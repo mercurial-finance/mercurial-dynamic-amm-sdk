@@ -8,6 +8,12 @@ export interface SwapCurve {
   ): BN;
 
   computeD(tokenAAmount: BN, tokenBAmount: BN): BN;
+
+  computeInAmount(
+    destAmount: BN,
+    swapSourceAmount: BN,
+    swapDestinationAmount: BN
+  ): BN;
 }
 
 export * from "./stable-swap";

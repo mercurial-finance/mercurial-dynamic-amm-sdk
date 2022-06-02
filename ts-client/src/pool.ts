@@ -147,45 +147,57 @@ class Pool {
 
   /**
    * Get maximum in amount (source amount) for swap
-   * @param outTokenMint
+   * !!! NOTE it is just estimation
+   * @param tokenMint
    */
-  getMaxSwappableInAmount(outTokenMint: PublicKey) {
-    // Get maximum in amount by swapping maximum withdrawable amount of outTokenMint in the pool
+  getMaxSwappableInAmount(tokenMint: PublicKey) {
+    // Get maximum in amount by swapping maximum withdrawable amount of tokenMint in the pool
     invariant(this.state, ERROR.POOL_NOT_LOAD);
     invariant(
-      outTokenMint.equals(this.state.tokenAMint) ||
-        outTokenMint.equals(this.state.tokenBMint),
+      tokenMint.equals(this.state.tokenAMint) ||
+      tokenMint.equals(this.state.tokenBMint),
       ERROR.INVALID_MINT
     );
+    let [tokenAAmount, tokenBAmount] = this.getTokensBalance();
+    const [outTokenMint, swapSourceAmount, swapDestAmount] = tokenMint.equals(this.state.tokenAMint)
+      ? [this.state.tokenBMint, this.normalizeTokenA(tokenAAmount), this.normalizeTokenB(tokenBAmount)]
+      : [this.state.tokenAMint, this.normalizeTokenB(tokenBAmount), this.normalizeTokenA(tokenAAmount)];
 
-    const inTokenMint = outTokenMint.equals(this.state.tokenAMint)
-      ? this.state.tokenBMint
-      : this.state.tokenAMint;
+    let maxOutAmount = this.getMaxSwappableOutAmount(outTokenMint);
+    maxOutAmount = tokenMint.equals(this.state.tokenAMint)
+      ? this.normalizeTokenB(maxOutAmount)
+      : this.normalizeTokenA(maxOutAmount);
 
-    const maxAmount = this.getMaxSwappableOutAmount(inTokenMint);
-
-    return this.getOutAmount(outTokenMint, maxAmount);
+    let maxInAmount = this.swapCurve!.computeInAmount(maxOutAmount, swapSourceAmount, swapDestAmount);
+    const adminFee = this.calculateAdminTradingFee(maxInAmount);
+    const tradeFee = this.calculateTradingFee(maxInAmount);
+    maxInAmount = maxInAmount.sub(adminFee);
+    maxInAmount = maxInAmount.sub(tradeFee);
+    maxInAmount = tokenMint.equals(this.state.tokenAMint)
+      ? this.denormalizeTokenA(maxInAmount)
+      : this.denormalizeTokenB(maxInAmount);
+    return maxInAmount;
   }
 
   /**
    *
-   * @param inTokenMint
+   * @param tokenMint
    * Get the maximum available amount to be swap out. This take consideration into the vault reserve
    */
-  getMaxSwappableOutAmount(inTokenMint: PublicKey) {
+  getMaxSwappableOutAmount(tokenMint: PublicKey) {
     invariant(this.state, ERROR.POOL_NOT_LOAD);
     invariant(
-      inTokenMint.equals(this.state.tokenAMint) ||
-        inTokenMint.equals(this.state.tokenBMint),
+      tokenMint.equals(this.state.tokenAMint) ||
+      tokenMint.equals(this.state.tokenBMint),
       ERROR.INVALID_MINT
     );
 
     const [totalAAmount, totalBAmount] = this.getTokensBalance();
-    const [outTotalAmount, outReserveBalance] = inTokenMint.equals(
+    const [outTotalAmount, outReserveBalance] = tokenMint.equals(
       this.state.tokenAMint
     )
-      ? [totalBAmount, this.vaultBSpl.reserveBalance]
-      : [totalAAmount, this.vaultASpl.reserveBalance];
+      ? [totalAAmount, this.vaultASpl.reserveBalance]
+      : [totalBAmount, this.vaultBSpl.reserveBalance];
 
     return outTotalAmount.gt(outReserveBalance)
       ? outReserveBalance
@@ -267,7 +279,7 @@ class Pool {
     invariant(this.state, ERROR.POOL_NOT_LOAD);
     invariant(
       inTokenMint.equals(this.state.tokenAMint) ||
-        inTokenMint.equals(this.state.tokenBMint),
+      inTokenMint.equals(this.state.tokenBMint),
       ERROR.INVALID_MINT
     );
 
@@ -282,7 +294,7 @@ class Pool {
       swapSourceVaultSpl,
       swapDestinationVaultSpl,
     ] = inTokenMint.equals(this.state.tokenAMint)
-      ? [
+        ? [
           this.normalizeTokenA(inAmount),
           this.normalizeTokenA(tokenAAmount),
           this.normalizeTokenB(tokenBAmount),
@@ -291,7 +303,7 @@ class Pool {
           this.vaultASpl,
           this.vaultBSpl,
         ]
-      : [
+        : [
           this.normalizeTokenB(inAmount),
           this.normalizeTokenB(tokenBAmount),
           this.normalizeTokenA(tokenAAmount),

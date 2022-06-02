@@ -26,7 +26,7 @@ function ceilDiv(lhs: BN, rhs: BN) {
 }
 
 export class ConstantProductSwap implements SwapCurve {
-  constructor() {}
+  constructor() { }
   // Typescript implementation of https://github.com/solana-labs/solana-program-library/blob/master/token-swap/program/src/curve/constant_product.rs#L27
   computeOutAmount(
     sourceAmount: BN,
@@ -34,11 +34,10 @@ export class ConstantProductSwap implements SwapCurve {
     swapDestinationAmount: BN
   ): BN {
     let invariant = swapSourceAmount.mul(swapDestinationAmount);
-    let [newSwapDestinationAmount, newSwapSourceAmount] = ceilDiv(
+    let [newSwapDestinationAmount, _newSwapSourceAmount] = ceilDiv(
       invariant,
       swapSourceAmount.add(sourceAmount)
     );
-    let _sourceAmountSwapped = newSwapSourceAmount.sub(sourceAmount);
     let destinationAmountSwapped = swapDestinationAmount.sub(
       newSwapDestinationAmount
     );
@@ -49,5 +48,24 @@ export class ConstantProductSwap implements SwapCurve {
   }
   computeD(tokenAAmount: BN, tokenBAmount: BN): BN {
     return sqrt(tokenAAmount.mul(tokenBAmount));
+  }
+  computeInAmount(
+    destAmount: BN,
+    swapSourceAmount: BN,
+    swapDestinationAmount: BN
+  ): BN {
+    let invariant = swapSourceAmount.mul(swapDestinationAmount);
+    let [newSwapSourceAmount, _newSwapDestinationAmount] = ceilDiv(
+      invariant,
+      swapDestinationAmount.sub(destAmount)
+    );
+    let sourceAmount = newSwapSourceAmount.sub(
+      swapSourceAmount
+    );
+  
+    if (sourceAmount.eq(new BN(0))) {
+      throw new Error("Swap result in zero");
+    }
+    return sourceAmount;
   }
 }
