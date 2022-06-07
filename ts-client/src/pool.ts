@@ -1,4 +1,4 @@
-import { AnchorProvider, BN, Program, Wallet } from "@project-serum/anchor";
+import { BN, Program, Wallet, AnchorProvider } from "@project-serum/anchor";
 import {
   Connection,
   ParsedAccountData,
@@ -6,7 +6,7 @@ import {
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
 import invariant from "invariant";
-// import Vault from "sdk-ts/src/vault"; // Wait for vault SDK being released
+import { vault } from "@mercurial-finance/mercurial-sdk";
 import { ERROR, POOL_BASE_KEY, PROGRAM_ID } from "./constants";
 import { StableSwap, SwapCurve } from "./curve";
 import { ConstantProductSwap } from "./curve/constant-product";
@@ -19,9 +19,10 @@ import {
   PoolState,
 } from "./types/pool_state";
 import { VaultSpl } from "./types/vault_spl";
-import Vault from "./vault-deps/vault";
 
 export type AmmProgram = Program<Amm>;
+const { default: Vault } = vault;
+type Vault = vault.default;
 
 const PRECISION = 100_000_000;
 
@@ -58,8 +59,8 @@ class Pool {
       commitment: "processed",
     });
     this.program = new Program<Amm>(AmmIDL, PROGRAM_ID, provider);
-    this.vaultA = new Vault(wallet, connection);
-    this.vaultB = new Vault(wallet, connection);
+    this.vaultA = new Vault(provider, wallet.publicKey);
+    this.vaultB = new Vault(provider, wallet.publicKey);
     this.poolSpl = new PoolSpl();
     this.vaultASpl = new VaultSpl();
     this.vaultBSpl = new VaultSpl();
@@ -155,20 +156,34 @@ class Pool {
     invariant(this.state, ERROR.POOL_NOT_LOAD);
     invariant(
       tokenMint.equals(this.state.tokenAMint) ||
-      tokenMint.equals(this.state.tokenBMint),
+        tokenMint.equals(this.state.tokenBMint),
       ERROR.INVALID_MINT
     );
     let [tokenAAmount, tokenBAmount] = this.getTokensBalance();
-    const [outTokenMint, swapSourceAmount, swapDestAmount] = tokenMint.equals(this.state.tokenAMint)
-      ? [this.state.tokenBMint, this.normalizeTokenA(tokenAAmount), this.normalizeTokenB(tokenBAmount)]
-      : [this.state.tokenAMint, this.normalizeTokenB(tokenBAmount), this.normalizeTokenA(tokenAAmount)];
+    const [outTokenMint, swapSourceAmount, swapDestAmount] = tokenMint.equals(
+      this.state.tokenAMint
+    )
+      ? [
+          this.state.tokenBMint,
+          this.normalizeTokenA(tokenAAmount),
+          this.normalizeTokenB(tokenBAmount),
+        ]
+      : [
+          this.state.tokenAMint,
+          this.normalizeTokenB(tokenBAmount),
+          this.normalizeTokenA(tokenAAmount),
+        ];
 
     let maxOutAmount = this.getMaxSwappableOutAmount(outTokenMint);
     maxOutAmount = tokenMint.equals(this.state.tokenAMint)
       ? this.normalizeTokenB(maxOutAmount)
       : this.normalizeTokenA(maxOutAmount);
 
-    let maxInAmount = this.swapCurve!.computeInAmount(maxOutAmount, swapSourceAmount, swapDestAmount);
+    let maxInAmount = this.swapCurve!.computeInAmount(
+      maxOutAmount,
+      swapSourceAmount,
+      swapDestAmount
+    );
     const adminFee = this.calculateAdminTradingFee(maxInAmount);
     const tradeFee = this.calculateTradingFee(maxInAmount);
     maxInAmount = maxInAmount.sub(adminFee);
@@ -188,7 +203,7 @@ class Pool {
     invariant(this.state, ERROR.POOL_NOT_LOAD);
     invariant(
       tokenMint.equals(this.state.tokenAMint) ||
-      tokenMint.equals(this.state.tokenBMint),
+        tokenMint.equals(this.state.tokenBMint),
       ERROR.INVALID_MINT
     );
 
@@ -279,7 +294,7 @@ class Pool {
     invariant(this.state, ERROR.POOL_NOT_LOAD);
     invariant(
       inTokenMint.equals(this.state.tokenAMint) ||
-      inTokenMint.equals(this.state.tokenBMint),
+        inTokenMint.equals(this.state.tokenBMint),
       ERROR.INVALID_MINT
     );
 
@@ -294,7 +309,7 @@ class Pool {
       swapSourceVaultSpl,
       swapDestinationVaultSpl,
     ] = inTokenMint.equals(this.state.tokenAMint)
-        ? [
+      ? [
           this.normalizeTokenA(inAmount),
           this.normalizeTokenA(tokenAAmount),
           this.normalizeTokenB(tokenBAmount),
@@ -303,7 +318,7 @@ class Pool {
           this.vaultASpl,
           this.vaultBSpl,
         ]
-        : [
+      : [
           this.normalizeTokenB(inAmount),
           this.normalizeTokenB(tokenBAmount),
           this.normalizeTokenA(tokenAAmount),
