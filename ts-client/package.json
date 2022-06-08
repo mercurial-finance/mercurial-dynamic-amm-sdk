@@ -1,36 +1,59 @@
 {
-    "scripts": {
-        "build": "tsc",
-        "test": "npx ts-mocha --bail -p ./tsconfig.json -t 1000000 tests/**/*.ts"
-    },
-    "dependencies": {
-        "@mercurial-finance/mercurial-sdk": "^0.0.3",
-        "@project-serum/anchor": "0.24.2",
-        "@saberhq/stableswap-sdk": "^1.13.15",
-        "@solana/spl-token": "^0.2.0",
-        "@solana/spl-token-registry": "^0.2.4094",
-        "@solana/web3.js": "^1.43.1",
-        "@types/invariant": "^2.2.35",
-        "bn-sqrt": "^1.0.0",
-        "invariant": "^2.2.4",
-        "jsbi": "^4.3.0",
-        "@saberhq/anchor-contrib": "^1.13.6",
-        "@types/jest": "^27.5.1",
-        "jest": "^28.1.0",
-        "ts-jest": "^28.0.2"
-    },
-    "devDependencies": {
-        "@tsconfig/recommended": "^1.0.1",
-        "@types/chai": "^4.3.1",
-        "@types/jest": "^27.5.1",
-        "@types/mocha": "^9.1.1",
-        "chai": "^4.3.6",
-        "jest": "^28.1.0",
-        "mocha": "^10.0.0",
-        "ts-jest": "^28.0.2",
-        "ts-mocha": "^10.0.0",
-        "typescript": "^4.7.2",
-        "@saberhq/solana-contrib": "1.13.6",
-        "@saberhq/token-utils": "1.13.6"
-    }
+  "scripts": {
+    "build": "tsc",
+    "test": "jest ./tests/*.test.ts"
+  },
+  "dependencies": {
+    "@mercurial-finance/mercurial-sdk": "^0.0.3",
+    "@project-serum/anchor": "0.24.2",
+    "@saberhq/stableswap-sdk": "^1.13.15",
+    "@solana/spl-token": "^0.2.0",
+    "@solana/spl-token-registry": "^0.2.4094",
+    "@solana/web3.js": "^1.43.1",
+    "@types/invariant": "^2.2.35",
+    "bn-sqrt": "^1.0.0",
+    "invariant": "^2.2.4",
+    "jsbi": "^4.3.0",
+    "@saberhq/anchor-contrib": "^1.13.6",
+    "@types/jest": "^27.5.1"
+  },
+  "devDependencies": {
+    "@tsconfig/recommended": "^1.0.1",
+    "@types/chai": "^4.3.1",
+    "@types/jest": "^27.5.1",
+    "@types/mocha": "^9.1.1",
+    "chai": "^4.3.6",
+    "jest": "^28.1.0",
+    "mocha": "^10.0.0",
+    "ts-jest": "^28.0.2",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^4.7.2",
+    "@saberhq/solana-contrib": "1.13.6",
+    "@saberhq/token-utils": "1.13.6"
+  },
+  "name": "@mercurial-finance/dynamic-amm-sdk",
+  "description": "## Setup",
+  "version": "0.0.1",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk.git"
+  },
+  "keywords": [
+    "mercurial",
+    "finance",
+    "dynamic",
+    "amm",
+    "sdk",
+    "solana"
+  ],
+  "author": "mercurial-finance",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/issues"
+  },
+  "homepage": "https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk#readme"
 }
