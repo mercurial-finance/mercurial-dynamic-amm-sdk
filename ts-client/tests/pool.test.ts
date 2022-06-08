@@ -7,9 +7,7 @@ import {
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
-import { BN } from "bn.js";
-import { expect } from "chai";
-import "mocha";
+import { BN } from "@project-serum/anchor"
 import { ConstantProductSwap } from "../src/curve/constant-product";
 import { StableSwap } from "../src/curve/index";
 import Pool from "../src/pool";
@@ -40,7 +38,7 @@ describe("computePoolAccount", () => {
       USDT_MINT,
       stableSwapCurve
     );
-    expect(poolAddress.toBase58()).to.be.equal(
+    expect(poolAddress.toBase58()).toEqual(
       "612wjkPj8nVreur2FsoQBsHkJgRarihkthjGRxrabGbH"
     );
   });
@@ -56,7 +54,7 @@ describe("computePoolAccount", () => {
       USDC_MINT,
       stableSwapCurve
     );
-    expect(poolAddressOne.toBase58()).to.be.equal(poolAddressTwo.toBase58());
+    expect(poolAddressOne.toBase58()).toEqual(poolAddressTwo.toBase58());
   });
 
   it("should compute different pool account when curve type is different", async () => {
@@ -65,7 +63,7 @@ describe("computePoolAccount", () => {
       USDT_MINT,
       constantProductCurve
     );
-    expect(poolAddress.toBase58()).to.be.equal(
+    expect(poolAddress.toBase58()).toEqual(
       "5cyvaW1WqTkZ1Y6pK7zV66mTV5e5TsM49fhsXKBS45ZM"
     );
   });
@@ -85,7 +83,7 @@ describe("stable-swap pool", () => {
         stableSwapCurve
       );
       await pool.load(poolUSDC_USDT);
-      expect(pool.state).not.undefined;
+      expect(pool.state).not.toBeUndefined();
     });
   });
 
@@ -97,8 +95,8 @@ describe("stable-swap pool", () => {
       console.log(
         `tokenABalance ${tokenABalance}, tokenBBalance ${tokenBBalance}`
       );
-      expect(tokenABalance).to.be.greaterThan(0);
-      expect(tokenBBalance).to.be.greaterThan(0);
+      expect(tokenABalance).toBeGreaterThan(0);
+      expect(tokenBBalance).toBeGreaterThan(0);
     });
   });
 
@@ -108,23 +106,23 @@ describe("stable-swap pool", () => {
         .getTokensBalance()
         .map((b) => b.toNumber());
       const maxSwapableAmount = pool
-        .getMaxSwappableOutAmount(pool.state.tokenBMint)
+        .getMaxSwappableOutAmount(pool.state!.tokenBMint)
         .toNumber();
       console.log(
         `maxSwapableAmount ${maxSwapableAmount}, tokenBAmount ${tokenBBalance}`
       );
-      expect(maxSwapableAmount).to.be.lessThanOrEqual(tokenBBalance);
+      expect(maxSwapableAmount).toBeLessThanOrEqual(tokenBBalance);
     });
   });
 
   describe("computeD", () => {
     it("should return total liquidity", async () => {
       const [tokenABalance, tokenBBalance] = pool.getTokensBalance();
-      const curveType = pool.state.curveType as StableSwapCurve;
+      const curveType = pool.state!.curveType as StableSwapCurve;
       const stableSwap = new StableSwap(curveType.stable.amp.toNumber());
       const totalLiquidity = stableSwap.computeD(tokenABalance, tokenBBalance);
       console.log("totalLiquidity", totalLiquidity.toString());
-      expect(totalLiquidity.toNumber()).to.be.greaterThan(0);
+      expect(totalLiquidity.toNumber()).toBeGreaterThan(0);
     });
   });
 
@@ -149,12 +147,12 @@ describe("stable-swap pool", () => {
 
   describe("getMaxInAmount", () => {
     it("should return maximum in amount, where the out amount < max out amount", async () => {
-      const maxInAmount = pool.getMaxSwappableInAmount(pool.state.tokenAMint);
-      const outAmount = pool.getOutAmount(pool.state.tokenAMint, maxInAmount);
-      const maxOutAmount = pool.getMaxSwappableOutAmount(pool.state.tokenBMint);
+      const maxInAmount = pool.getMaxSwappableInAmount(pool.state!.tokenAMint);
+      const outAmount = pool.getOutAmount(pool.state!.tokenAMint, maxInAmount);
+      const maxOutAmount = pool.getMaxSwappableOutAmount(pool.state!.tokenBMint);
       console.log(maxOutAmount.toString(), outAmount.toString());
       console.log("Ratio: ", maxOutAmount.toNumber() / outAmount.toNumber());
-      expect(outAmount.toNumber()).to.be.lessThanOrEqual(
+      expect(outAmount.toNumber()).toBeLessThanOrEqual(
         maxOutAmount.toNumber()
       );
     });
@@ -175,7 +173,7 @@ describe("constant-product pool", () => {
         constantProductCurve
       );
       await pool.load(poolWSOL_USDT);
-      expect(pool.state).not.undefined;
+      expect(pool.state).not.toBeUndefined();
     });
   });
 
@@ -187,8 +185,8 @@ describe("constant-product pool", () => {
       console.log(
         `tokenABalance ${tokenABalance}, tokenBBalance ${tokenBBalance}`
       );
-      expect(tokenABalance).to.be.greaterThan(0);
-      expect(tokenBBalance).to.be.greaterThan(0);
+      expect(tokenABalance).toBeGreaterThan(0);
+      expect(tokenBBalance).toBeGreaterThan(0);
     });
   });
 
@@ -198,12 +196,12 @@ describe("constant-product pool", () => {
         .getTokensBalance()
         .map((b) => b.toNumber());
       const maxSwapableAmount = pool
-        .getMaxSwappableOutAmount(pool.state.tokenAMint)
+        .getMaxSwappableOutAmount(pool.state!.tokenAMint)
         .toNumber();
       console.log(
         `maxSwapableAmount ${maxSwapableAmount}, tokenAAmount ${tokenABalance}`
       );
-      expect(maxSwapableAmount).to.be.lessThanOrEqual(tokenABalance);
+      expect(maxSwapableAmount).toBeLessThanOrEqual(tokenABalance);
     });
   });
 
@@ -216,7 +214,7 @@ describe("constant-product pool", () => {
         tokenBBalance
       );
       console.log("totalLiquidity", totalLiquidity.toString());
-      expect(totalLiquidity.toNumber()).to.be.greaterThan(0);
+      expect(totalLiquidity.toNumber()).toBeGreaterThan(0);
     });
   });
 
@@ -241,12 +239,12 @@ describe("constant-product pool", () => {
 
   describe("getMaxInAmount", () => {
     it("should return maximum in amount, where the out amount < max out amount", async () => {
-      const maxInAmount = pool.getMaxSwappableInAmount(pool.state.tokenAMint);
-      const outAmount = pool.getOutAmount(pool.state.tokenAMint, maxInAmount);
-      const maxOutAmount = pool.getMaxSwappableOutAmount(pool.state.tokenBMint);  
+      const maxInAmount = pool.getMaxSwappableInAmount(pool.state!.tokenAMint);
+      const outAmount = pool.getOutAmount(pool.state!.tokenAMint, maxInAmount);
+      const maxOutAmount = pool.getMaxSwappableOutAmount(pool.state!.tokenBMint);  
       console.log(maxOutAmount.toString(), outAmount.toString());
       console.log("Ratio: ", maxOutAmount.toNumber() / outAmount.toNumber());
-      expect(outAmount.toNumber()).to.be.lessThanOrEqual(
+      expect(outAmount.toNumber()).toBeLessThanOrEqual(
         maxOutAmount.toNumber()
       );
     });
@@ -261,9 +259,9 @@ describe("read unix timestamp onchain", () => {
       connection.getParsedAccountInfo(SYSVAR_CLOCK_PUBKEY),
       connection.getBlockTime(slot),
     ]);
-    let parsedClockAccount = (parsedClock.value.data as ParsedAccountData)
+    let parsedClockAccount = (parsedClock.value!.data as ParsedAccountData)
       .parsed as ParsedClockState;
     console.log(blockTime, parsedClockAccount.info.unixTimestamp);
-    expect(blockTime).to.be.equal(parsedClockAccount.info.unixTimestamp);
+    expect(blockTime).toEqual(parsedClockAccount.info.unixTimestamp);
   });
 });

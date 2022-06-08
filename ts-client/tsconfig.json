@@ -1,21 +1,23 @@
 {
+  "extends": "@tsconfig/recommended/tsconfig.json",
   "compilerOptions": {
-    "typeRoots": ["./node_modules/@types"],
-    "types": ["mocha", "chai"],
-    "target": "es2020",
-    "skipLibCheck": true,
-    "allowJs": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true,
-    "noImplicitAny": false,
-    "noImplicitThis": true,
+    "outDir": "dist",
+    "types": [
+      "jest",
+      "mocha",
+      "chai"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
     "module": "commonjs",
-    "moduleResolution": "node",
+    "target": "es6",
+    "esModuleInterop": true,
     "resolveJsonModule": true,
-    "rootDir": "src",
-    "outDir": "./lib",
-    "declaration": true
+    "noImplicitAny": false,
+    "skipLibCheck": true
   },
-  "exclude": ["tests", "lib"]
+  "exclude": [
+    "node_modules"
+  ]
 }

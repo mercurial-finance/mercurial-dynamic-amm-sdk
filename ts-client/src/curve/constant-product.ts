@@ -1,5 +1,5 @@
 import sqrt from "bn-sqrt";
-import BN from "bn.js";
+import { BN } from "@project-serum/anchor"
 import { SwapCurve } from ".";
 
 // Typescript implementation of https://github.com/solana-labs/solana-program-library/blob/master/libraries/math/src/checked_ceil_div.rs#L29
@@ -62,7 +62,7 @@ export class ConstantProductSwap implements SwapCurve {
     let sourceAmount = newSwapSourceAmount.sub(
       swapSourceAmount
     );
-  
+
     if (sourceAmount.eq(new BN(0))) {
       throw new Error("Swap result in zero");
     }
