@@ -1,12 +1,13 @@
 lockfileVersion: 5.3
 
 specifiers:
-  '@mercurial-finance/mercurial-sdk': ^0.0.3
+  '@mercurial-finance/vault-sdk': ^0.0.3
   '@project-serum/anchor': 0.24.2
   '@saberhq/anchor-contrib': ^1.13.6
   '@saberhq/solana-contrib': 1.13.6
   '@saberhq/stableswap-sdk': ^1.13.15
   '@saberhq/token-utils': 1.13.6
+  '@solana/buffer-layout': 4.0.0
   '@solana/spl-token': ^0.2.0
   '@solana/spl-token-registry': ^0.2.4094
   '@solana/web3.js': ^1.43.1
@@ -26,7 +27,7 @@ specifiers:
   typescript: ^4.7.2
 
 dependencies:
-  '@mercurial-finance/mercurial-sdk': 0.0.3_a16c6ec061eb15b068650106b73e44d4
+  '@mercurial-finance/vault-sdk': 0.0.3_a16c6ec061eb15b068650106b73e44d4
   '@project-serum/anchor': 0.24.2
   '@saberhq/anchor-contrib': 1.13.27_98c01757814d0bd052e66c24bcd5c635
   '@saberhq/stableswap-sdk': 1.13.27_5b777e036bafb3d232727a35b3474cb3
@@ -42,6 +43,7 @@ dependencies:
 devDependencies:
   '@saberhq/solana-contrib': 1.13.6_@solana+web3.js@1.43.6
   '@saberhq/token-utils': 1.13.6_5b777e036bafb3d232727a35b3474cb3
+  '@solana/buffer-layout': 4.0.0
   '@tsconfig/recommended': 1.0.1
   '@types/chai': 4.3.1
   '@types/mocha': 9.1.1
@@ -695,8 +697,20 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.13
     dev: true
 
-  /@mercurial-finance/mercurial-sdk/0.0.3_a16c6ec061eb15b068650106b73e44d4:
-    resolution: {integrity: sha512-0Weqbbz/bBo+uOE8KveIMFe7zuW3rwfCvzhl5KtOxi70ygK0EjjZ7emgbfQ5s1AUr6GGh6jHicXyUq/s5gW1BA==}
+  /@mercurial-finance/optimist/0.1.4_b00511aea74f1e3d5accd032380e9846:
+    resolution: {integrity: sha512-m8QuyPx9j7fGd2grw0mD5WcYtBb8l7+OQI5aHdeIlxPg3QoPrbSdCHyFOuipYbvB0EY5YDbOmyeFwiTcBkBBSw==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      '@solana/spl-token': <0.2.0
+      '@solana/web3.js': '>=1.15.0'
+      bn.js: '>=5.2.0'
+    dependencies:
+      '@solana/spl-token': 0.1.8
+      '@solana/web3.js': 1.43.6
+    dev: false
+
+  /@mercurial-finance/vault-sdk/0.0.3_a16c6ec061eb15b068650106b73e44d4:
+    resolution: {integrity: sha512-3yEWsdKSFxsASY7ojLPHIhdC6g7u3rYBwknEqPUT2MDTZpGBBP8jRnlr3YYDdBjW+QELITkDHsROYyaKfgga1g==}
     dependencies:
       '@blockworks-foundation/mango-client': 3.5.3
       '@mercurial-finance/optimist': 0.1.4_b00511aea74f1e3d5accd032380e9846
@@ -718,18 +732,6 @@ packages:
       - debug
       - encoding
       - utf-8-validate
-    dev: false
-
-  /@mercurial-finance/optimist/0.1.4_b00511aea74f1e3d5accd032380e9846:
-    resolution: {integrity: sha512-m8QuyPx9j7fGd2grw0mD5WcYtBb8l7+OQI5aHdeIlxPg3QoPrbSdCHyFOuipYbvB0EY5YDbOmyeFwiTcBkBBSw==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      '@solana/spl-token': <0.2.0
-      '@solana/web3.js': '>=1.15.0'
-      bn.js: '>=5.2.0'
-    dependencies:
-      '@solana/spl-token': 0.1.8
-      '@solana/web3.js': 1.43.6
     dev: false
 
   /@mithraic-labs/psy-american/0.2.2:

@@ -6,7 +6,7 @@ import {
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
 import invariant from "invariant";
-import { vault } from "@mercurial-finance/mercurial-sdk";
+import { vault } from "@mercurial-finance/vault-sdk";
 import { ERROR, POOL_BASE_KEY, PROGRAM_ID } from "./constants";
 import { StableSwap, SwapCurve } from "./curve";
 import { ConstantProductSwap } from "./curve/constant-product";
