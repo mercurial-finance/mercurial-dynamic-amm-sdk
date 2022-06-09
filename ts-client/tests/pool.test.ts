@@ -7,7 +7,7 @@ import {
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
-import { BN } from "@project-serum/anchor"
+import { BN } from "@project-serum/anchor";
 import { ConstantProductSwap } from "../src/curve/constant-product";
 import { StableSwap } from "../src/curve/index";
 import Pool from "../src/pool";
@@ -149,12 +149,12 @@ describe("stable-swap pool", () => {
     it("should return maximum in amount, where the out amount < max out amount", async () => {
       const maxInAmount = pool.getMaxSwappableInAmount(pool.state!.tokenAMint);
       const outAmount = pool.getOutAmount(pool.state!.tokenAMint, maxInAmount);
-      const maxOutAmount = pool.getMaxSwappableOutAmount(pool.state!.tokenBMint);
+      const maxOutAmount = pool.getMaxSwappableOutAmount(
+        pool.state!.tokenBMint
+      );
       console.log(maxOutAmount.toString(), outAmount.toString());
       console.log("Ratio: ", maxOutAmount.toNumber() / outAmount.toNumber());
-      expect(outAmount.toNumber()).toBeLessThanOrEqual(
-        maxOutAmount.toNumber()
-      );
+      expect(outAmount.toNumber()).toBeLessThanOrEqual(maxOutAmount.toNumber());
     });
   });
 });
@@ -241,12 +241,12 @@ describe("constant-product pool", () => {
     it("should return maximum in amount, where the out amount < max out amount", async () => {
       const maxInAmount = pool.getMaxSwappableInAmount(pool.state!.tokenAMint);
       const outAmount = pool.getOutAmount(pool.state!.tokenAMint, maxInAmount);
-      const maxOutAmount = pool.getMaxSwappableOutAmount(pool.state!.tokenBMint);  
+      const maxOutAmount = pool.getMaxSwappableOutAmount(
+        pool.state!.tokenBMint
+      );
       console.log(maxOutAmount.toString(), outAmount.toString());
       console.log("Ratio: ", maxOutAmount.toNumber() / outAmount.toNumber());
-      expect(outAmount.toNumber()).toBeLessThanOrEqual(
-        maxOutAmount.toNumber()
-      );
+      expect(outAmount.toNumber()).toBeLessThanOrEqual(maxOutAmount.toNumber());
     });
   });
 });

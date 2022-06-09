@@ -74,7 +74,7 @@ class Pool {
   async load(pool: PublicKey) {
     const poolAccount = (await this.program.account.pool.fetchNullable(
       pool
-    )) as PoolState;
+    )) as unknown as PoolState;
     invariant(poolAccount, `Pool ${pool.toBase58()} not found`);
 
     if ("stable" in poolAccount.curveType) {
@@ -86,8 +86,8 @@ class Pool {
     }
 
     await Promise.all([
-      this.vaultA.getVaultStateByMint(poolAccount.tokenAMint),
-      this.vaultB.getVaultStateByMint(poolAccount.tokenBMint),
+      this.vaultA.init(poolAccount.tokenAMint),
+      this.vaultB.init(poolAccount.tokenBMint),
     ]);
 
     this.state = poolAccount;
