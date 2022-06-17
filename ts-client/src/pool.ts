@@ -1,4 +1,10 @@
-import { BN, Program, Wallet, AnchorProvider } from "@project-serum/anchor";
+import {
+  BN,
+  Program,
+  Wallet,
+  AnchorProvider,
+  Provider,
+} from "@project-serum/anchor";
 import {
   Connection,
   ParsedAccountData,
@@ -19,6 +25,7 @@ import {
   PoolState,
 } from "./types/pool_state";
 import { VaultSpl } from "./types/vault_spl";
+import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 
 export type AmmProgram = Program<Amm>;
 const { default: Vault } = vault;
@@ -40,30 +47,29 @@ function fromTokenMintsToCompositeKey(
 }
 
 class Pool {
-  private program: AmmProgram;
+  private swapCurve: SwapCurve;
 
-  private vaultA: Vault;
-  private vaultB: Vault;
+  constructor(
+    private program: AmmProgram,
+    private vaultA: Vault,
+    private vaultB: Vault,
+    private state: PoolState,
+    private vaultASpl: VaultSpl,
+    private vaultBSpl: VaultSpl,
+    private poolSpl: PoolSpl,
+    private onChainTime: number = 0;
+  ) {
+    if ("stable" in this.state.curveType) {
+      this.swapCurve = new StableSwap(
+        this.state.curveType.stable.amp.toNumber()
+      );
+    } else {
+      this.swapCurve = new ConstantProductSwap();
+    }
+  }
 
-  private vaultASpl: VaultSpl;
-  private vaultBSpl: VaultSpl;
-
-  private poolSpl: PoolSpl;
-  private onChainTime: number = 0;
-
-  public state: PoolState | undefined;
-  private swapCurve: SwapCurve | undefined;
-
-  constructor(wallet: Wallet, connection: Connection) {
-    const provider = new AnchorProvider(connection, wallet, {
-      commitment: "processed",
-    });
-    this.program = new Program<Amm>(AmmIDL, PROGRAM_ID, provider);
-    this.vaultA = new Vault(provider, wallet.publicKey);
-    this.vaultB = new Vault(provider, wallet.publicKey);
-    this.poolSpl = new PoolSpl();
-    this.vaultASpl = new VaultSpl();
-    this.vaultBSpl = new VaultSpl();
+  static getProgram(provider: Provider): AmmProgram {
+    return new Program<Amm>(AmmIDL, PROGRAM_ID, provider);
   }
 
   /**
@@ -71,26 +77,19 @@ class Pool {
    * @param pool
    * Load the pool state
    */
-  async load(pool: PublicKey) {
-    const poolAccount = (await this.program.account.pool.fetchNullable(
+  static async load(wallet: Wallet, program: AmmProgram, pool: PublicKey) {
+    const poolState = (await program.account.pool.fetchNullable(
       pool
     )) as unknown as PoolState;
-    invariant(poolAccount, `Pool ${pool.toBase58()} not found`);
+    invariant(poolState, `Pool ${pool.toBase58()} not found`);
 
-    if ("stable" in poolAccount.curveType) {
-      this.swapCurve = new StableSwap(
-        poolAccount.curveType.stable.amp.toNumber()
-      );
-    } else {
-      this.swapCurve = new ConstantProductSwap();
-    }
-
+    // TODO: Fix underlying Vault to be loaded and not default to invalid state Vault
+    const vaultA = new Vault(program.provider, wallet.publicKey);
+    const vaultB = new Vault(program.provider, wallet.publicKey);
     await Promise.all([
-      this.vaultA.init(poolAccount.tokenAMint),
-      this.vaultB.init(poolAccount.tokenBMint),
+      vaultA.init(poolState.tokenAMint),
+      vaultB.init(poolState.tokenBMint),
     ]);
-
-    this.state = poolAccount;
 
     const [
       parsedClock,
@@ -104,27 +103,32 @@ class Pool {
         lpMint,
       ],
     ] = await Promise.all([
-      this.program.provider.connection.getParsedAccountInfo(
-        SYSVAR_CLOCK_PUBKEY
-      ),
-      this.program.provider.connection.getMultipleAccountsInfo([
-        this.vaultA.state!.tokenVault,
-        this.vaultB.state!.tokenVault,
-        this.vaultA.state!.lpMint,
-        this.vaultB.state!.lpMint,
-        this.state.aVaultLp,
-        this.state.bVaultLp,
-        this.state.lpMint,
+      program.provider.connection.getParsedAccountInfo(SYSVAR_CLOCK_PUBKEY),
+      program.provider.connection.getMultipleAccountsInfo([
+        vaultA.state!.tokenVault,
+        vaultB.state!.tokenVault,
+        vaultA.state!.lpMint,
+        vaultB.state!.lpMint,
+        poolState.aVaultLp,
+        poolState.bVaultLp,
+        poolState.lpMint,
       ]),
     ]);
 
     const parsedClockAccount = (parsedClock.value!.data as ParsedAccountData)
       .parsed as ParsedClockState;
 
-    this.vaultASpl.fromAccountsInfo(vaultATokenVault!, vaultALpMint!);
-    this.vaultBSpl.fromAccountsInfo(vaultBTokenVault!, vaultBLpMint!);
-    this.poolSpl.fromAccountsInfo(aVaultLp!, bVaultLp!, lpMint!);
-    this.onChainTime = parsedClockAccount.info.unixTimestamp;
+    // What is the meaning of those default objects?
+    const poolSpl = new PoolSpl();
+    const vaultASpl = new VaultSpl();
+    const vaultBSpl = new VaultSpl();
+
+    vaultASpl.fromAccountsInfo(vaultATokenVault!, vaultALpMint!);
+    vaultBSpl.fromAccountsInfo(vaultBTokenVault!, vaultBLpMint!);
+    poolSpl.fromAccountsInfo(aVaultLp!, bVaultLp!, lpMint!);
+    const onChainTime = parsedClockAccount.info.unixTimestamp;
+
+    return new Pool(program, vaultA, vaultB, poolState, vaultASpl, vaultBSpl, poolSpl, onChainTime);
   }
 
   /**
@@ -132,7 +136,6 @@ class Pool {
    * @returns [totalTokenA, totalTokenB]
    */
   getTokensBalance() {
-    invariant(this.state, ERROR.POOL_NOT_LOAD);
     const totalAAmount = this.vaultA.getAmountByShare(
       this.onChainTime,
       this.poolSpl.vaultALpBalance.toNumber(),
@@ -153,7 +156,6 @@ class Pool {
    */
   getMaxSwappableInAmount(tokenMint: PublicKey) {
     // Get maximum in amount by swapping maximum withdrawable amount of tokenMint in the pool
-    invariant(this.state, ERROR.POOL_NOT_LOAD);
     invariant(
       tokenMint.equals(this.state.tokenAMint) ||
         tokenMint.equals(this.state.tokenBMint),
@@ -200,7 +202,6 @@ class Pool {
    * Get the maximum available amount to be swap out. This take consideration into the vault reserve
    */
   getMaxSwappableOutAmount(tokenMint: PublicKey) {
-    invariant(this.state, ERROR.POOL_NOT_LOAD);
     invariant(
       tokenMint.equals(this.state.tokenAMint) ||
         tokenMint.equals(this.state.tokenBMint),
@@ -220,7 +221,6 @@ class Pool {
   }
 
   private normalizeTokenA(tokenAAmount: BN) {
-    invariant(this.state, ERROR.POOL_NOT_LOAD);
     if (this.state.precisionFactor.tokenMultiplier) {
       const { tokenAMultiplier } = this.state.precisionFactor.tokenMultiplier;
       return tokenAAmount.mul(tokenAMultiplier);
@@ -229,7 +229,6 @@ class Pool {
   }
 
   private normalizeTokenB(tokenBAmount: BN) {
-    invariant(this.state, ERROR.POOL_NOT_LOAD);
     if (this.state.precisionFactor.tokenMultiplier) {
       const { tokenBMultiplier } = this.state.precisionFactor.tokenMultiplier;
       return tokenBAmount.mul(tokenBMultiplier);
@@ -238,7 +237,6 @@ class Pool {
   }
 
   private denormalizeTokenA(tokenAAmount: BN) {
-    invariant(this.state, ERROR.POOL_NOT_LOAD);
     if (this.state.precisionFactor.tokenMultiplier) {
       const { tokenAMultiplier } = this.state.precisionFactor.tokenMultiplier;
       return tokenAAmount.div(tokenAMultiplier);
@@ -247,7 +245,6 @@ class Pool {
   }
 
   private denormalizeTokenB(tokenBAmount: BN) {
-    invariant(this.state, ERROR.POOL_NOT_LOAD);
     if (this.state.precisionFactor.tokenMultiplier) {
       const { tokenBMultiplier } = this.state.precisionFactor.tokenMultiplier;
       return tokenBAmount.div(tokenBMultiplier);
@@ -256,14 +253,12 @@ class Pool {
   }
 
   private calculateAdminTradingFee(amount: BN) {
-    invariant(this.state, ERROR.POOL_NOT_LOAD);
     const { ownerTradeFeeDenominator, ownerTradeFeeNumerator } =
       this.state.fees;
     return amount.mul(ownerTradeFeeNumerator).div(ownerTradeFeeDenominator);
   }
 
   private calculateTradingFee(amount: BN) {
-    invariant(this.state, ERROR.POOL_NOT_LOAD);
     const { tradeFeeDenominator, tradeFeeNumerator } = this.state.fees;
     return amount.mul(tradeFeeNumerator).div(tradeFeeDenominator);
   }
@@ -273,7 +268,6 @@ class Pool {
    * @returns
    */
   getVirtualPrice() {
-    invariant(this.state, ERROR.POOL_NOT_LOAD);
     let [tokenAAmount, tokenBAmount] = this.getTokensBalance();
     tokenAAmount = this.normalizeTokenA(tokenAAmount);
     tokenBAmount = this.normalizeTokenB(tokenBAmount);
@@ -291,7 +285,6 @@ class Pool {
    * @returns
    */
   getOutAmount(inTokenMint: PublicKey, inAmount: BN) {
-    invariant(this.state, ERROR.POOL_NOT_LOAD);
     invariant(
       inTokenMint.equals(this.state.tokenAMint) ||
         inTokenMint.equals(this.state.tokenBMint),
@@ -383,12 +376,12 @@ class Pool {
    * @param curveType
    * @returns
    */
-  static async computePoolAccount(
+  static computePoolPublicKey(
     tokenAMint: PublicKey,
     tokenBMint: PublicKey,
     curveType: CurveType
   ) {
-    const [poolPda, _] = await PublicKey.findProgramAddress(
+    const [poolPda, _] = findProgramAddressSync(
       [
         Buffer.from("pool"),
         fromTokenMintsToCompositeKey(tokenAMint, tokenBMint).toBuffer(),
