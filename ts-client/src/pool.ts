@@ -46,18 +46,18 @@ function fromTokenMintsToCompositeKey(
   return new PublicKey(compositeKeyBuffer);
 }
 
-class Pool {
+export class Pool {
   private swapCurve: SwapCurve;
 
   constructor(
     private program: AmmProgram,
     private vaultA: Vault,
     private vaultB: Vault,
-    private state: PoolState,
+    public state: PoolState,
     private vaultASpl: VaultSpl,
     private vaultBSpl: VaultSpl,
     private poolSpl: PoolSpl,
-    private onChainTime: number = 0;
+    private onChainTime: number = 0
   ) {
     if ("stable" in this.state.curveType) {
       this.swapCurve = new StableSwap(
@@ -77,15 +77,15 @@ class Pool {
    * @param pool
    * Load the pool state
    */
-  static async load(wallet: Wallet, program: AmmProgram, pool: PublicKey) {
+  static async load(walletPublicKey, program: AmmProgram, pool: PublicKey) {
     const poolState = (await program.account.pool.fetchNullable(
       pool
     )) as unknown as PoolState;
     invariant(poolState, `Pool ${pool.toBase58()} not found`);
 
     // TODO: Fix underlying Vault to be loaded and not default to invalid state Vault
-    const vaultA = new Vault(program.provider, wallet.publicKey);
-    const vaultB = new Vault(program.provider, wallet.publicKey);
+    const vaultA = new Vault(program.provider, walletPublicKey);
+    const vaultB = new Vault(program.provider, walletPublicKey);
     await Promise.all([
       vaultA.init(poolState.tokenAMint),
       vaultB.init(poolState.tokenBMint),
@@ -128,7 +128,16 @@ class Pool {
     poolSpl.fromAccountsInfo(aVaultLp!, bVaultLp!, lpMint!);
     const onChainTime = parsedClockAccount.info.unixTimestamp;
 
-    return new Pool(program, vaultA, vaultB, poolState, vaultASpl, vaultBSpl, poolSpl, onChainTime);
+    return new Pool(
+      program,
+      vaultA,
+      vaultB,
+      poolState,
+      vaultASpl,
+      vaultBSpl,
+      poolSpl,
+      onChainTime
+    );
   }
 
   /**
@@ -376,7 +385,7 @@ class Pool {
    * @param curveType
    * @returns
    */
-  static computePoolPublicKey(
+  static computePoolAddress(
     tokenAMint: PublicKey,
     tokenBMint: PublicKey,
     curveType: CurveType
@@ -393,5 +402,3 @@ class Pool {
     return poolPda;
   }
 }
-
-export default Pool;
