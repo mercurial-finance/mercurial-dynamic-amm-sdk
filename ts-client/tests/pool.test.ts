@@ -149,10 +149,8 @@ describe("stable-swap pool", () => {
   describe("getMaxInAmount", () => {
     it("should return maximum in amount, where the out amount < max out amount", async () => {
       const maxInAmount = pool.getMaxSwappableInAmount(pool.state.tokenAMint);
-      const outAmount = pool.getOutAmount(pool.state!.tokenAMint, maxInAmount);
-      const maxOutAmount = pool.getMaxSwappableOutAmount(
-        pool.state!.tokenBMint
-      );
+      const outAmount = pool.getOutAmount(pool.state.tokenAMint, maxInAmount);
+      const maxOutAmount = pool.getMaxSwappableOutAmount(pool.state.tokenBMint);
       console.log(maxOutAmount.toString(), outAmount.toString());
       console.log("Ratio: ", maxOutAmount.toNumber() / outAmount.toNumber());
       expect(outAmount.toNumber()).toBeLessThanOrEqual(maxOutAmount.toNumber());
@@ -194,7 +192,7 @@ describe("constant-product pool", () => {
         .getTokensBalance()
         .map((b) => b.toNumber());
       const maxSwapableAmount = pool
-        .getMaxSwappableOutAmount(pool.state!.tokenAMint)
+        .getMaxSwappableOutAmount(pool.state.tokenAMint)
         .toNumber();
       console.log(
         `maxSwapableAmount ${maxSwapableAmount}, tokenAAmount ${tokenABalance}`
@@ -238,10 +236,8 @@ describe("constant-product pool", () => {
   describe("getMaxInAmount", () => {
     it("should return maximum in amount, where the out amount < max out amount", async () => {
       const maxInAmount = pool.getMaxSwappableInAmount(pool.state.tokenAMint);
-      const outAmount = pool.getOutAmount(pool.state!.tokenAMint, maxInAmount);
-      const maxOutAmount = pool.getMaxSwappableOutAmount(
-        pool.state!.tokenBMint
-      );
+      const outAmount = pool.getOutAmount(pool.state.tokenAMint, maxInAmount);
+      const maxOutAmount = pool.getMaxSwappableOutAmount(pool.state.tokenBMint);
       console.log(maxOutAmount.toString(), outAmount.toString());
       console.log("Ratio: ", maxOutAmount.toNumber() / outAmount.toNumber());
       expect(outAmount.toNumber()).toBeLessThanOrEqual(maxOutAmount.toNumber());
