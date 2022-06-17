@@ -68,7 +68,7 @@ export class Pool {
     }
   }
 
-  static getProgram(provider: Provider): AmmProgram {
+  static createProgram(provider: Provider): AmmProgram {
     return new Program<Amm>(AmmIDL, PROGRAM_ID, provider);
   }
 
@@ -77,7 +77,11 @@ export class Pool {
    * @param pool
    * Load the pool state
    */
-  static async load(walletPublicKey, program: AmmProgram, pool: PublicKey) {
+  static async load(
+    walletPublicKey: PublicKey,
+    program: AmmProgram,
+    pool: PublicKey
+  ) {
     const poolState = (await program.account.pool.fetchNullable(
       pool
     )) as unknown as PoolState;

@@ -33,7 +33,7 @@ const PROVIDER = new AnchorProvider(
   {}
 );
 
-const AMM_PROGRAM = Pool.getProgram(PROVIDER);
+const AMM_PROGRAM = Pool.createProgram(PROVIDER);
 
 describe("computePoolAccount", () => {
   it("should correctly compute the pool account", async () => {
