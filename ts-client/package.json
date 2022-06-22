@@ -1,6 +1,6 @@
 {
     "name": "@mercurial-finance/dynamic-amm-sdk",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Mercurial Vaults SDK is a typescript library that allows you to interact with Mercurial v2's AMM.",
     "main": "dist/index.js",
     "types": "dist/types/index.d.ts",
