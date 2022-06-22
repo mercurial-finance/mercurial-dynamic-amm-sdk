@@ -1,4 +1,4 @@
-import { Wallet } from "@project-serum/anchor";
+import { AnchorProvider, Wallet } from "@project-serum/anchor";
 import {
   clusterApiUrl,
   Connection,
@@ -8,32 +8,36 @@ import {
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
 import { BN } from "@project-serum/anchor";
+import { Pool, StableSwap } from "../index";
 import { ConstantProductSwap } from "../src/curve/constant-product";
-import { StableSwap } from "../src/curve/index";
-import Pool from "../src/pool";
-import {
-  ConstantProductCurve,
-  ParsedClockState,
-  StableSwapCurve,
-} from "../src/types/pool_state";
+import { ParsedClockState, StableSwapCurve } from "../src/types/pool_state";
 
 const USDT_MINT = new PublicKey("9NGDi2tZtNmCCp8SVLKNuGjuWAVwNF3Vap5tT8km5er9");
 const USDC_MINT = new PublicKey("zVzi5VAf4qMEwzv7NXECVx5v2pQ7xnqVVjCXZwS9XzA");
 const WSOL_MINT = new PublicKey("So11111111111111111111111111111111111111112");
 
-const stableSwapCurve: StableSwapCurve = {
+const stableSwapCurve = {
   stable: {
     amp: new BN(30),
   },
 };
 
-const constantProductCurve: ConstantProductCurve = {
+const constantProductCurve = {
   constantProduct: {},
 };
 
+const KEYPAIR = Keypair.generate();
+const PROVIDER = new AnchorProvider(
+  new Connection(clusterApiUrl("devnet")),
+  new Wallet(KEYPAIR),
+  {}
+);
+
+const AMM_PROGRAM = Pool.createProgram(PROVIDER);
+
 describe("computePoolAccount", () => {
   it("should correctly compute the pool account", async () => {
-    const poolAddress = await Pool.computePoolAccount(
+    const poolAddress = Pool.computePoolAddress(
       USDC_MINT,
       USDT_MINT,
       stableSwapCurve
@@ -44,12 +48,12 @@ describe("computePoolAccount", () => {
   });
 
   it("should correctly compute the same pool account regardless of the token order", async () => {
-    const poolAddressOne = await Pool.computePoolAccount(
+    const poolAddressOne = Pool.computePoolAddress(
       USDC_MINT,
       USDT_MINT,
       stableSwapCurve
     );
-    const poolAddressTwo = await Pool.computePoolAccount(
+    const poolAddressTwo = Pool.computePoolAddress(
       USDT_MINT,
       USDC_MINT,
       stableSwapCurve
@@ -58,7 +62,7 @@ describe("computePoolAccount", () => {
   });
 
   it("should compute different pool account when curve type is different", async () => {
-    const poolAddress = await Pool.computePoolAccount(
+    const poolAddress = Pool.computePoolAddress(
       USDC_MINT,
       USDT_MINT,
       constantProductCurve
@@ -70,19 +74,16 @@ describe("computePoolAccount", () => {
 });
 
 describe("stable-swap pool", () => {
-  const pool = new Pool(
-    new Wallet(Keypair.generate()),
-    new Connection(clusterApiUrl("devnet"))
-  );
+  let pool: Pool;
 
   describe("load", () => {
     it("should load the pool state", async () => {
-      const poolUSDC_USDT = await Pool.computePoolAccount(
+      const poolUSDC_USDT = Pool.computePoolAddress(
         USDC_MINT,
         USDT_MINT,
         stableSwapCurve
       );
-      await pool.load(poolUSDC_USDT);
+      pool = await Pool.load(KEYPAIR.publicKey, AMM_PROGRAM, poolUSDC_USDT);
       expect(pool.state).not.toBeUndefined();
     });
   });
@@ -106,7 +107,7 @@ describe("stable-swap pool", () => {
         .getTokensBalance()
         .map((b) => b.toNumber());
       const maxSwapableAmount = pool
-        .getMaxSwappableOutAmount(pool.state!.tokenBMint)
+        .getMaxSwappableOutAmount(pool.state.tokenBMint)
         .toNumber();
       console.log(
         `maxSwapableAmount ${maxSwapableAmount}, tokenBAmount ${tokenBBalance}`
@@ -118,7 +119,7 @@ describe("stable-swap pool", () => {
   describe("computeD", () => {
     it("should return total liquidity", async () => {
       const [tokenABalance, tokenBBalance] = pool.getTokensBalance();
-      const curveType = pool.state!.curveType as StableSwapCurve;
+      const curveType = pool.state.curveType as StableSwapCurve;
       const stableSwap = new StableSwap(curveType.stable.amp.toNumber());
       const totalLiquidity = stableSwap.computeD(tokenABalance, tokenBBalance);
       console.log("totalLiquidity", totalLiquidity.toString());
@@ -147,11 +148,9 @@ describe("stable-swap pool", () => {
 
   describe("getMaxInAmount", () => {
     it("should return maximum in amount, where the out amount < max out amount", async () => {
-      const maxInAmount = pool.getMaxSwappableInAmount(pool.state!.tokenAMint);
-      const outAmount = pool.getOutAmount(pool.state!.tokenAMint, maxInAmount);
-      const maxOutAmount = pool.getMaxSwappableOutAmount(
-        pool.state!.tokenBMint
-      );
+      const maxInAmount = pool.getMaxSwappableInAmount(pool.state.tokenAMint);
+      const outAmount = pool.getOutAmount(pool.state.tokenAMint, maxInAmount);
+      const maxOutAmount = pool.getMaxSwappableOutAmount(pool.state.tokenBMint);
       console.log(maxOutAmount.toString(), outAmount.toString());
       console.log("Ratio: ", maxOutAmount.toNumber() / outAmount.toNumber());
       expect(outAmount.toNumber()).toBeLessThanOrEqual(maxOutAmount.toNumber());
@@ -160,19 +159,16 @@ describe("stable-swap pool", () => {
 });
 
 describe("constant-product pool", () => {
-  const pool = new Pool(
-    new Wallet(Keypair.generate()),
-    new Connection(clusterApiUrl("devnet"))
-  );
+  let pool: Pool;
 
   describe("load", () => {
     it("should load the pool state", async () => {
-      const poolWSOL_USDT = await Pool.computePoolAccount(
+      const poolWSOL_USDT = Pool.computePoolAddress(
         WSOL_MINT,
         USDT_MINT,
         constantProductCurve
       );
-      await pool.load(poolWSOL_USDT);
+      pool = await Pool.load(KEYPAIR.publicKey, AMM_PROGRAM, poolWSOL_USDT);
       expect(pool.state).not.toBeUndefined();
     });
   });
@@ -196,7 +192,7 @@ describe("constant-product pool", () => {
         .getTokensBalance()
         .map((b) => b.toNumber());
       const maxSwapableAmount = pool
-        .getMaxSwappableOutAmount(pool.state!.tokenAMint)
+        .getMaxSwappableOutAmount(pool.state.tokenAMint)
         .toNumber();
       console.log(
         `maxSwapableAmount ${maxSwapableAmount}, tokenAAmount ${tokenABalance}`
@@ -239,11 +235,9 @@ describe("constant-product pool", () => {
 
   describe("getMaxInAmount", () => {
     it("should return maximum in amount, where the out amount < max out amount", async () => {
-      const maxInAmount = pool.getMaxSwappableInAmount(pool.state!.tokenAMint);
-      const outAmount = pool.getOutAmount(pool.state!.tokenAMint, maxInAmount);
-      const maxOutAmount = pool.getMaxSwappableOutAmount(
-        pool.state!.tokenBMint
-      );
+      const maxInAmount = pool.getMaxSwappableInAmount(pool.state.tokenAMint);
+      const outAmount = pool.getOutAmount(pool.state.tokenAMint, maxInAmount);
+      const maxOutAmount = pool.getMaxSwappableOutAmount(pool.state.tokenBMint);
       console.log(maxOutAmount.toString(), outAmount.toString());
       console.log("Ratio: ", maxOutAmount.toNumber() / outAmount.toNumber());
       expect(outAmount.toNumber()).toBeLessThanOrEqual(maxOutAmount.toNumber());
