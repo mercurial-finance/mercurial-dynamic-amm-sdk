@@ -1,0 +1,66 @@
+name: Continuous Deployment to NPM
+
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'LICENSE'
+      - '.editorconfig'
+    branches:
+      - main
+
+  # pull_request:
+  #   paths-ignore:
+  #     - 'docs/**'
+  #     - 'README.md'
+  #     - 'LICENSE'
+  #     - '.editorconfig'
+  #   branches:
+  #     - main
+
+jobs:
+  # release:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+  #     - name: Create Release
+  #       id: create_release
+  #       uses: actions/create-release@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         tag_name: ${{ github.ref }}
+  #         release_name: ${{ github.ref }}
+  #         draft: false
+  #         prerelease: false
+
+  ts-test-publish:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == 'true'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .npmrc file to publish to npm
+        uses: actions/setup-node@v1
+        with:
+          node-version: '16.x'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install modules
+        run: npm install
+      - name: Run tests
+        run: |
+          cd ts-client/
+          npm run test
+      - name: Build
+        run: |
+          cd ts-client/
+          npm run build
+      - name: Add git commit tag to env
+        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
+      - name: Publish to npm
+        run: |
+          npm version --no-git-tag-version prerelease --preid=${SHORT_SHA} --force
+          npm publish --tag next
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
