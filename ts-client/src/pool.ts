@@ -1,20 +1,15 @@
+import { vault } from "@mercurial-finance/vault-sdk";
+import { BN, Program, Provider } from "@project-serum/anchor";
+import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 import {
-  BN,
-  Program,
-  Wallet,
-  AnchorProvider,
-  Provider,
-} from "@project-serum/anchor";
-import {
-  Connection,
+  AccountInfo,
   ParsedAccountData,
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
 import invariant from "invariant";
-import { vault } from "@mercurial-finance/vault-sdk";
-import { ERROR, POOL_BASE_KEY, PROGRAM_ID } from "./constants";
-import { StableSwap, SwapCurve } from "./curve";
+import { ERROR, EXTRA_ACCOUNTS, POOL_BASE_KEY, PROGRAM_ID } from "./constants";
+import { StableSwap, SwapCurve, TradeDirection } from "./curve";
 import { ConstantProductSwap } from "./curve/constant-product";
 import { Amm, IDL as AmmIDL } from "./idl/amm";
 import { PoolSpl } from "./types/pool_spl";
@@ -25,7 +20,6 @@ import {
   PoolState,
 } from "./types/pool_state";
 import { VaultSpl } from "./types/vault_spl";
-import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 
 export type AmmProgram = Program<Amm>;
 const { default: Vault } = vault;
@@ -46,8 +40,34 @@ function fromTokenMintsToCompositeKey(
   return new PublicKey(compositeKeyBuffer);
 }
 
+/**
+ * Compute "actual" amount deposited to vault (precision loss)
+ * @param depositAmount
+ * @param beforeAmount
+ * @param vaultLpBalance
+ * @param vaultLpSupply
+ * @param vaultTotalAmount
+ * @returns
+ */
+function computeActualDepositAmount(
+  depositAmount: BN,
+  beforeAmount: BN,
+  vaultLpBalance: BN,
+  vaultLpSupply: BN,
+  vaultTotalAmount: BN
+): BN {
+  const vaultLpMinted = depositAmount.mul(vaultLpSupply).div(vaultTotalAmount);
+  vaultLpSupply = vaultLpSupply.add(vaultLpMinted);
+  vaultTotalAmount = vaultTotalAmount.add(depositAmount);
+  vaultLpBalance = vaultLpBalance.add(vaultLpMinted);
+
+  const afterAmount = vaultLpBalance.mul(vaultTotalAmount).div(vaultLpSupply);
+
+  return afterAmount.sub(beforeAmount);
+}
+
 export class Pool {
-  private swapCurve: SwapCurve;
+  swapCurve: SwapCurve;
 
   constructor(
     private program: AmmProgram,
@@ -57,11 +77,17 @@ export class Pool {
     private vaultASpl: VaultSpl,
     private vaultBSpl: VaultSpl,
     private poolSpl: PoolSpl,
-    private onChainTime: number = 0
+    private onChainTime: number = 0,
+    private extraAccounts: Map<String, AccountInfo<Buffer>>
   ) {
     if ("stable" in this.state.curveType) {
+      const { amp, depeg, tokenMultiplier } = this.state.curveType.stable;
       this.swapCurve = new StableSwap(
-        this.state.curveType.stable.amp.toNumber()
+        amp.toNumber(),
+        tokenMultiplier,
+        depeg,
+        this.onChainTime,
+        this.extraAccounts
       );
     } else {
       this.swapCurve = new ConstantProductSwap();
@@ -131,6 +157,28 @@ export class Pool {
     vaultBSpl.fromAccountsInfo(vaultBTokenVault!, vaultBLpMint!);
     poolSpl.fromAccountsInfo(aVaultLp!, bVaultLp!, lpMint!);
     const onChainTime = parsedClockAccount.info.unixTimestamp;
+    const extraAccounts = new Map<String, AccountInfo<Buffer>>();
+
+    if (
+      poolState.curveType["stable"] &&
+      !poolState.curveType["stable"]["depeg"]["depegType"]["none"]
+    ) {
+      let extraAddresses: PublicKey[] = [];
+      for (const [_, addresses] of Object.entries(EXTRA_ACCOUNTS)) {
+        extraAddresses = extraAddresses.concat(addresses);
+      }
+      const accounts =
+        await program.provider.connection.getMultipleAccountsInfo(
+          extraAddresses
+        );
+      for (let i = 0; i < accounts.length; i++) {
+        const account = accounts[i];
+        const address = extraAddresses[i].toBase58();
+        if (account) {
+          extraAccounts.set(address, account);
+        }
+      }
+    }
 
     return new Pool(
       program,
@@ -140,7 +188,8 @@ export class Pool {
       vaultASpl,
       vaultBSpl,
       poolSpl,
-      onChainTime
+      onChainTime,
+      extraAccounts
     );
   }
 
@@ -148,16 +197,16 @@ export class Pool {
    * Get the total token A, and B amount in the pool
    * @returns [totalTokenA, totalTokenB]
    */
-  getTokensBalance() {
+  getTokensBalance(): [BN, BN] {
     const totalAAmount = this.vaultA.getAmountByShare(
       this.onChainTime,
-      this.poolSpl.vaultALpBalance.toNumber(),
-      this.vaultASpl.totalLpSupply.toNumber()
+      this.poolSpl.vaultALpBalance,
+      this.vaultASpl.totalLpSupply
     );
     const totalBAmount = this.vaultB.getAmountByShare(
       this.onChainTime,
-      this.poolSpl.vaultBLpBalance.toNumber(),
-      this.vaultBSpl.totalLpSupply.toNumber()
+      this.poolSpl.vaultBLpBalance,
+      this.vaultBSpl.totalLpSupply
     );
     return [new BN(totalAAmount), new BN(totalBAmount)];
   }
@@ -175,37 +224,35 @@ export class Pool {
       ERROR.INVALID_MINT
     );
     let [tokenAAmount, tokenBAmount] = this.getTokensBalance();
-    const [outTokenMint, swapSourceAmount, swapDestAmount] = tokenMint.equals(
-      this.state.tokenAMint
-    )
-      ? [
-          this.state.tokenBMint,
-          this.normalizeTokenA(tokenAAmount),
-          this.normalizeTokenB(tokenBAmount),
-        ]
-      : [
-          this.state.tokenAMint,
-          this.normalizeTokenB(tokenBAmount),
-          this.normalizeTokenA(tokenAAmount),
-        ];
-
+    const [outTokenMint, swapSourceAmount, swapDestAmount, tradeDirection] =
+      tokenMint.equals(this.state.tokenAMint)
+        ? [
+            this.state.tokenBMint,
+            tokenAAmount,
+            tokenBAmount,
+            TradeDirection.AToB,
+          ]
+        : [
+            this.state.tokenAMint,
+            tokenBAmount,
+            tokenAAmount,
+            TradeDirection.BToA,
+          ];
     let maxOutAmount = this.getMaxSwappableOutAmount(outTokenMint);
-    maxOutAmount = tokenMint.equals(this.state.tokenAMint)
-      ? this.normalizeTokenB(maxOutAmount)
-      : this.normalizeTokenA(maxOutAmount);
-
+    // Impossible to deplete the pool, therefore if maxOutAmount is equals to tokenAmount in pool, subtract it by 1
+    if (maxOutAmount.eq(swapDestAmount)) {
+      maxOutAmount = maxOutAmount.sub(new BN(1)); // Left 1 token in pool
+    }
     let maxInAmount = this.swapCurve!.computeInAmount(
       maxOutAmount,
       swapSourceAmount,
-      swapDestAmount
+      swapDestAmount,
+      tradeDirection
     );
     const adminFee = this.calculateAdminTradingFee(maxInAmount);
     const tradeFee = this.calculateTradingFee(maxInAmount);
     maxInAmount = maxInAmount.sub(adminFee);
     maxInAmount = maxInAmount.sub(tradeFee);
-    maxInAmount = tokenMint.equals(this.state.tokenAMint)
-      ? this.denormalizeTokenA(maxInAmount)
-      : this.denormalizeTokenB(maxInAmount);
     return maxInAmount;
   }
 
@@ -233,38 +280,6 @@ export class Pool {
       : outTotalAmount;
   }
 
-  private normalizeTokenA(tokenAAmount: BN) {
-    if (this.state.precisionFactor.tokenMultiplier) {
-      const { tokenAMultiplier } = this.state.precisionFactor.tokenMultiplier;
-      return tokenAAmount.mul(tokenAMultiplier);
-    }
-    return tokenAAmount;
-  }
-
-  private normalizeTokenB(tokenBAmount: BN) {
-    if (this.state.precisionFactor.tokenMultiplier) {
-      const { tokenBMultiplier } = this.state.precisionFactor.tokenMultiplier;
-      return tokenBAmount.mul(tokenBMultiplier);
-    }
-    return tokenBAmount;
-  }
-
-  private denormalizeTokenA(tokenAAmount: BN) {
-    if (this.state.precisionFactor.tokenMultiplier) {
-      const { tokenAMultiplier } = this.state.precisionFactor.tokenMultiplier;
-      return tokenAAmount.div(tokenAMultiplier);
-    }
-    return tokenAAmount;
-  }
-
-  private denormalizeTokenB(tokenBAmount: BN) {
-    if (this.state.precisionFactor.tokenMultiplier) {
-      const { tokenBMultiplier } = this.state.precisionFactor.tokenMultiplier;
-      return tokenBAmount.div(tokenBMultiplier);
-    }
-    return tokenBAmount;
-  }
-
   private calculateAdminTradingFee(amount: BN) {
     const { ownerTradeFeeDenominator, ownerTradeFeeNumerator } =
       this.state.fees;
@@ -277,13 +292,81 @@ export class Pool {
   }
 
   /**
+   * Calculate the token amount to receive by unstaking lp token
+   * @param lpAmount
+   * @param tokenMint
+   */
+  computeWithdrawOne(lpAmount: BN, tokenMint: PublicKey): BN {
+    const [tokenAAmount, tokenBAmount] = this.getTokensBalance();
+    const tradeDirection = tokenMint.equals(this.state.tokenAMint)
+      ? TradeDirection.BToA
+      : TradeDirection.AToB;
+
+    const outAmount = this.swapCurve!.computeWithdrawOne(
+      lpAmount,
+      this.poolSpl.totalLpSupply,
+      tokenAAmount,
+      tokenBAmount,
+      this.state.fees,
+      tradeDirection
+    );
+
+    const [vaultLpSupply, vaultTotalAmount] =
+      tradeDirection == TradeDirection.AToB
+        ? [
+            this.vaultBSpl.totalLpSupply,
+            this.vaultB.getUnlockedAmount(this.onChainTime),
+          ]
+        : [
+            this.vaultASpl.totalLpSupply,
+            this.vaultA.getUnlockedAmount(this.onChainTime),
+          ];
+
+    const vaultLpToBurn = outAmount.mul(vaultLpSupply).div(vaultTotalAmount);
+    // "Actual" out amount (precision loss)
+    return vaultLpToBurn.mul(vaultTotalAmount).div(vaultLpSupply);
+  }
+
+  /**
+   * Calculate the LP amount to receive when deposit imbalance balance
+   * @param depositAAmount
+   * @param depositBAmount
+   */
+  computeImbalanceDeposit(depositAAmount: BN, depositBAmount: BN): BN {
+    const [tokenAAmount, tokenBAmount] = this.getTokensBalance();
+
+    const actualDepositAAmount = computeActualDepositAmount(
+      depositAAmount,
+      tokenAAmount,
+      this.poolSpl.vaultALpBalance,
+      this.vaultASpl.totalLpSupply,
+      this.vaultA.getUnlockedAmount(this.onChainTime)
+    );
+
+    const actualDepositBAmount = computeActualDepositAmount(
+      depositBAmount,
+      tokenBAmount,
+      this.poolSpl.vaultBLpBalance,
+      this.vaultBSpl.totalLpSupply,
+      this.vaultB.getUnlockedAmount(this.onChainTime)
+    );
+
+    return this.swapCurve!.computeImbalanceDeposit(
+      actualDepositAAmount,
+      actualDepositBAmount,
+      tokenAAmount,
+      tokenBAmount,
+      this.poolSpl.totalLpSupply,
+      this.state.fees
+    );
+  }
+
+  /**
    * Calculate the virtual price of the LP
    * @returns
    */
   getVirtualPrice() {
     let [tokenAAmount, tokenBAmount] = this.getTokensBalance();
-    tokenAAmount = this.normalizeTokenA(tokenAAmount);
-    tokenBAmount = this.normalizeTokenB(tokenBAmount);
     let invariantD = this.swapCurve!.computeD(tokenAAmount, tokenBAmount);
     let virtualPrice = invariantD
       .mul(new BN(PRECISION))
@@ -297,7 +380,7 @@ export class Pool {
    * @param inAmount
    * @returns
    */
-  getOutAmount(inTokenMint: PublicKey, inAmount: BN) {
+  getOutAmount(inTokenMint: PublicKey, inAmount: BN): BN {
     invariant(
       inTokenMint.equals(this.state.tokenAMint) ||
         inTokenMint.equals(this.state.tokenBMint),
@@ -314,42 +397,42 @@ export class Pool {
       swapDestinationVault,
       swapSourceVaultSpl,
       swapDestinationVaultSpl,
+      tradeDirection,
     ] = inTokenMint.equals(this.state.tokenAMint)
       ? [
-          this.normalizeTokenA(inAmount),
-          this.normalizeTokenA(tokenAAmount),
-          this.normalizeTokenB(tokenBAmount),
+          inAmount,
+          tokenAAmount,
+          tokenBAmount,
           this.vaultA,
           this.vaultB,
           this.vaultASpl,
           this.vaultBSpl,
+          TradeDirection.AToB,
         ]
       : [
-          this.normalizeTokenB(inAmount),
-          this.normalizeTokenB(tokenBAmount),
-          this.normalizeTokenA(tokenAAmount),
+          inAmount,
+          tokenBAmount,
+          tokenAAmount,
           this.vaultB,
           this.vaultA,
           this.vaultBSpl,
           this.vaultASpl,
+          TradeDirection.BToA,
         ];
-
     const adminFee = this.calculateAdminTradingFee(sourceAmount);
     const tradeFee = this.calculateTradingFee(sourceAmount);
 
     // Get vault lp minted when deposit to the vault
     const sourceVaultLp = swapSourceVault.getUnmintAmount(
       this.onChainTime,
-      sourceAmount.sub(adminFee).toNumber(),
-      swapSourceVaultSpl.totalLpSupply.toNumber()
+      sourceAmount.sub(adminFee),
+      swapSourceVaultSpl.totalLpSupply
     );
 
-    const actualSourceAmount = new BN(
-      swapSourceVault.getAmountByShare(
-        this.onChainTime,
-        sourceVaultLp,
-        swapSourceVaultSpl.totalLpSupply.toNumber()
-      )
+    const actualSourceAmount = swapSourceVault.getAmountByShare(
+      this.onChainTime,
+      sourceVaultLp,
+      swapSourceVaultSpl.totalLpSupply
     );
 
     let sourceAmountWithFee = actualSourceAmount.sub(tradeFee);
@@ -357,29 +440,24 @@ export class Pool {
     const destinationAmount = this.swapCurve!.computeOutAmount(
       sourceAmountWithFee,
       swapSourceAmount,
-      swapDestinationAmount
+      swapDestinationAmount,
+      tradeDirection
     );
 
     // Get vault lp to burn when withdraw from the vault
-    const destinationVaultLp = new BN(
-      swapDestinationVault.getUnmintAmount(
-        this.onChainTime,
-        destinationAmount.toNumber(),
-        swapDestinationVaultSpl.totalLpSupply.toNumber()
-      )
+    const destinationVaultLp = swapDestinationVault.getUnmintAmount(
+      this.onChainTime,
+      destinationAmount,
+      swapDestinationVaultSpl.totalLpSupply
     );
 
-    let actualDestinationAmount = new BN(
-      swapDestinationVault.getAmountByShare(
-        this.onChainTime,
-        destinationVaultLp.toNumber(),
-        swapDestinationVaultSpl.totalLpSupply.toNumber()
-      )
+    let actualDestinationAmount = swapDestinationVault.getAmountByShare(
+      this.onChainTime,
+      destinationVaultLp,
+      swapDestinationVaultSpl.totalLpSupply
     );
 
-    return inTokenMint.equals(this.state.tokenAMint)
-      ? this.denormalizeTokenB(actualDestinationAmount)
-      : this.denormalizeTokenA(actualDestinationAmount);
+    return actualDestinationAmount;
   }
 
   /**
