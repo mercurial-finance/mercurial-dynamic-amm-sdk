@@ -1,12 +1,6 @@
 import { BN } from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
 
-export interface PoolBumps {
-  poolBump: number;
-  aVaultLpBump: number;
-  bVaultLpBump: number;
-}
-
 export interface PoolFees {
   tradeFeeNumerator: BN;
   tradeFeeDenominator: BN;
@@ -27,6 +21,8 @@ export const encodeCurveType = (curveType: CurveType) => {
 export type StableSwapCurve = {
   ["stable"]: {
     ["amp"]: BN;
+    ["tokenMultiplier"]: TokenMultiplier;
+    ["depeg"]: Depeg;
   };
 };
 
@@ -34,8 +30,24 @@ export type ConstantProductCurve = {
   ["constantProduct"]: {};
 };
 
-export type PrecisionFactor = {
-  ["tokenMultiplier"]: TokenMultiplier | null;
+export type DepegNone = {
+  ["none"]: {};
+};
+
+export type DepegMarinade = {
+  ["marinade"]: {};
+};
+
+export type DepegLido = {
+  ["lido"]: {};
+};
+
+export type DepegType = DepegNone | DepegMarinade | DepegLido;
+
+export type Depeg = {
+  baseVirtualPrice: BN;
+  baseCacheUpdated: BN;
+  depegType: DepegType;
 };
 
 export interface TokenMultiplier {
@@ -55,7 +67,6 @@ export interface SnapShot {
 }
 
 export interface PoolState {
-  base: PublicKey;
   lpMint: PublicKey;
   tokenAMint: PublicKey;
   tokenBMint: PublicKey;
@@ -63,15 +74,14 @@ export interface PoolState {
   bVault: PublicKey;
   aVaultLp: PublicKey;
   bVaultLp: PublicKey;
-  poolBump: number;
+  aVaultLpBump: number;
   enabled: boolean;
   adminTokenAFee: PublicKey;
   adminTokenBFee: PublicKey;
   admin: PublicKey;
   fees: PoolFees;
+  padding: any;
   curveType: CurveType;
-  precisionFactor: PrecisionFactor;
-  snapshot: SnapShot;
 }
 
 export interface ParsedClockState {

@@ -1,6 +1,7 @@
 import sqrt from "bn-sqrt";
-import { BN } from "@project-serum/anchor"
-import { SwapCurve } from ".";
+import { BN } from "@project-serum/anchor";
+import { SwapCurve, TradeDirection } from ".";
+import { PoolFees } from "../types/pool_state";
 
 // Typescript implementation of https://github.com/solana-labs/solana-program-library/blob/master/libraries/math/src/checked_ceil_div.rs#L29
 function ceilDiv(lhs: BN, rhs: BN) {
@@ -26,12 +27,13 @@ function ceilDiv(lhs: BN, rhs: BN) {
 }
 
 export class ConstantProductSwap implements SwapCurve {
-  constructor() { }
+  constructor() {}
   // Typescript implementation of https://github.com/solana-labs/solana-program-library/blob/master/token-swap/program/src/curve/constant_product.rs#L27
   computeOutAmount(
     sourceAmount: BN,
     swapSourceAmount: BN,
-    swapDestinationAmount: BN
+    swapDestinationAmount: BN,
+    _tradeDirection: TradeDirection
   ): BN {
     let invariant = swapSourceAmount.mul(swapDestinationAmount);
     let [newSwapDestinationAmount, _newSwapSourceAmount] = ceilDiv(
@@ -52,20 +54,40 @@ export class ConstantProductSwap implements SwapCurve {
   computeInAmount(
     destAmount: BN,
     swapSourceAmount: BN,
-    swapDestinationAmount: BN
+    swapDestinationAmount: BN,
+    _tradeDirection: TradeDirection
   ): BN {
     let invariant = swapSourceAmount.mul(swapDestinationAmount);
     let [newSwapSourceAmount, _newSwapDestinationAmount] = ceilDiv(
       invariant,
       swapDestinationAmount.sub(destAmount)
     );
-    let sourceAmount = newSwapSourceAmount.sub(
-      swapSourceAmount
-    );
+    let sourceAmount = newSwapSourceAmount.sub(swapSourceAmount);
 
     if (sourceAmount.eq(new BN(0))) {
       throw new Error("Swap result in zero");
     }
     return sourceAmount;
+  }
+  computeImbalanceDeposit(
+    _depositAAmount: BN,
+    _depositBAmount: BN,
+    _swapTokenAAmount: BN,
+    _swapTokenBAmount: BN,
+    _lpSupply: BN,
+    _fees: PoolFees
+  ): BN {
+    throw new Error("UnsupportedOperation");
+  }
+
+  computeWithdrawOne(
+    _lpAmount: BN,
+    _lpSupply: BN,
+    _swapTokenAAmount: BN,
+    _swapTokenBAmount: BN,
+    _fees: PoolFees,
+    _tradeDirection: TradeDirection
+  ): BN {
+    throw new Error("UnsupportedOperation");
   }
 }
