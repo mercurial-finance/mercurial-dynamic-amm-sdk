@@ -11,7 +11,10 @@ export const ERROR = {
   INVALID_MINT: "Invalid mint",
 };
 
+// Extra accounts for depeg pools. Might add more addresses in the future when more different types of pools are being added
 export const EXTRA_ACCOUNTS = {
+  // Stake account of Marinade finance. Used to retrieve mSol virtual price
   marinade: [new PublicKey("8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC")],
+  // Stake account of Solana Lido. Used to retrieve stSol virtual price
   solido: [new PublicKey("49Yi1TKkNyYjPAFdR9LBvoHcUjuPX4Df5T5yv39w2XTn")],
 };

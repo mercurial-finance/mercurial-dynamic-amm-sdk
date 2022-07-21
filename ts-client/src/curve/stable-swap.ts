@@ -22,6 +22,7 @@ import MarinadeIDL from "../idl/marinade-finance.json";
 import { EXTRA_ACCOUNTS } from "../constants";
 import { Idl } from "@project-serum/anchor/dist/esm";
 
+// Precision for base pool virtual price
 const PRECISION = new BN(1_000_000);
 const BASE_CACHE_EXPIRE = new BN(60 * 10);
 
@@ -82,72 +83,40 @@ export class StableSwap implements SwapCurve {
     }
   }
 
-  private pegTokenB(tokenBAmount: BN): BN {
-    if (!this.depeg.depegType["none"]) {
-      return tokenBAmount.mul(this.depeg.baseVirtualPrice);
-    }
-    return tokenBAmount;
-  }
-
-  private pegTokenA(tokenAAmount: BN): BN {
-    if (!this.depeg.depegType["none"]) {
-      return tokenAAmount.mul(PRECISION);
-    }
-    return tokenAAmount;
-  }
-
-  private revertPegTokenB(tokenBAmount: BN): BN {
-    if (!this.depeg.depegType["none"]) {
-      return tokenBAmount.div(this.depeg.baseVirtualPrice);
-    }
-    return tokenBAmount;
-  }
-
-  private revertPegTokenA(tokenAAmount: BN): BN {
-    if (!this.depeg.depegType["none"]) {
-      return tokenAAmount.div(PRECISION);
-    }
-    return tokenAAmount;
-  }
-
-  private normalizeTokenA(tokenAAmount: BN): BN {
-    const { tokenAMultiplier } = this.tokenMultiplier;
-    return tokenAAmount.mul(tokenAMultiplier);
-  }
-
-  private normalizeTokenB(tokenBAmount: BN): BN {
-    const { tokenBMultiplier } = this.tokenMultiplier;
-    return tokenBAmount.mul(tokenBMultiplier);
-  }
-
-  private denormalizeTokenA(tokenAAmount: BN): BN {
-    const { tokenAMultiplier } = this.tokenMultiplier;
-    return tokenAAmount.div(tokenAMultiplier);
-  }
-
-  private denormalizeTokenB(tokenBAmount: BN): BN {
-    const { tokenBMultiplier } = this.tokenMultiplier;
-    return tokenBAmount.div(tokenBMultiplier);
-  }
-
   private upscaleTokenA(tokenAAmount: BN): BN {
-    const normalizedTokenAAmount = this.normalizeTokenA(tokenAAmount);
-    return this.pegTokenA(normalizedTokenAAmount);
+    const { tokenAMultiplier } = this.tokenMultiplier;
+    const normalizedTokenAAmount = tokenAAmount.mul(tokenAMultiplier);
+    if (!this.depeg.depegType["none"]) {
+      return normalizedTokenAAmount.mul(PRECISION);
+    }
+    return normalizedTokenAAmount;
   }
 
   private downscaleTokenA(tokenAAmount: BN): BN {
-    const denormalizeTokenAAmount = this.denormalizeTokenA(tokenAAmount);
-    return this.revertPegTokenA(denormalizeTokenAAmount);
+    const { tokenAMultiplier } = this.tokenMultiplier;
+    const denormalizedTokenAAmount = tokenAAmount.div(tokenAMultiplier);
+    if (!this.depeg.depegType["none"]) {
+      return denormalizedTokenAAmount.div(PRECISION);
+    }
+    return denormalizedTokenAAmount;
   }
 
   private upscaleTokenB(tokenBAmount: BN): BN {
-    const normalizedTokenAAmount = this.normalizeTokenB(tokenBAmount);
-    return this.pegTokenB(normalizedTokenAAmount);
+    const { tokenBMultiplier } = this.tokenMultiplier;
+    const normalizedTokenBAmount = tokenBAmount.mul(tokenBMultiplier);
+    if (!this.depeg.depegType["none"]) {
+      return normalizedTokenBAmount.mul(this.depeg.baseVirtualPrice);
+    }
+    return normalizedTokenBAmount;
   }
 
   private downscaleTokenB(tokenBAmount: BN): BN {
-    const denormalizeTokenBAmount = this.denormalizeTokenB(tokenBAmount);
-    return this.revertPegTokenB(denormalizeTokenBAmount);
+    const { tokenBMultiplier } = this.tokenMultiplier;
+    const denormalizedTokenBAmount = tokenBAmount.div(tokenBMultiplier);
+    if (!this.depeg.depegType["none"]) {
+      return denormalizedTokenBAmount.div(this.depeg.baseVirtualPrice);
+    }
+    return denormalizedTokenBAmount;
   }
 
   computeOutAmount(
