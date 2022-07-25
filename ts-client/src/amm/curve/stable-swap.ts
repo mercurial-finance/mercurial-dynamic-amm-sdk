@@ -1,5 +1,5 @@
-import { SwapCurve, TradeDirection } from ".";
-import { BN, BorshCoder } from "@project-serum/anchor";
+import { SwapCurve, TradeDirection } from '.';
+import { BN, BorshCoder } from '@project-serum/anchor';
 import {
   computeY,
   computeD,
@@ -8,77 +8,54 @@ import {
   IReserve,
   calculateEstimatedWithdrawOneAmount,
   IExchangeInfo,
-} from "@saberhq/stableswap-sdk";
-import JSBI from "jsbi";
-import { Token, TokenAmount, Percent, ChainId } from "@saberhq/token-utils";
-import {
-  Depeg,
-  DepegType,
-  PoolFees,
-  TokenMultiplier,
-} from "../types/pool_state";
-import { AccountInfo, Keypair, PublicKey } from "@solana/web3.js";
-import MarinadeIDL from "../idl/marinade-finance.json";
-import { EXTRA_ACCOUNTS } from "../constants";
-import { Idl } from "@project-serum/anchor/dist/esm";
+} from '@saberhq/stableswap-sdk';
+import JSBI from 'jsbi';
+import { Token, TokenAmount, Percent, ChainId } from '@saberhq/token-utils';
+import { AccountInfo, Connection, Keypair, PublicKey } from '@solana/web3.js';
+import { Idl } from '@project-serum/anchor/dist/esm';
+import MarinadeIDL from '../marinade-finance.json';
+import { CURVE_TYPE_ACCOUNTS } from '../constants';
+import { Depeg, DepegType, PoolFees, TokenMultiplier } from '../types';
+import { getOnchainTime } from '../utils';
 
 // Precision for base pool virtual price
 const PRECISION = new BN(1_000_000);
 const BASE_CACHE_EXPIRE = new BN(60 * 10);
 
 export class StableSwap implements SwapCurve {
-  amp: number;
-  tokenMultiplier: TokenMultiplier;
-  depeg: Depeg;
-  extraAccounts: Map<String, AccountInfo<Buffer>>;
-  onChainTime: number;
-
   constructor(
-    amp: number,
-    tokenMultiplier: TokenMultiplier,
-    depeg: Depeg,
-    onChainTime: number,
-    extraAccounts: Map<String, AccountInfo<Buffer>>
-  ) {
-    this.amp = amp;
-    this.tokenMultiplier = tokenMultiplier;
-    this.depeg = depeg;
-    this.onChainTime = onChainTime;
-    this.extraAccounts = extraAccounts;
-  }
+    private amp: number,
+    private tokenMultiplier: TokenMultiplier,
+    private depeg: Depeg,
+    private extraAccounts: Map<String, AccountInfo<Buffer>>,
+    private connection: Connection,
+  ) {}
 
   private getBasePoolVirtualPrice(depegType: DepegType): BN {
-    if (depegType["marinade"]) {
-      const account = this.extraAccounts.get(
-        EXTRA_ACCOUNTS.marinade[0].toBase58()
-      );
+    if (depegType['marinade']) {
+      const account = this.extraAccounts.get(CURVE_TYPE_ACCOUNTS.marinade.toBase58());
       const coder = new BorshCoder(MarinadeIDL as any as Idl);
-      const stake = coder.accounts.decode("State", account!.data);
+      const stake = coder.accounts.decode('State', account!.data);
       const msolPrice = stake.msolPrice as BN;
       return msolPrice.mul(PRECISION).div(new BN(0x1_0000_0000));
     }
-    if (depegType["lido"]) {
-      const account = this.extraAccounts.get(
-        EXTRA_ACCOUNTS.solido[0].toBase58()
-      );
+    if (depegType['lido']) {
+      const account = this.extraAccounts.get(CURVE_TYPE_ACCOUNTS.solido.toBase58());
       //https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/tests/test_depeg_price.rs#L33
       const stSolSupply = new BN(account!.data.readBigInt64LE(73).toString());
       const stSolBalance = new BN(account!.data.readBigInt64LE(81).toString());
       return stSolBalance.mul(PRECISION).div(stSolSupply);
     }
-    throw new Error("UnsupportedBasePool");
+    throw new Error('UnsupportedBasePool');
   }
 
-  private updateDepegInfoIfExpired() {
-    if (!this.depeg.depegType["none"]) {
-      const expired =
-        this.onChainTime >
-        this.depeg.baseCacheUpdated.add(BASE_CACHE_EXPIRE).toNumber();
+  private async updateDepegInfoIfExpired() {
+    const onChainTime = await getOnchainTime(this.connection);
+    if (!this.depeg.depegType['none']) {
+      const expired = onChainTime > this.depeg.baseCacheUpdated.add(BASE_CACHE_EXPIRE).toNumber();
       if (expired) {
-        this.depeg.baseVirtualPrice = this.getBasePoolVirtualPrice(
-          this.depeg.depegType
-        );
-        this.depeg.baseCacheUpdated = new BN(this.onChainTime);
+        this.depeg.baseVirtualPrice = this.getBasePoolVirtualPrice(this.depeg.depegType);
+        this.depeg.baseCacheUpdated = new BN(onChainTime);
       }
     }
   }
@@ -86,7 +63,7 @@ export class StableSwap implements SwapCurve {
   private upscaleTokenA(tokenAAmount: BN): BN {
     const { tokenAMultiplier } = this.tokenMultiplier;
     const normalizedTokenAAmount = tokenAAmount.mul(tokenAMultiplier);
-    if (!this.depeg.depegType["none"]) {
+    if (!this.depeg.depegType['none']) {
       return normalizedTokenAAmount.mul(PRECISION);
     }
     return normalizedTokenAAmount;
@@ -95,7 +72,7 @@ export class StableSwap implements SwapCurve {
   private downscaleTokenA(tokenAAmount: BN): BN {
     const { tokenAMultiplier } = this.tokenMultiplier;
     const denormalizedTokenAAmount = tokenAAmount.div(tokenAMultiplier);
-    if (!this.depeg.depegType["none"]) {
+    if (!this.depeg.depegType['none']) {
       return denormalizedTokenAAmount.div(PRECISION);
     }
     return denormalizedTokenAAmount;
@@ -104,7 +81,7 @@ export class StableSwap implements SwapCurve {
   private upscaleTokenB(tokenBAmount: BN): BN {
     const { tokenBMultiplier } = this.tokenMultiplier;
     const normalizedTokenBAmount = tokenBAmount.mul(tokenBMultiplier);
-    if (!this.depeg.depegType["none"]) {
+    if (!this.depeg.depegType['none']) {
       return normalizedTokenBAmount.mul(this.depeg.baseVirtualPrice);
     }
     return normalizedTokenBAmount;
@@ -113,7 +90,7 @@ export class StableSwap implements SwapCurve {
   private downscaleTokenB(tokenBAmount: BN): BN {
     const { tokenBMultiplier } = this.tokenMultiplier;
     const denormalizedTokenBAmount = tokenBAmount.div(tokenBMultiplier);
-    if (!this.depeg.depegType["none"]) {
+    if (!this.depeg.depegType['none']) {
       return denormalizedTokenBAmount.div(this.depeg.baseVirtualPrice);
     }
     return denormalizedTokenBAmount;
@@ -123,14 +100,10 @@ export class StableSwap implements SwapCurve {
     sourceAmount: BN,
     swapSourceAmount: BN,
     swapDestinationAmount: BN,
-    tradeDirection: TradeDirection
+    tradeDirection: TradeDirection,
   ): BN {
     this.updateDepegInfoIfExpired();
-    const [
-      upscaledSourceAmount,
-      upscaledSwapSourceAmount,
-      upscaledSwapDestinationAmount,
-    ] =
+    const [upscaledSourceAmount, upscaledSwapSourceAmount, upscaledSwapDestinationAmount] =
       tradeDirection == TradeDirection.AToB
         ? [
             this.upscaleTokenA(sourceAmount),
@@ -146,24 +119,16 @@ export class StableSwap implements SwapCurve {
     const invariantD = computeD(
       JSBI.BigInt(this.amp),
       JSBI.BigInt(upscaledSwapSourceAmount.toString()),
-      JSBI.BigInt(upscaledSwapDestinationAmount.toString())
+      JSBI.BigInt(upscaledSwapDestinationAmount.toString()),
     );
 
     const newSwapSourceAmount = JSBI.add(
       JSBI.BigInt(upscaledSwapSourceAmount.toString()),
-      JSBI.BigInt(upscaledSourceAmount.toString())
+      JSBI.BigInt(upscaledSourceAmount.toString()),
     );
-    const newSwapDestinationAmount = computeY(
-      JSBI.BigInt(this.amp),
-      newSwapSourceAmount,
-      invariantD
-    );
-    const outAmount = upscaledSwapDestinationAmount.sub(
-      new BN(newSwapDestinationAmount.toString())
-    );
-    return tradeDirection == TradeDirection.AToB
-      ? this.downscaleTokenB(outAmount)
-      : this.downscaleTokenA(outAmount);
+    const newSwapDestinationAmount = computeY(JSBI.BigInt(this.amp), newSwapSourceAmount, invariantD);
+    const outAmount = upscaledSwapDestinationAmount.sub(new BN(newSwapDestinationAmount.toString()));
+    return tradeDirection == TradeDirection.AToB ? this.downscaleTokenB(outAmount) : this.downscaleTokenA(outAmount);
   }
 
   computeD(tokenAAmount: BN, tokenBAmount: BN): BN {
@@ -174,27 +139,18 @@ export class StableSwap implements SwapCurve {
       computeD(
         JSBI.BigInt(this.amp),
         JSBI.BigInt(upscaledTokenAAmount.toString()),
-        JSBI.BigInt(upscaledTokenBAmount.toString())
-      ).toString()
+        JSBI.BigInt(upscaledTokenBAmount.toString()),
+      ).toString(),
     );
-    if (!this.depeg.depegType["none"]) {
+    if (!this.depeg.depegType['none']) {
       return invariantD.div(PRECISION);
     }
     return invariantD;
   }
 
-  computeInAmount(
-    destAmount: BN,
-    swapSourceAmount: BN,
-    swapDestinationAmount: BN,
-    tradeDirection: TradeDirection
-  ): BN {
+  computeInAmount(destAmount: BN, swapSourceAmount: BN, swapDestinationAmount: BN, tradeDirection: TradeDirection): BN {
     this.updateDepegInfoIfExpired();
-    const [
-      upscaledDestAmount,
-      upscaledSwapSourceAmount,
-      upscaledSwapDestinationAmount,
-    ] =
+    const [upscaledDestAmount, upscaledSwapSourceAmount, upscaledSwapDestinationAmount] =
       tradeDirection == TradeDirection.AToB
         ? [
             this.upscaleTokenB(destAmount),
@@ -210,25 +166,17 @@ export class StableSwap implements SwapCurve {
     const invariantD = computeD(
       JSBI.BigInt(this.amp),
       JSBI.BigInt(upscaledSwapSourceAmount.toString()),
-      JSBI.BigInt(upscaledSwapDestinationAmount.toString())
+      JSBI.BigInt(upscaledSwapDestinationAmount.toString()),
     );
 
     const newSwapDestAmount = JSBI.subtract(
       JSBI.BigInt(upscaledSwapDestinationAmount.toString()),
-      JSBI.BigInt(upscaledDestAmount.toString())
+      JSBI.BigInt(upscaledDestAmount.toString()),
     );
-    const newSwapSourceAmount = computeY(
-      JSBI.BigInt(this.amp),
-      newSwapDestAmount,
-      invariantD
-    );
-    const inAmount = new BN(newSwapSourceAmount.toString()).sub(
-      swapSourceAmount
-    );
+    const newSwapSourceAmount = computeY(JSBI.BigInt(this.amp), newSwapDestAmount, invariantD);
+    const inAmount = new BN(newSwapSourceAmount.toString()).sub(swapSourceAmount);
 
-    return tradeDirection == TradeDirection.AToB
-      ? this.downscaleTokenA(inAmount)
-      : this.downscaleTokenB(inAmount);
+    return tradeDirection == TradeDirection.AToB ? this.downscaleTokenA(inAmount) : this.downscaleTokenB(inAmount);
   }
 
   computeImbalanceDeposit(
@@ -237,30 +185,19 @@ export class StableSwap implements SwapCurve {
     swapTokenAAmount: BN,
     swapTokenBAmount: BN,
     lpSupply: BN,
-    fees: PoolFees
+    fees: PoolFees,
   ): BN {
     this.updateDepegInfoIfExpired();
-    const [
-      upscaledDepositAAmount,
-      upscaledDepositBAmount,
-      upscaledSwapTokenAAmount,
-      upscaledSwapTokenBAmount,
-    ] = [
+    const [upscaledDepositAAmount, upscaledDepositBAmount, upscaledSwapTokenAAmount, upscaledSwapTokenBAmount] = [
       this.upscaleTokenA(depositAAmount),
       this.upscaleTokenB(depositBAmount),
       this.upscaleTokenA(swapTokenAAmount),
       this.upscaleTokenB(swapTokenBAmount),
     ];
     const { mintAmount } = calculateEstimatedMintAmount(
-      Helper.toExchange(
-        this.amp,
-        upscaledSwapTokenAAmount,
-        upscaledSwapTokenBAmount,
-        lpSupply,
-        fees
-      ),
+      Helper.toExchange(this.amp, upscaledSwapTokenAAmount, upscaledSwapTokenBAmount, lpSupply, fees),
       JSBI.BigInt(upscaledDepositAAmount.toString()),
-      JSBI.BigInt(upscaledDepositBAmount.toString())
+      JSBI.BigInt(upscaledDepositBAmount.toString()),
     );
     return mintAmount.toU64();
   }
@@ -271,24 +208,16 @@ export class StableSwap implements SwapCurve {
     swapTokenAAmount: BN,
     swapTokenBAmount: BN,
     fees: PoolFees,
-    tradeDirection: TradeDirection
+    tradeDirection: TradeDirection,
   ): BN {
     this.updateDepegInfoIfExpired();
     const [upscaledSwapTokenAAmount, upscaledSwapTokenBAmount] = [
       this.upscaleTokenA(swapTokenAAmount),
       this.upscaleTokenB(swapTokenBAmount),
     ];
-    const exchange = Helper.toExchange(
-      this.amp,
-      upscaledSwapTokenAAmount,
-      upscaledSwapTokenBAmount,
-      lpSupply,
-      fees
-    );
+    const exchange = Helper.toExchange(this.amp, upscaledSwapTokenAAmount, upscaledSwapTokenBAmount, lpSupply, fees);
     const withdrawToken =
-      tradeDirection == TradeDirection.BToA
-        ? exchange.reserves[0].amount.token
-        : exchange.reserves[1].amount.token;
+      tradeDirection == TradeDirection.BToA ? exchange.reserves[0].amount.token : exchange.reserves[1].amount.token;
     const { withdrawAmountBeforeFees } = calculateEstimatedWithdrawOneAmount({
       exchange,
       poolTokenAmount: Helper.toTokenAmount(lpAmount),
@@ -307,24 +236,18 @@ class Helper {
     swapTokenAAmount: BN,
     swapTokenBAmount: BN,
     lpSupply: BN,
-    fees: PoolFees
+    fees: PoolFees,
   ): IExchangeInfo {
     return {
       ampFactor: JSBI.BigInt(amp),
       fees: this.toFees(fees),
       lpTotalSupply: this.toTokenAmount(lpSupply),
-      reserves: [
-        this.toReserve(swapTokenAAmount),
-        this.toReserve(swapTokenBAmount),
-      ],
+      reserves: [this.toReserve(swapTokenAAmount), this.toReserve(swapTokenBAmount)],
     };
   }
   public static toFees(fees: PoolFees): Fees {
     return {
-      adminTrade: new Percent(
-        fees.ownerTradeFeeNumerator,
-        fees.ownerTradeFeeDenominator
-      ),
+      adminTrade: new Percent(fees.ownerTradeFeeNumerator, fees.ownerTradeFeeDenominator),
       trade: new Percent(fees.tradeFeeNumerator, fees.tradeFeeDenominator),
       adminWithdraw: new Percent(0, 100),
       withdraw: new Percent(0, 100),
@@ -337,10 +260,10 @@ class Helper {
         address: Keypair.generate().publicKey.toBase58(),
         chainId: ChainId.MainnetBeta,
         decimals: 0,
-        name: "",
-        symbol: "",
+        name: '',
+        symbol: '',
       }),
-      amount
+      amount,
     );
   }
   public static toReserve(amount: BN): IReserve {

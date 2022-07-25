@@ -1,22 +1,17 @@
-import { BN } from "@project-serum/anchor";
-import { PoolFees } from "../types/pool_state";
+import { BN } from '@project-serum/anchor';
+import { PoolFees } from '../types';
 
 export interface SwapCurve {
   computeOutAmount(
     sourceAmount: BN,
     swapSourceAmount: BN,
     swapDestinationAmount: BN,
-    tradeDirection: TradeDirection
+    tradeDirection: TradeDirection,
   ): BN;
 
   computeD(tokenAAmount: BN, tokenBAmount: BN): BN;
 
-  computeInAmount(
-    destAmount: BN,
-    swapSourceAmount: BN,
-    swapDestinationAmount: BN,
-    tradeDirection: TradeDirection
-  ): BN;
+  computeInAmount(destAmount: BN, swapSourceAmount: BN, swapDestinationAmount: BN, tradeDirection: TradeDirection): BN;
 
   computeImbalanceDeposit(
     depositAAmount: BN,
@@ -24,7 +19,7 @@ export interface SwapCurve {
     swapTokenAAmount: BN,
     swapTokenBAmount: BN,
     lpSupply: BN,
-    fees: PoolFees
+    fees: PoolFees,
   ): BN;
 
   computeWithdrawOne(
@@ -33,7 +28,7 @@ export interface SwapCurve {
     swapTokenAAmount: BN,
     swapTokenBAmount: BN,
     fees: PoolFees,
-    tradeDirection: TradeDirection
+    tradeDirection: TradeDirection,
   ): BN;
 }
 
@@ -42,4 +37,5 @@ export enum TradeDirection {
   BToA,
 }
 
-export * from "./stable-swap";
+export * from './stable-swap';
+export * from './constant-product';

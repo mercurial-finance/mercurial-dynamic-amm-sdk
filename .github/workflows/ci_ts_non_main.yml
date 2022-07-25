@@ -3,23 +3,37 @@ name: Continuous Integration
 on:
   push:
     paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'LICENSE'
-      - '.editorconfig'
+      - "docs/**"
+      - "README.md"
+      - "LICENSE"
+      - ".editorconfig"
     branches:
-      - develop
-      - staging
+      - main
+  pull_request:
+
+env:
+  WALLET_PRIVATE_KEY: ${{secrets.WALLET_PRIVATE_KEY}}
+  working_dir: ./ts-client
 
 jobs:
+  changed_files:
+    runs-on: ubuntu-latest
+    outputs:
+      program: ${{steps.changed-files-specific.outputs.any_changed}}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get specific changed files
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v18.6
+        with:
+          files: |
+            ts-client
+
   ts-test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-        node: [16.x]
+    needs: changed_files
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -27,11 +41,12 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 6.0.2
       - name: Install dependencies
-        run: |
-          cd ts-client/
-          npm install
+        working-directory: ${{ env.working_dir }}
+        run: pnpm install
       - name: Run tests
-        run: |
-          cd ts-client/
-          npm run test
+        working-directory: ${{ env.working_dir }}
+        run: pnpm run test

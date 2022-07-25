@@ -1,66 +1,52 @@
 name: Continuous Deployment to NPM
 
 on:
-  push:
-    paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'LICENSE'
-      - '.editorconfig'
-    branches:
-      - main
+  - pull_request
 
-  # pull_request:
-  #   paths-ignore:
-  #     - 'docs/**'
-  #     - 'README.md'
-  #     - 'LICENSE'
-  #     - '.editorconfig'
-  #   branches:
-  #     - main
+env:
+  working_dir: ./ts-client
 
 jobs:
-  # release:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2
-  #     - name: Create Release
-  #       id: create_release
-  #       uses: actions/create-release@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         tag_name: ${{ github.ref }}
-  #         release_name: ${{ github.ref }}
-  #         draft: false
-  #         prerelease: false
+  changed_files:
+    runs-on: ubuntu-latest
+    outputs:
+      program: ${{steps.changed-files-specific.outputs.any_changed}}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get specific changed files
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v18.6
+        with:
+          files: |
+            ts-client
 
   ts-test-publish:
+    needs: changed_files
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == 'true'
     steps:
       - uses: actions/checkout@v2
       - name: Setup .npmrc file to publish to npm
         uses: actions/setup-node@v1
         with:
-          node-version: '16.x'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "16.x"
+          registry-url: "https://registry.npmjs.org"
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 6.0.2
       - name: Install modules
-        run: npm install
-      - name: Run tests
-        run: |
-          cd ts-client/
-          npm run test
+        working-directory: ${{ env.working_dir }}
+        run: pnpm i
       - name: Build
-        run: |
-          cd ts-client/
-          npm run build
+        working-directory: ${{ env.working_dir }}
+        run: pnpm run build
       - name: Add git commit tag to env
         run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       - name: Publish to npm
+        working-directory: ${{ env.working_dir }}
         run: |
           npm version --no-git-tag-version prerelease --preid=${SHORT_SHA} --force
-          npm publish --tag next
+          npm publish --tag develop
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
