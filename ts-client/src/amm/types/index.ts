@@ -38,6 +38,7 @@ export type DepositQuote = {
 };
 
 export type WithdrawQuote = {
+  poolTokenAmountIn: BN;
   tokenAOutAmount: BN;
   tokenBOutAmount: BN;
 };
