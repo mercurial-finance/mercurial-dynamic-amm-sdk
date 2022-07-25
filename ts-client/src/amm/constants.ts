@@ -111,6 +111,6 @@ export const SIMULATION_USER = new PublicKey('HrY9qR5TiB2xPzzvbBu5KrBorMfYGQXh9o
 
 export const WRAPPED_SOL_MINT = new PublicKey('So11111111111111111111111111111111111111112');
 
-export const DEFAULT_SLIPPAGE = new BN(1);
+export const DEFAULT_SLIPPAGE = 1;
 
 export const UNLOCK_AMOUNT_BUFFER = 0.995;
