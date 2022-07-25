@@ -136,7 +136,7 @@ export default class AmmImpl implements AmmImplementation {
     private apyPda: PublicKey,
     private tokenInfos: Array<TokenInfo>,
     public address: PublicKey,
-    public poolState: PoolState & PoolInformation,
+    public poolState: PoolState & PoolInformation & { lpSupply: BN },
     public vaultA: VaultImpl,
     public vaultB: VaultImpl,
     private depegAccounts: Map<String, AccountInfo<Buffer>>,
