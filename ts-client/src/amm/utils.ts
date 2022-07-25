@@ -12,12 +12,12 @@ import invariant from 'invariant';
 import { WRAPPED_SOL_MINT } from './constants';
 import { ParsedClockState } from './types';
 
-export const getMaxAmountWithSlippage = (amount: BN, slippageRate: BN) => {
-  return amount.mul(slippageRate.add(new BN(100))).div(new BN(100));
+export const getMaxAmountWithSlippage = (amount: BN, slippageRate: number) => {
+  return new BN((amount.toNumber() * (slippageRate + 100)) / 100);
 };
 
-export const getMinAmountWithSlippage = (amount: BN, slippageRate: BN) => {
-  return amount.mul(new BN(100).sub(slippageRate)).div(new BN(100));
+export const getMinAmountWithSlippage = (amount: BN, slippageRate: number) => {
+  return new BN((amount.toNumber() * (100 - slippageRate)) / 100);
 };
 
 export const getOrCreateATAInstruction = async (

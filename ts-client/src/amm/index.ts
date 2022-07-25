@@ -296,7 +296,7 @@ export default class AmmImpl implements AmmImplementation {
     return new BN(u64.fromBuffer(accountInfoData.amount));
   }
 
-  public async getSwapQuote(inTokenMint: PublicKey, inAmountLamport: BN, slippage?: BN) {
+  public async getSwapQuote(inTokenMint: PublicKey, inAmountLamport: BN, slippage?: number) {
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
     invariant(
       inTokenMint.equals(this.poolState.tokenAMint) || inTokenMint.equals(this.poolState.tokenBMint),
@@ -452,7 +452,7 @@ export default class AmmImpl implements AmmImplementation {
   public async getDepositQuote(
     tokenAInAmount: BN,
     tokenBInAmount: BN,
-    slippage?: BN,
+    slippage?: number,
   ): Promise<{
     poolTokenAmountOut: BN;
     tokenAInAmount: BN;
@@ -602,7 +602,7 @@ export default class AmmImpl implements AmmImplementation {
     }).add(depositTx);
   }
 
-  public async getWithdrawQuote(withdrawTokenAmount: BN, tokenMint?: PublicKey, slippage?: BN) {
+  public async getWithdrawQuote(withdrawTokenAmount: BN, tokenMint?: PublicKey, slippage?: number) {
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
     const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
     const { poolLpSupply, vaultALpSupply, vaultBLpSupply, poolVaultALp, poolVaultBLp } = await this.getSplInfo();
