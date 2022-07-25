@@ -11,6 +11,7 @@ export type AmmImplementation = {
   tokenB: TokenInfo;
   decimals: number;
   isStablePool: boolean;
+  updatePoolState: () => Promise<void>;
   getPoolTokenMint: () => PublicKey;
   getUserBalance: (owner: PublicKey) => Promise<BN>;
   getSwapQuote: (inTokenMint: PublicKey, inAmountLamport: BN, slippage?: number) => Promise<BN>;
