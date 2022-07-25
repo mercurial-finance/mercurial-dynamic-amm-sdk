@@ -47,7 +47,13 @@ const getPoolState = async (poolMint: PublicKey, program: AmmProgram) => {
   const poolState = (await program.account.pool.fetchNullable(poolMint)) as PoolState;
   invariant(poolState, `Pool ${poolMint.toBase58()} not found`);
 
-  return poolState;
+  const account = await program.provider.connection.getAccountInfo(poolState.lpMint);
+  invariant(account, ERROR.INVALID_ACCOUNT);
+
+  const lpMintInfo = MintLayout.decode(account.data);
+  const lpSupply = new BN(lpMintInfo.supply.toString());
+
+  return { ...poolState, lpSupply };
 };
 
 const getRemainingAccounts = (poolState: PoolState) => {
@@ -284,16 +290,6 @@ export default class AmmImpl implements AmmImplementation {
     const accountInfoData = AccountLayout.decode(accountInfo.data);
 
     return new BN(u64.fromBuffer(accountInfoData.amount));
-  }
-
-  public async getLpSupply() {
-    const account = await this.program.provider.connection.getAccountInfo(this.poolState.lpMint);
-
-    invariant(account, ERROR.INVALID_ACCOUNT);
-
-    const lpMintInfo = MintLayout.decode(account.data);
-
-    return new BN(lpMintInfo.supply.toString());
   }
 
   public async getSwapQuote(inTokenMint: PublicKey, inAmountLamport: BN, slippage?: BN) {

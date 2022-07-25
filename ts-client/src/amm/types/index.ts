@@ -13,7 +13,6 @@ export type AmmImplementation = {
   isStablePool: boolean;
   getPoolTokenMint: () => PublicKey;
   getUserBalance: (owner: PublicKey) => Promise<BN>;
-  getLpSupply: () => Promise<BN>;
   getSwapQuote: (inTokenMint: PublicKey, inAmountLamport: BN, slippage?: BN) => Promise<BN>;
   swap: (owner: PublicKey, inTokenMint: PublicKey, inAmountLamport: BN, outAmountLamport: BN) => Promise<Transaction>;
   getDepositQuote: (tokenAInAmount: BN, tokenBInAmount: BN, slippage?: BN) => Promise<DepositQuote>;
