@@ -1,10 +1,9 @@
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { TypeDef } from '@project-serum/anchor/dist/cjs/program/namespace/types';
 import BN from 'bn.js';
 import { Amm as AmmIdl } from '../idl';
 import { IdlTypes } from '@project-serum/anchor/dist/esm';
-import AmmImpl from '..';
 
 export type AmmImplementation = {
   tokenA: TokenInfo;
@@ -16,7 +15,12 @@ export type AmmImplementation = {
   getUserBalance: (owner: PublicKey) => Promise<BN>;
   getSwapQuote: (inTokenMint: PublicKey, inAmountLamport: BN, slippage?: number) => Promise<BN>;
   swap: (owner: PublicKey, inTokenMint: PublicKey, inAmountLamport: BN, outAmountLamport: BN) => Promise<Transaction>;
-  getDepositQuote: (tokenAInAmount: BN, tokenBInAmount: BN, slippage?: number) => Promise<DepositQuote>;
+  getDepositQuote: (
+    tokenAInAmount: BN,
+    tokenBInAmount: BN,
+    isImbalance?: boolean,
+    slippage?: number,
+  ) => Promise<DepositQuote>;
   deposit: (owner: PublicKey, tokenAInAmount: BN, tokenBInAmount: BN, poolTokenAmount: BN) => Promise<Transaction>;
   getWithdrawQuote: (withdrawTokenAmount: BN, tokenMint?: PublicKey, slippage?: number) => Promise<WithdrawQuote>;
   withdraw: (
@@ -82,11 +86,6 @@ export interface TokenMultiplier {
   tokenBMultiplier: BN;
   precisionFactor: number;
 }
-
-type VirtualPrice = {
-  price: BN;
-  timestamp: BN;
-};
 
 // PoolState
 export type PoolState = TypeDef<AmmIdl['accounts']['0'], IdlTypes<AmmIdl>>;

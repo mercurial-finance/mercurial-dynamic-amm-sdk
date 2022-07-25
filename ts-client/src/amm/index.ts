@@ -17,7 +17,6 @@ import {
   SIMULATION_USER,
   VAULT_PROGRAM_ID,
   WRAPPED_SOL_MINT,
-  UNLOCK_AMOUNT_BUFFER,
 } from './constants';
 import { StableSwap, SwapCurve, TradeDirection } from './curve';
 import { ConstantProductSwap } from './curve/constant-product';
@@ -452,6 +451,7 @@ export default class AmmImpl implements AmmImplementation {
   public async getDepositQuote(
     tokenAInAmount: BN,
     tokenBInAmount: BN,
+    isImbalance = false,
     slippage?: number,
   ): Promise<{
     poolTokenAmountOut: BN;
@@ -467,8 +467,16 @@ export default class AmmImpl implements AmmImplementation {
     const vaultBWithdrawableAmount = await this.vaultB.getWithdrawableAmount();
 
     // Constant product pool
-    if (tokenAInAmount.eq(new BN(0)) && !this.isStablePool) {
+    if (tokenAInAmount.eq(new BN(0)) && !isImbalance) {
       const poolTokenAmountOut = this.getShareByAmount(tokenBInAmount, tokenBAmount, poolLpSupply);
+
+      if (this.isStablePool) {
+        return {
+          poolTokenAmountOut,
+          tokenAInAmount: getMaxAmountWithSlippage(tokenBInAmount.mul(tokenAAmount).div(tokenBAmount), slippageRate),
+          tokenBInAmount: getMaxAmountWithSlippage(tokenBInAmount, slippageRate),
+        };
+      }
 
       const [actualTokenAInAmount, actualTokenBInAmount] = this.computeActualInAmount(
         poolTokenAmountOut,
@@ -489,8 +497,16 @@ export default class AmmImpl implements AmmImplementation {
     }
 
     // Constant product pool
-    if (tokenBInAmount.eq(new BN(0)) && !this.isStablePool) {
+    if (tokenBInAmount.eq(new BN(0)) && !isImbalance) {
       const poolTokenAmountOut = this.getShareByAmount(tokenAInAmount, tokenAAmount, poolLpSupply);
+
+      if (this.isStablePool) {
+        return {
+          poolTokenAmountOut,
+          tokenAInAmount: getMaxAmountWithSlippage(tokenAInAmount, slippageRate),
+          tokenBInAmount: getMaxAmountWithSlippage(tokenAInAmount.mul(tokenBAmount).div(tokenAAmount), slippageRate),
+        };
+      }
 
       const [actualTokenAInAmount, actualTokenBInAmount] = this.computeActualInAmount(
         poolTokenAmountOut,
