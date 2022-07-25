@@ -326,8 +326,35 @@ describe('Get Devnet pool state', () => {
     }
   });
 
-  // Single deposit in depeg pool
-  test('Deposit SOL in SOL-mSOL', async () => {
+  // Single imbalance deposit in depeg pool
+  test('Deposit SOL in SOL-mSOL (imbalance)', async () => {
+    const inAmountALamport = new BN(0.1 * 10 ** depegPool.tokenA.decimals);
+
+    const { poolTokenAmountOut, tokenBInAmount } = await depegPool.getDepositQuote(inAmountALamport, new BN(0), true);
+
+    const depositTx = await depegPool.deposit(
+      mockWallet.publicKey,
+      inAmountALamport,
+      tokenBInAmount,
+      poolTokenAmountOut,
+    );
+
+    try {
+      const depositResult = await provider.sendAndConfirm(depositTx);
+      console.log('Result of deposit SOL into SOL-mSOL pool', depositResult);
+      expect(typeof depositResult).toBe('string');
+
+      const depegPoolBalance = await depegPool.getUserBalance(mockWallet.publicKey);
+      expect(depegPoolBalance.toNumber()).toBeGreaterThan(currentDepegPoolBalance.toNumber());
+      currentDepegPoolBalance = depegPoolBalance;
+    } catch (error: any) {
+      console.trace(error);
+      throw new Error(error.message);
+    }
+  });
+
+  // Single balance deposit in depeg pool
+  test('Deposit SOL in SOL-mSOL (balance)', async () => {
     const inAmountALamport = new BN(0.1 * 10 ** depegPool.tokenA.decimals);
 
     const { poolTokenAmountOut, tokenBInAmount } = await depegPool.getDepositQuote(inAmountALamport, new BN(0));
