@@ -51,7 +51,7 @@ const getPoolState = async (poolMint: PublicKey, program: AmmProgram) => {
   invariant(account, ERROR.INVALID_ACCOUNT);
 
   const lpMintInfo = MintLayout.decode(account.data);
-  const lpSupply = new BN(lpMintInfo.supply.toString());
+  const lpSupply = new BN(u64.fromBuffer(lpMintInfo.supply));
 
   return { ...poolState, lpSupply };
 };
