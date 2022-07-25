@@ -1,6 +1,6 @@
-import AmmImpl from "./src/amm";
-import { PROGRAM_ID } from "./src/amm/constants";
-import { getOnchainTime } from "./src/amm/utils";
+import AmmImpl from './src/amm';
+import { PROGRAM_ID } from './src/amm/constants';
+import { getOnchainTime } from './src/amm/utils';
 
 export default AmmImpl;
 export {
@@ -10,8 +10,4 @@ export {
   getOnchainTime,
 };
 
-export type {
-  AmmImplementation,
-  PoolState,
-  ParsedClockState,
-} from "./src/amm/types";
+export type { AmmImplementation, DepositQuote, WithdrawQuote, PoolState, ParsedClockState } from './src/amm/types';
