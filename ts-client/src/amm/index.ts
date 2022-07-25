@@ -4,7 +4,7 @@ import { StaticTokenListResolutionStrategy, TokenInfo } from '@solana/spl-token-
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import VaultImpl, { getAmountByShare, getUnmintAmount } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
-import { PoolInformation, PoolState } from './types';
+import { AmmImplementation, PoolInformation, PoolState } from './types';
 import { Amm, IDL as AmmIDL } from './idl';
 import { Vault, IDL as VaultIdl } from './vault-idl';
 import {
@@ -118,7 +118,7 @@ const getPoolInfo = async ({
   return poolInfo;
 };
 
-export default class AmmImpl /* implements AmmImplementation */ {
+export default class AmmImpl implements AmmImplementation {
   public swapCurve: SwapCurve;
   private vaultProgram: VaultProgram;
   private opt: Opt = {
@@ -572,6 +572,7 @@ export default class AmmImpl /* implements AmmImplementation */ {
       ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
     }).add(depositTx);
   }
+
   public async getWithdrawQuote(withdrawTokenAmount: BN, tokenMint?: PublicKey, slippage?: BN) {
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
     const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
