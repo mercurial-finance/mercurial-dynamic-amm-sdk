@@ -260,6 +260,10 @@ export default class AmmImpl implements AmmImplementation {
     return Math.max(this.tokenA.decimals, this.tokenB.decimals);
   }
 
+  get symbol(): string {
+    return `${this.tokenA.symbol}-${this.tokenB.symbol}`;
+  }
+
   get isStablePool(): boolean {
     return 'stable' in this.poolState.curveType;
   }
