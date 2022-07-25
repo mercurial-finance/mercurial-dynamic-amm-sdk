@@ -197,9 +197,12 @@ describe('Get Devnet pool state', () => {
   test('Deposit SOL in SOL-USDT pool', async () => {
     const inAmountALamport = new BN(2 * 10 ** cpPool.tokenA.decimals);
 
-    const { poolTokenAmountOut, tokenBInAmount } = await cpPool.getDepositQuote(inAmountALamport, new BN(0));
+    const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await cpPool.getDepositQuote(
+      inAmountALamport,
+      new BN(0),
+    );
 
-    const depositTx = await cpPool.deposit(mockWallet.publicKey, inAmountALamport, tokenBInAmount, poolTokenAmountOut);
+    const depositTx = await cpPool.deposit(mockWallet.publicKey, tokenAInAmount, tokenBInAmount, poolTokenAmountOut);
 
     try {
       const depositResult = await provider.sendAndConfirm(depositTx);
@@ -219,9 +222,12 @@ describe('Get Devnet pool state', () => {
   test('Deposit USDT in SOL-USDT pool', async () => {
     const inAmountBLamport = new BN(1 * 10 ** cpPool.tokenB.decimals);
 
-    const { poolTokenAmountOut, tokenAInAmount } = await cpPool.getDepositQuote(new BN(0), inAmountBLamport);
+    const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await cpPool.getDepositQuote(
+      new BN(0),
+      inAmountBLamport,
+    );
 
-    const depositTx = await cpPool.deposit(mockWallet.publicKey, tokenAInAmount, inAmountBLamport, poolTokenAmountOut);
+    const depositTx = await cpPool.deposit(mockWallet.publicKey, tokenAInAmount, tokenBInAmount, poolTokenAmountOut);
 
     try {
       const depositResult = await provider.sendAndConfirm(depositTx);
