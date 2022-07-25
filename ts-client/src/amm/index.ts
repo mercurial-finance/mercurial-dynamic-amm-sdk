@@ -463,26 +463,54 @@ export default class AmmImpl implements AmmImplementation {
 
     const { poolLpSupply, vaultALpSupply, vaultBLpSupply, poolVaultALp, poolVaultBLp } = await this.getSplInfo();
 
+    const vaultAWithdrawableAmount = await this.vaultA.getWithdrawableAmount();
+    const vaultBWithdrawableAmount = await this.vaultB.getWithdrawableAmount();
+
+    // Constant product pool
     if (tokenAInAmount.eq(new BN(0)) && !this.isStablePool) {
       const poolTokenAmountOut = this.getShareByAmount(tokenBInAmount, tokenBAmount, poolLpSupply);
 
+      const [actualTokenAInAmount, actualTokenBInAmount] = this.computeActualInAmount(
+        poolTokenAmountOut,
+        poolLpSupply,
+        poolVaultALp,
+        poolVaultBLp,
+        vaultALpSupply,
+        vaultBLpSupply,
+        vaultAWithdrawableAmount,
+        vaultBWithdrawableAmount,
+      );
+
       return {
         poolTokenAmountOut,
-        tokenAInAmount: getMaxAmountWithSlippage(tokenBInAmount.mul(tokenAAmount).div(tokenBAmount), slippageRate),
-        tokenBInAmount: getMaxAmountWithSlippage(tokenBInAmount, slippageRate),
+        tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippageRate),
+        tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippageRate),
       };
     }
 
+    // Constant product pool
     if (tokenBInAmount.eq(new BN(0)) && !this.isStablePool) {
       const poolTokenAmountOut = this.getShareByAmount(tokenAInAmount, tokenAAmount, poolLpSupply);
+
+      const [actualTokenAInAmount, actualTokenBInAmount] = this.computeActualInAmount(
+        poolTokenAmountOut,
+        poolLpSupply,
+        poolVaultALp,
+        poolVaultBLp,
+        vaultALpSupply,
+        vaultBLpSupply,
+        vaultAWithdrawableAmount,
+        vaultBWithdrawableAmount,
+      );
+
       return {
         poolTokenAmountOut,
-        tokenAInAmount: getMaxAmountWithSlippage(tokenAInAmount, slippageRate),
-        tokenBInAmount: getMaxAmountWithSlippage(tokenAInAmount.mul(tokenBAmount).div(tokenAAmount), slippageRate),
+        tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippageRate),
+        tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippageRate),
       };
     }
 
-    const vaultAWithdrawableAmount = await this.vaultA.getWithdrawableAmount();
+    // Stable pool
     const actualDepositAAmount = computeActualDepositAmount(
       tokenAInAmount,
       tokenAAmount,
@@ -491,7 +519,6 @@ export default class AmmImpl implements AmmImplementation {
       vaultAWithdrawableAmount,
     );
 
-    const vaultBWithdrawableAmount = await this.vaultB.getWithdrawableAmount();
     const actualDepositBAmount = computeActualDepositAmount(
       tokenBInAmount,
       tokenBAmount,
@@ -545,12 +572,7 @@ export default class AmmImpl implements AmmImplementation {
       ? this.program.methods.addImbalanceLiquidity
       : this.program.methods.addBalanceLiquidity;
 
-    // Buffer for unlocked amount after send to program
-    const realPoolTokenAmount = this.isStablePool
-      ? poolTokenAmount
-      : new BN(poolTokenAmount.toNumber() * UNLOCK_AMOUNT_BUFFER);
-
-    const depositTx = await programMethod(realPoolTokenAmount, tokenAInAmount, tokenBInAmount)
+    const depositTx = await programMethod(poolTokenAmount, tokenAInAmount, tokenBInAmount)
       .accounts({
         aTokenVault: this.vaultA.vaultState.tokenVault,
         bTokenVault: this.vaultB.vaultState.tokenVault,
@@ -583,17 +605,25 @@ export default class AmmImpl implements AmmImplementation {
   public async getWithdrawQuote(withdrawTokenAmount: BN, tokenMint?: PublicKey, slippage?: BN) {
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
     const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
-    const { poolLpSupply, vaultALpSupply, vaultBLpSupply } = await this.getSplInfo();
+    const { poolLpSupply, vaultALpSupply, vaultBLpSupply, poolVaultALp, poolVaultBLp } = await this.getSplInfo();
+
+    const vaultAWithdrawableAmount = await this.vaultA.getWithdrawableAmount();
+    const vaultBWithdrawableAmount = await this.vaultB.getWithdrawableAmount();
 
     if (!tokenMint) {
-      const tokenAAmountByShare = this.getAmountByShare(withdrawTokenAmount, tokenAAmount, poolLpSupply);
-      const tokenBAmountByShare = this.getAmountByShare(withdrawTokenAmount, tokenBAmount, poolLpSupply);
+      const vaultALpBurn = this.getShareByAmount(withdrawTokenAmount, poolLpSupply, poolVaultALp);
+      const vaultBLpBurn = this.getShareByAmount(withdrawTokenAmount, poolLpSupply, poolVaultBLp);
+
+      const tokenAOutAmount = this.getAmountByShare(vaultALpBurn, vaultAWithdrawableAmount, vaultALpSupply);
+      const tokenBOutAmount = this.getAmountByShare(vaultBLpBurn, vaultBWithdrawableAmount, vaultBLpSupply);
+
       return {
-        tokenAOutAmount: getMinAmountWithSlippage(tokenAAmountByShare, slippageRate),
-        tokenBOutAmount: getMinAmountWithSlippage(tokenBAmountByShare, slippageRate),
+        tokenAOutAmount: getMinAmountWithSlippage(tokenAOutAmount, slippageRate),
+        tokenBOutAmount: getMinAmountWithSlippage(tokenBOutAmount, slippageRate),
       };
     }
 
+    // Stable pool
     const isWithdrawingTokenA = tokenMint.equals(new PublicKey(this.tokenA.address));
     const isWithdrawingTokenB = tokenMint.equals(new PublicKey(this.tokenB.address));
     invariant(isWithdrawingTokenA || isWithdrawingTokenB, ERROR.INVALID_MINT);
@@ -609,8 +639,6 @@ export default class AmmImpl implements AmmImplementation {
       tradeDirection,
     );
 
-    const vaultAWithdrawableAmount = await this.vaultA.getWithdrawableAmount();
-    const vaultBWithdrawableAmount = await this.vaultB.getWithdrawableAmount();
     const [vaultLpSupply, vaultTotalAmount] =
       tradeDirection == TradeDirection.AToB
         ? [vaultALpSupply, vaultBWithdrawableAmount]
@@ -784,11 +812,30 @@ export default class AmmImpl implements AmmImplementation {
     return amount.mul(tradeFeeNumerator).div(tradeFeeDenominator);
   }
 
-  private getShareByAmount(amount: BN, tokenAmount: BN, lpSupply: BN): BN {
-    return amount.mul(lpSupply).div(tokenAmount);
+  private computeActualInAmount(
+    poolTokenAmount: BN,
+    poolLpSupply: BN,
+    poolVaultALp: BN,
+    poolVaultBLp: BN,
+    vaultALpSupply: BN,
+    vaultBLpSupply: BN,
+    vaultAWithdrawableAmount: BN,
+    vaultBWithdrawableAmount: BN,
+  ): [BN, BN] {
+    const aVaultLpMinted = this.getShareByAmount(poolTokenAmount, poolLpSupply, poolVaultALp, true);
+    const bVaultLpMinted = this.getShareByAmount(poolTokenAmount, poolLpSupply, poolVaultBLp, true);
+
+    const actualTokenAInAmount = this.getAmountByShare(aVaultLpMinted, vaultAWithdrawableAmount, vaultALpSupply, true);
+    const actualTokenBInAmount = this.getAmountByShare(bVaultLpMinted, vaultBWithdrawableAmount, vaultBLpSupply, true);
+
+    return [actualTokenAInAmount, actualTokenBInAmount];
   }
 
-  private getAmountByShare(amount: BN, tokenAmount: BN, lpSupply: BN): BN {
-    return amount.mul(tokenAmount).div(lpSupply);
+  private getShareByAmount(amount: BN, tokenAmount: BN, lpSupply: BN, roundUp?: boolean): BN {
+    return roundUp ? amount.mul(lpSupply).divRound(tokenAmount) : amount.mul(lpSupply).div(tokenAmount);
+  }
+
+  private getAmountByShare(amount: BN, tokenAmount: BN, lpSupply: BN, roundUp?: boolean): BN {
+    return roundUp ? amount.mul(tokenAmount).divRound(lpSupply) : amount.mul(tokenAmount).div(lpSupply);
   }
 }
