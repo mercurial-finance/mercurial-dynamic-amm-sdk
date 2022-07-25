@@ -126,7 +126,7 @@ export default class AmmImpl /* implements AmmImplementation */ {
   };
 
   private constructor(
-    public program: AmmProgram,
+    private program: AmmProgram,
     private apyPda: PublicKey,
     private tokenInfos: Array<TokenInfo>,
     public address: PublicKey,

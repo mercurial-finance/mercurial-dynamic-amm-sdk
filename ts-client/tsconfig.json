@@ -1,6 +1,15 @@
 {
-  "extends": "./tsconfig.base.json",
+  "extends": "@tsconfig/recommended/tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs"
+    "outDir": "dist",
+    "types": ["jest", "mocha", "chai"],
+    "typeRoots": ["./node_modules/@types"],
+    "module": "commonjs",
+    "target": "es6",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": false,
+    "skipLibCheck": true
   }
 }
