@@ -634,6 +634,7 @@ export default class AmmImpl implements AmmImplementation {
       const tokenBOutAmount = this.getAmountByShare(vaultBLpBurn, vaultBWithdrawableAmount, vaultBLpSupply);
 
       return {
+        poolTokenAmountIn: withdrawTokenAmount,
         tokenAOutAmount: getMinAmountWithSlippage(tokenAOutAmount, slippageRate),
         tokenBOutAmount: getMinAmountWithSlippage(tokenBOutAmount, slippageRate),
       };
@@ -668,6 +669,7 @@ export default class AmmImpl implements AmmImplementation {
     );
 
     return {
+      poolTokenAmountIn: withdrawTokenAmount,
       tokenAOutAmount: isWithdrawingTokenA ? realOutAmount : new BN(0),
       tokenBOutAmount: isWithdrawingTokenB ? realOutAmount : new BN(0),
     };
