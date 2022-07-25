@@ -1,7 +1,7 @@
-import sqrt from "bn-sqrt";
-import { BN } from "@project-serum/anchor";
-import { SwapCurve, TradeDirection } from ".";
-import { PoolFees } from "../types/pool_state";
+import sqrt from 'bn-sqrt';
+import { BN } from '@project-serum/anchor';
+import { SwapCurve, TradeDirection } from '.';
+import { PoolFees } from '../types';
 
 // Typescript implementation of https://github.com/solana-labs/solana-program-library/blob/master/libraries/math/src/checked_ceil_div.rs#L29
 function ceilDiv(lhs: BN, rhs: BN) {
@@ -9,7 +9,7 @@ function ceilDiv(lhs: BN, rhs: BN) {
   // Avoid dividing a small number by a big one and returning 1, and instead
   // fail.
   if (quotient.eq(new BN(0))) {
-    throw new Error("ceilDiv result in zero");
+    throw new Error('ceilDiv result in zero');
   }
 
   let remainder = lhs.mod(rhs);
@@ -28,23 +28,19 @@ function ceilDiv(lhs: BN, rhs: BN) {
 
 export class ConstantProductSwap implements SwapCurve {
   constructor() {}
+
   // Typescript implementation of https://github.com/solana-labs/solana-program-library/blob/master/token-swap/program/src/curve/constant_product.rs#L27
   computeOutAmount(
     sourceAmount: BN,
     swapSourceAmount: BN,
     swapDestinationAmount: BN,
-    _tradeDirection: TradeDirection
+    _tradeDirection: TradeDirection,
   ): BN {
     let invariant = swapSourceAmount.mul(swapDestinationAmount);
-    let [newSwapDestinationAmount, _newSwapSourceAmount] = ceilDiv(
-      invariant,
-      swapSourceAmount.add(sourceAmount)
-    );
-    let destinationAmountSwapped = swapDestinationAmount.sub(
-      newSwapDestinationAmount
-    );
+    let [newSwapDestinationAmount, _newSwapSourceAmount] = ceilDiv(invariant, swapSourceAmount.add(sourceAmount));
+    let destinationAmountSwapped = swapDestinationAmount.sub(newSwapDestinationAmount);
     if (destinationAmountSwapped.eq(new BN(0))) {
-      throw new Error("Swap result in zero");
+      throw new Error('Swap result in zero');
     }
     return destinationAmountSwapped;
   }
@@ -55,17 +51,14 @@ export class ConstantProductSwap implements SwapCurve {
     destAmount: BN,
     swapSourceAmount: BN,
     swapDestinationAmount: BN,
-    _tradeDirection: TradeDirection
+    _tradeDirection: TradeDirection,
   ): BN {
     let invariant = swapSourceAmount.mul(swapDestinationAmount);
-    let [newSwapSourceAmount, _newSwapDestinationAmount] = ceilDiv(
-      invariant,
-      swapDestinationAmount.sub(destAmount)
-    );
+    let [newSwapSourceAmount, _newSwapDestinationAmount] = ceilDiv(invariant, swapDestinationAmount.sub(destAmount));
     let sourceAmount = newSwapSourceAmount.sub(swapSourceAmount);
 
     if (sourceAmount.eq(new BN(0))) {
-      throw new Error("Swap result in zero");
+      throw new Error('Swap result in zero');
     }
     return sourceAmount;
   }
@@ -75,9 +68,9 @@ export class ConstantProductSwap implements SwapCurve {
     _swapTokenAAmount: BN,
     _swapTokenBAmount: BN,
     _lpSupply: BN,
-    _fees: PoolFees
+    _fees: PoolFees,
   ): BN {
-    throw new Error("UnsupportedOperation");
+    throw new Error('UnsupportedOperation');
   }
 
   computeWithdrawOne(
@@ -86,8 +79,8 @@ export class ConstantProductSwap implements SwapCurve {
     _swapTokenAAmount: BN,
     _swapTokenBAmount: BN,
     _fees: PoolFees,
-    _tradeDirection: TradeDirection
+    _tradeDirection: TradeDirection,
   ): BN {
-    throw new Error("UnsupportedOperation");
+    throw new Error('UnsupportedOperation');
   }
 }
