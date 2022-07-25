@@ -258,6 +258,13 @@ export default class AmmImpl implements AmmImplementation {
     return 'stable' in this.poolState.curveType;
   }
 
+  public async updatePoolState() {
+    const poolState = await getPoolState(this.address, this.program);
+    const poolInfo = await this.getPoolInfo();
+
+    this.poolState = { ...poolState, ...poolInfo };
+  }
+
   public getPoolTokenMint() {
     return this.poolState.lpMint;
   }
