@@ -13,11 +13,13 @@ import { WRAPPED_SOL_MINT } from './constants';
 import { ParsedClockState } from './types';
 
 export const getMaxAmountWithSlippage = (amount: BN, slippageRate: number) => {
-  return new BN((amount.toNumber() * (slippageRate + 100)) / 100);
+  const slippage = ((100 + slippageRate) / 100) * 10000;
+  return amount.mul(new BN(slippage)).div(new BN(10000));
 };
 
 export const getMinAmountWithSlippage = (amount: BN, slippageRate: number) => {
-  return new BN((amount.toNumber() * (100 - slippageRate)) / 100);
+  const slippage = ((100 - slippageRate) / 100) * 10000;
+  return amount.mul(new BN(slippage)).div(new BN(10000));
 };
 
 export const getOrCreateATAInstruction = async (
