@@ -1,6 +1,13 @@
 import { Cluster, Connection, Keypair, PublicKey } from '@solana/web3.js';
 import AmmImpl from '../index';
-import { DEV_POOL_SOL_MSOL, DEV_POOL_USDT_SOL, DEV_POOL_USDT_USDC } from '../constants';
+import {
+  DEV_POOL_SOL_MSOL,
+  DEV_POOL_USDT_SOL,
+  DEV_POOL_USDT_USDC,
+  MAIN_POOL_SOL_STSOL,
+  MAIN_POOL_USDT_SOL,
+  MAIN_POOL_USDT_USDC,
+} from '../constants';
 import { AnchorProvider, BN, Wallet } from '@project-serum/anchor';
 // import { airDropSol } from "./utils";
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
@@ -195,7 +202,7 @@ describe('Get Devnet pool state', () => {
 
   // Balance deposit in constant product
   test('Deposit SOL in USDT-SOL pool', async () => {
-    const inAmountBLamport = new BN(1 * 10 ** cpPool.tokenA.decimals);
+    const inAmountBLamport = new BN(0.1 * 10 ** cpPool.tokenB.decimals);
 
     const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await cpPool.getDepositQuote(
       new BN(0),
@@ -248,12 +255,15 @@ describe('Get Devnet pool state', () => {
     const inAmountALamport = new BN(1 * 10 ** stablePool.tokenA.decimals);
     const inAmountBLamport = new BN(1 * 10 ** stablePool.tokenB.decimals);
 
-    const { poolTokenAmountOut } = await stablePool.getDepositQuote(inAmountALamport, inAmountBLamport);
+    const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await stablePool.getDepositQuote(
+      inAmountALamport,
+      inAmountBLamport,
+    );
 
     const depositTx = await stablePool.deposit(
       mockWallet.publicKey,
-      inAmountALamport,
-      inAmountBLamport,
+      tokenAInAmount,
+      tokenBInAmount,
       poolTokenAmountOut,
     );
 
@@ -522,5 +532,29 @@ describe('Get Devnet pool state', () => {
       console.trace(error);
       throw new Error(error.message);
     }
+  });
+});
+
+describe('Get Mainnet pool state', () => {
+  let stablePool: AmmImpl;
+  let cpPool: AmmImpl;
+  let depegPool: AmmImpl;
+
+  beforeAll(async () => {
+    cpPool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAIN_POOL_USDT_SOL), {
+      cluster: MAINNET.cluster as Cluster,
+    });
+    depegPool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAIN_POOL_SOL_STSOL), {
+      cluster: MAINNET.cluster as Cluster,
+    });
+    stablePool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAIN_POOL_USDT_USDC), {
+      cluster: MAINNET.cluster as Cluster,
+    });
+  });
+
+  test('Get Pool Token Mint', () => {
+    expect(cpPool.getPoolTokenMint()).toBeDefined();
+    expect(depegPool.getPoolTokenMint()).toBeDefined();
+    expect(stablePool.getPoolTokenMint()).toBeDefined();
   });
 });
