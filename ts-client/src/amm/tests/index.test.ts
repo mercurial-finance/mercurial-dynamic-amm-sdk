@@ -243,7 +243,7 @@ describe('Get Devnet pool state', () => {
     }
   });
 
-  // Balance deposit in stable pool
+  // // Balance deposit in stable pool
   test('Deposit USDC and USDT in USDT-USDC', async () => {
     const inAmountALamport = new BN(1 * 10 ** stablePool.tokenA.decimals);
     const inAmountBLamport = new BN(1 * 10 ** stablePool.tokenB.decimals);
@@ -272,7 +272,7 @@ describe('Get Devnet pool state', () => {
   });
 
   // Single deposit in stable pool
-  test('Deposit USDT in USDT-USDC', async () => {
+  test('Deposit USDT in USDT-USDC (balance)', async () => {
     const inAmountALamport = new BN(1 * 10 ** stablePool.tokenA.decimals);
 
     const { poolTokenAmountOut, tokenBInAmount } = await stablePool.getDepositQuote(inAmountALamport, new BN(0));
@@ -438,13 +438,10 @@ describe('Get Devnet pool state', () => {
   });
 
   // Single withdraw from stable pool
-  test('Withdraw USDC from USDT-USDC', async () => {
+  test('Withdraw USDC and USDT from USDT-USDC', async () => {
     const outTokenAmountLamport = new BN(1 * 10 ** stablePool.decimals);
 
-    const { tokenAOutAmount, tokenBOutAmount } = await stablePool.getWithdrawQuote(
-      outTokenAmountLamport,
-      new PublicKey(stablePool.tokenB.address),
-    );
+    const { tokenAOutAmount, tokenBOutAmount } = await stablePool.getWithdrawQuote(outTokenAmountLamport);
 
     const withdrawTx = await stablePool.withdraw(
       mockWallet.publicKey,

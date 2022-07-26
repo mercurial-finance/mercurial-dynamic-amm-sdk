@@ -448,16 +448,19 @@ export default class AmmImpl implements AmmImplementation {
     }).add(swapTx);
   }
 
+  public async getBalanceDepositQuote(tokenA, tokenMint) {}
+
   public async getDepositQuote(
     tokenAInAmount: BN,
     tokenBInAmount: BN,
-    isImbalance = false,
+    balance = true,
     slippage?: number,
   ): Promise<{
     poolTokenAmountOut: BN;
     tokenAInAmount: BN;
     tokenBInAmount: BN;
   }> {
+    // if (tokenAInAmount!==0 && tokenBInAmount!==0 && blance) throw
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
     const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
 
@@ -466,18 +469,19 @@ export default class AmmImpl implements AmmImplementation {
     const vaultAWithdrawableAmount = await this.vaultA.getWithdrawableAmount();
     const vaultBWithdrawableAmount = await this.vaultB.getWithdrawableAmount();
 
-    // Constant product pool
-    if (tokenAInAmount.eq(new BN(0)) && !isImbalance) {
+    if (tokenAInAmount.eq(new BN(0)) && balance) {
       const poolTokenAmountOut = this.getShareByAmount(tokenBInAmount, tokenBAmount, poolLpSupply);
 
+      // Calculate for stable pool balance deposit but used `addImbalanceLiquidity`
       if (this.isStablePool) {
         return {
-          poolTokenAmountOut,
-          tokenAInAmount: getMaxAmountWithSlippage(tokenBInAmount.mul(tokenAAmount).div(tokenBAmount), slippageRate),
-          tokenBInAmount: getMaxAmountWithSlippage(tokenBInAmount, slippageRate),
+          poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippageRate),
+          tokenAInAmount: tokenBInAmount.mul(tokenAAmount).div(tokenBAmount),
+          tokenBInAmount,
         };
       }
 
+      // Constant product pool balance deposit
       const [actualTokenAInAmount, actualTokenBInAmount] = this.computeActualInAmount(
         poolTokenAmountOut,
         poolLpSupply,
@@ -496,18 +500,19 @@ export default class AmmImpl implements AmmImplementation {
       };
     }
 
-    // Constant product pool
-    if (tokenBInAmount.eq(new BN(0)) && !isImbalance) {
+    if (tokenBInAmount.eq(new BN(0)) && balance) {
       const poolTokenAmountOut = this.getShareByAmount(tokenAInAmount, tokenAAmount, poolLpSupply);
 
+      // Calculate for stable pool balance deposit but used `addImbalanceLiquidity`
       if (this.isStablePool) {
         return {
-          poolTokenAmountOut,
-          tokenAInAmount: getMaxAmountWithSlippage(tokenAInAmount, slippageRate),
-          tokenBInAmount: getMaxAmountWithSlippage(tokenAInAmount.mul(tokenBAmount).div(tokenAAmount), slippageRate),
+          poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippageRate),
+          tokenAInAmount,
+          tokenBInAmount: tokenAInAmount.mul(tokenBAmount).div(tokenAAmount),
         };
       }
 
+      // Constant product pool
       const [actualTokenAInAmount, actualTokenBInAmount] = this.computeActualInAmount(
         poolTokenAmountOut,
         poolLpSupply,
