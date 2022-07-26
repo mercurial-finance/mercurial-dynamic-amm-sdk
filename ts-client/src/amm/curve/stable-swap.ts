@@ -50,8 +50,8 @@ export class StableSwap implements SwapCurve {
   }
 
   private async updateDepegInfoIfExpired() {
-    const onChainTime = await getOnchainTime(this.connection);
     if (!this.depeg.depegType['none']) {
+      const onChainTime = await getOnchainTime(this.connection);
       const expired = onChainTime > this.depeg.baseCacheUpdated.add(BASE_CACHE_EXPIRE).toNumber();
       if (expired) {
         this.depeg.baseVirtualPrice = this.getBasePoolVirtualPrice(this.depeg.depegType);
