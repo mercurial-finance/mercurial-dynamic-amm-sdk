@@ -1,7 +1,8 @@
 import { AnchorProvider, Program, BN, EventParser } from '@project-serum/anchor';
 import { PublicKey, Connection, Cluster, Transaction, TransactionInstruction, AccountInfo } from '@solana/web3.js';
-import { StaticTokenListResolutionStrategy, TokenInfo } from '@solana/spl-token-registry';
+import { StaticTokenListResolutionStrategy, TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
+import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
 import VaultImpl, { getAmountByShare, getUnmintAmount } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
 import { AmmImplementation, PoolInformation, PoolState } from './types';
@@ -29,11 +30,6 @@ import {
   unwrapSOLInstruction,
   wrapSOLInstruction,
 } from './utils';
-import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
-
-const getTokenMap = (cluster: Cluster) => {
-  return cluster === 'mainnet-beta' ? (new StaticTokenListResolutionStrategy().resolve() as TokenInfo[]) : DEVNET_COIN;
-};
 
 type AmmProgram = Program<Amm>;
 type VaultProgram = Program<Vault>;
@@ -179,7 +175,8 @@ export default class AmmImpl implements AmmImplementation {
 
     const poolState = await getPoolState(pool, program);
 
-    const tokenMap = getTokenMap(cluster);
+    const tokenListContainer = await new TokenListProvider().resolve();
+    const tokenMap = cluster === 'devnet' ? DEVNET_COIN : tokenListContainer.filterByClusterSlug(cluster).getList();
 
     const tokenInfoA = tokenMap.find((token) => token.address === poolState.tokenAMint.toBase58());
     const tokenInfoB = tokenMap.find((token) => token.address === poolState.tokenBMint.toBase58());
@@ -460,7 +457,8 @@ export default class AmmImpl implements AmmImplementation {
     tokenAInAmount: BN;
     tokenBInAmount: BN;
   }> {
-    // if (tokenAInAmount!==0 && tokenBInAmount!==0 && blance) throw
+    invariant(!tokenAInAmount.isZero() || !tokenBInAmount.isZero() || !balance, 'Deposit balance is not possible');
+
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
     const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
 
