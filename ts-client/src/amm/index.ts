@@ -469,7 +469,7 @@ export default class AmmImpl implements AmmImplementation {
     const vaultAWithdrawableAmount = await this.vaultA.getWithdrawableAmount();
     const vaultBWithdrawableAmount = await this.vaultB.getWithdrawableAmount();
 
-    if (tokenAInAmount.eq(new BN(0)) && balance) {
+    if (tokenAInAmount.isZero() && balance) {
       const poolTokenAmountOut = this.getShareByAmount(tokenBInAmount, tokenBAmount, poolLpSupply);
 
       // Calculate for stable pool balance deposit but used `addImbalanceLiquidity`
@@ -500,7 +500,7 @@ export default class AmmImpl implements AmmImplementation {
       };
     }
 
-    if (tokenBInAmount.eq(new BN(0)) && balance) {
+    if (tokenBInAmount.isZero() && balance) {
       const poolTokenAmountOut = this.getShareByAmount(tokenAInAmount, tokenAAmount, poolLpSupply);
 
       // Calculate for stable pool balance deposit but used `addImbalanceLiquidity`
@@ -531,7 +531,7 @@ export default class AmmImpl implements AmmImplementation {
       };
     }
 
-    // Stable pool
+    // Imbalance deposit
     const actualDepositAAmount = computeActualDepositAmount(
       tokenAInAmount,
       tokenAAmount,
@@ -631,6 +631,7 @@ export default class AmmImpl implements AmmImplementation {
     const vaultAWithdrawableAmount = await this.vaultA.getWithdrawableAmount();
     const vaultBWithdrawableAmount = await this.vaultB.getWithdrawableAmount();
 
+    // balance withdraw
     if (!tokenMint) {
       const vaultALpBurn = this.getShareByAmount(withdrawTokenAmount, poolLpSupply, poolVaultALp);
       const vaultBLpBurn = this.getShareByAmount(withdrawTokenAmount, poolLpSupply, poolVaultBLp);
@@ -645,7 +646,7 @@ export default class AmmImpl implements AmmImplementation {
       };
     }
 
-    // Stable pool
+    // Imbalance withdraw
     const isWithdrawingTokenA = tokenMint.equals(new PublicKey(this.tokenA.address));
     const isWithdrawingTokenB = tokenMint.equals(new PublicKey(this.tokenB.address));
     invariant(isWithdrawingTokenA || isWithdrawingTokenB, ERROR.INVALID_MINT);

@@ -194,19 +194,19 @@ describe('Get Devnet pool state', () => {
   });
 
   // Balance deposit in constant product
-  test('Deposit SOL in SOL-USDT pool', async () => {
-    const inAmountALamport = new BN(2 * 10 ** cpPool.tokenA.decimals);
+  test('Deposit SOL in USDT-SOL pool', async () => {
+    const inAmountBLamport = new BN(1 * 10 ** cpPool.tokenA.decimals);
 
     const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await cpPool.getDepositQuote(
-      inAmountALamport,
       new BN(0),
+      inAmountBLamport,
     );
 
     const depositTx = await cpPool.deposit(mockWallet.publicKey, tokenAInAmount, tokenBInAmount, poolTokenAmountOut);
 
     try {
       const depositResult = await provider.sendAndConfirm(depositTx);
-      console.log('Result of depositing SOL into SOL-USDT pool', depositResult);
+      console.log('Result of depositing SOL into USDT-SOL pool', depositResult);
       expect(typeof depositResult).toBe('string');
 
       const cpPoolBalance = await cpPool.getUserBalance(mockWallet.publicKey);
@@ -219,19 +219,19 @@ describe('Get Devnet pool state', () => {
   });
 
   // Balance deposit in constant product
-  test('Deposit USDT in SOL-USDT pool', async () => {
-    const inAmountBLamport = new BN(1 * 10 ** cpPool.tokenB.decimals);
+  test('Deposit USDT in USDT-SOL pool', async () => {
+    const inAmountALamport = new BN(1 * 10 ** cpPool.tokenA.decimals);
 
     const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await cpPool.getDepositQuote(
+      inAmountALamport,
       new BN(0),
-      inAmountBLamport,
     );
 
     const depositTx = await cpPool.deposit(mockWallet.publicKey, tokenAInAmount, tokenBInAmount, poolTokenAmountOut);
 
     try {
       const depositResult = await provider.sendAndConfirm(depositTx);
-      console.log('Result of USDT deposit into SOL-USDT pool', depositResult);
+      console.log('Result of USDT deposit into USDT-SOL pool', depositResult);
       expect(typeof depositResult).toBe('string');
 
       const cpPoolBalance = await cpPool.getUserBalance(mockWallet.publicKey);
@@ -381,8 +381,8 @@ describe('Get Devnet pool state', () => {
   });
 
   // Balance withdraw from constant product
-  test('Withdraw from SOL-USDT pool', async () => {
-    const outTokenAmountLamport = new BN(0.1 * 10 ** cpPool.decimals);
+  test('Withdraw from USDT-SOL pool', async () => {
+    const outTokenAmountLamport = new BN(2 * 10 ** cpPool.decimals);
 
     const { tokenAOutAmount, tokenBOutAmount } = await cpPool.getWithdrawQuote(outTokenAmountLamport);
 
@@ -395,7 +395,7 @@ describe('Get Devnet pool state', () => {
 
     try {
       const withdrawResult = await provider.sendAndConfirm(withdrawTx);
-      console.log('Result of withdrawal from SOL-USDT', withdrawResult);
+      console.log('Result of withdrawal from USDT-SOL', withdrawResult);
       expect(typeof withdrawResult).toBe('string');
 
       const cpPoolBalance = await cpPool.getUserBalance(mockWallet.publicKey);
