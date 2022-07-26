@@ -88,7 +88,7 @@ describe('Get Devnet pool state', () => {
   });
 
   test('Swap USDT → SOL', async () => {
-    const inAmountLamport = new BN(1 * 10 ** cpPool.tokenA.decimals);
+    const inAmountLamport = new BN(0.1 * 10 ** cpPool.tokenA.decimals);
 
     const quote = await cpPool.getSwapQuote(new PublicKey(cpPool.tokenA.address), inAmountLamport);
     expect(quote.toNumber()).toBeGreaterThan(0);
@@ -111,7 +111,7 @@ describe('Get Devnet pool state', () => {
   });
 
   test('SWAP USDT -> USDC', async () => {
-    const inAmountLamport = new BN(1 * 10 ** stablePool.tokenA.decimals);
+    const inAmountLamport = new BN(0.1 * 10 ** stablePool.tokenA.decimals);
     const quote = await stablePool.getSwapQuote(new PublicKey(stablePool.tokenA.address), inAmountLamport);
     expect(Number(quote)).toBeGreaterThan(0);
 
@@ -250,14 +250,15 @@ describe('Get Devnet pool state', () => {
     }
   });
 
-  // // Balance deposit in stable pool
+  // Imbalance deposit in stable pool
   test('Deposit USDC and USDT in USDT-USDC', async () => {
-    const inAmountALamport = new BN(1 * 10 ** stablePool.tokenA.decimals);
-    const inAmountBLamport = new BN(1 * 10 ** stablePool.tokenB.decimals);
+    const inAmountALamport = new BN(0.1 * 10 ** stablePool.tokenA.decimals);
+    const inAmountBLamport = new BN(0.1 * 10 ** stablePool.tokenB.decimals);
 
     const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await stablePool.getDepositQuote(
       inAmountALamport,
       inAmountBLamport,
+      false,
     );
 
     const depositTx = await stablePool.deposit(
@@ -281,11 +282,11 @@ describe('Get Devnet pool state', () => {
     }
   });
 
-  // Single deposit in stable pool
+  // Single imbalance deposit in stable pool
   test('Deposit USDT in USDT-USDC (balance)', async () => {
-    const inAmountALamport = new BN(1 * 10 ** stablePool.tokenA.decimals);
+    const inAmountALamport = new BN(0.1 * 10 ** stablePool.tokenA.decimals);
 
-    const { poolTokenAmountOut, tokenBInAmount } = await stablePool.getDepositQuote(inAmountALamport, new BN(0));
+    const { poolTokenAmountOut, tokenBInAmount } = await stablePool.getDepositQuote(inAmountALamport, new BN(0), false);
 
     const depositTx = await stablePool.deposit(
       mockWallet.publicKey,
@@ -308,12 +309,12 @@ describe('Get Devnet pool state', () => {
     }
   });
 
-  // Balance deposit in depeg pool
+  // Imbalance deposit in depeg pool
   test('Deposit SOL and mSOL in SOL-mSOL', async () => {
     const inAmountALamport = new BN(0.1 * 10 ** depegPool.tokenA.decimals);
     const inAmountBLamport = new BN(0.1 * 10 ** depegPool.tokenB.decimals);
 
-    const { poolTokenAmountOut } = await depegPool.getDepositQuote(inAmountALamport, inAmountBLamport);
+    const { poolTokenAmountOut } = await depegPool.getDepositQuote(inAmountALamport, inAmountBLamport, false);
 
     const depositTx = await depegPool.deposit(
       mockWallet.publicKey,
@@ -392,7 +393,7 @@ describe('Get Devnet pool state', () => {
 
   // Balance withdraw from constant product
   test('Withdraw from USDT-SOL pool', async () => {
-    const outTokenAmountLamport = new BN(2 * 10 ** cpPool.decimals);
+    const outTokenAmountLamport = new BN(0.1 * 10 ** cpPool.decimals);
 
     const { tokenAOutAmount, tokenBOutAmount } = await cpPool.getWithdrawQuote(outTokenAmountLamport);
 
@@ -419,7 +420,7 @@ describe('Get Devnet pool state', () => {
 
   // Single withdraw from stable pool
   test('Withdraw USDT from USDT-USDC', async () => {
-    const outTokenAmountLamport = new BN(1 * 10 ** stablePool.decimals);
+    const outTokenAmountLamport = new BN(0.1 * 10 ** stablePool.decimals);
 
     const { tokenAOutAmount, tokenBOutAmount } = await stablePool.getWithdrawQuote(
       outTokenAmountLamport,
@@ -449,7 +450,7 @@ describe('Get Devnet pool state', () => {
 
   // Single withdraw from stable pool
   test('Withdraw USDC and USDT from USDT-USDC', async () => {
-    const outTokenAmountLamport = new BN(1 * 10 ** stablePool.decimals);
+    const outTokenAmountLamport = new BN(0.1 * 10 ** stablePool.decimals);
 
     const { tokenAOutAmount, tokenBOutAmount } = await stablePool.getWithdrawQuote(outTokenAmountLamport);
 
