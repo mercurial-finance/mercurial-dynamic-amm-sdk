@@ -457,7 +457,7 @@ export default class AmmImpl implements AmmImplementation {
     tokenAInAmount: BN;
     tokenBInAmount: BN;
   }> {
-    invariant(!tokenAInAmount.isZero() || !tokenBInAmount.isZero() || !balance, 'Deposit balance is not possible');
+    invariant(!(!tokenAInAmount.isZero() && !tokenBInAmount.isZero() && balance), 'Deposit balance is not possible');
 
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
     const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
