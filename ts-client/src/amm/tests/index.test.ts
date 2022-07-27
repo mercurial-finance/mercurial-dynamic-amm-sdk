@@ -498,7 +498,7 @@ describe('Get Devnet pool state', () => {
 
       const depegPoolBalance = await depegPool.getUserBalance(mockWallet.publicKey);
       expect(depegPoolBalance.toNumber()).toBeLessThan(currentDepegPoolBalance.toNumber());
-      currentStablePoolBalance = depegPoolBalance;
+      currentDepegPoolBalance = depegPoolBalance;
     } catch (error: any) {
       console.trace(error);
       throw new Error(error.message);
