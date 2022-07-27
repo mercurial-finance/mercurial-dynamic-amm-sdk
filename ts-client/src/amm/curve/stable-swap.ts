@@ -16,7 +16,6 @@ import { Idl } from '@project-serum/anchor/dist/esm';
 import MarinadeIDL from '../marinade-finance.json';
 import { CURVE_TYPE_ACCOUNTS } from '../constants';
 import { Depeg, DepegType, PoolFees, TokenMultiplier } from '../types';
-import { getOnchainTime } from '../utils';
 
 // Precision for base pool virtual price
 const PRECISION = new BN(1_000_000);
@@ -28,7 +27,7 @@ export class StableSwap implements SwapCurve {
     private tokenMultiplier: TokenMultiplier,
     private depeg: Depeg,
     private extraAccounts: Map<String, AccountInfo<Buffer>>,
-    private connection: Connection,
+    private onChainTime: number,
   ) {}
 
   private getBasePoolVirtualPrice(depegType: DepegType): BN {
@@ -51,11 +50,10 @@ export class StableSwap implements SwapCurve {
 
   private async updateDepegInfoIfExpired() {
     if (!this.depeg.depegType['none']) {
-      const onChainTime = await getOnchainTime(this.connection);
-      const expired = onChainTime > this.depeg.baseCacheUpdated.add(BASE_CACHE_EXPIRE).toNumber();
+      const expired = this.onChainTime > this.depeg.baseCacheUpdated.add(BASE_CACHE_EXPIRE).toNumber();
       if (expired) {
         this.depeg.baseVirtualPrice = this.getBasePoolVirtualPrice(this.depeg.depegType);
-        this.depeg.baseCacheUpdated = new BN(onChainTime);
+        this.depeg.baseCacheUpdated = new BN(this.onChainTime);
       }
     }
   }

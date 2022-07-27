@@ -25,6 +25,7 @@ import {
   computeActualDepositAmount,
   getMaxAmountWithSlippage,
   getMinAmountWithSlippage,
+  getOnchainTime,
   getOrCreateATAInstruction,
   parseLogs,
   unwrapSOLInstruction,
@@ -135,6 +136,7 @@ export default class AmmImpl implements AmmImplementation {
     public vaultA: VaultImpl,
     public vaultB: VaultImpl,
     private depegAccounts: Map<String, AccountInfo<Buffer>>,
+    private onChainTime: number,
     opt: Opt,
   ) {
     this.vaultProgram = new Program<Vault>(VaultIdl, VAULT_PROGRAM_ID, this.program.provider);
@@ -145,13 +147,7 @@ export default class AmmImpl implements AmmImplementation {
 
     if ('stable' in this.poolState.curveType) {
       const { amp, depeg, tokenMultiplier } = this.poolState.curveType['stable'];
-      this.swapCurve = new StableSwap(
-        amp.toNumber(),
-        tokenMultiplier,
-        depeg,
-        this.depegAccounts,
-        this.program.provider.connection,
-      );
+      this.swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, this.depegAccounts, onChainTime);
     } else {
       this.swapCurve = new ConstantProductSwap();
     }
@@ -209,6 +205,8 @@ export default class AmmImpl implements AmmImplementation {
       }
     }
 
+    const onChainTime = await getOnchainTime(program.provider.connection);
+
     return new AmmImpl(
       program,
       apyPda,
@@ -218,6 +216,7 @@ export default class AmmImpl implements AmmImplementation {
       vaultA,
       vaultB,
       depegAccounts,
+      onChainTime,
       {
         cluster,
       },
