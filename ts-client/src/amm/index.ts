@@ -162,9 +162,6 @@ export default class AmmImpl implements AmmImplementation {
     pool: PublicKey,
     opt?: {
       cluster?: Cluster;
-      // programId?: string;
-      // affiliateId?: PublicKey;
-      // affiliateProgramId?: string;
     },
   ): Promise<AmmImpl> {
     const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
@@ -225,23 +222,6 @@ export default class AmmImpl implements AmmImplementation {
         cluster,
       },
     );
-
-    // const { vaultPda, tokenVaultPda, vaultState, lpSupply } = await getVaultState(tokenInfo, program);
-    // return new AmmImpl(
-    //     program,
-    //     { tokenInfo, vaultPda, tokenVaultPda, vaultState, lpSupply },
-    //     {
-    //         ...opt,
-    //         affiliateId: opt?.affiliateId,
-    //         affiliateProgram: opt?.affiliateId
-    //             ? new Program<AffiliateVaultIdl>(
-    //                 AffiliateIDL as AffiliateVaultIdl,
-    //                 opt?.affiliateProgramId || AFFILIATE_PROGRAM_ID,
-    //                 provider
-    //             )
-    //             : undefined
-    //     }
-    // );
   }
 
   get tokenA(): TokenInfo {
@@ -271,10 +251,19 @@ export default class AmmImpl implements AmmImplementation {
     this.poolState = { ...poolState, ...poolInfo };
   }
 
+  /**
+   * It returns the pool token mint.
+   * @returns The poolState.lpMint
+   */
   public getPoolTokenMint() {
     return this.poolState.lpMint;
   }
 
+  /**
+   * Get the user's balance by looking up the account associated with the user's public key
+   * @param {PublicKey} owner - PublicKey - The public key of the user you want to get the balance of
+   * @returns The amount of tokens the user has.
+   */
   public async getUserBalance(owner: PublicKey) {
     const account = await Token.getAssociatedTokenAddress(
       ASSOCIATED_PROGRAM_ID,
@@ -292,6 +281,14 @@ export default class AmmImpl implements AmmImplementation {
     return new BN(u64.fromBuffer(accountInfoData.amount));
   }
 
+  /**
+   * `getSwapQuote` returns the amount of `outToken` that you will receive if you swap
+   * `inAmountLamport` of `inToken` into the pool
+   * @param {PublicKey} inTokenMint - The mint you want to swap from.
+   * @param {BN} inAmountLamport - The amount of lamports you want to swap.
+   * @param {number} [slippage] - The maximum amount of slippage you're willing to accept.
+   * @returns The amount of the destination token that will be received after the swap.
+   */
   public async getSwapQuote(inTokenMint: PublicKey, inAmountLamport: BN, slippage?: number) {
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
     invariant(
@@ -372,6 +369,11 @@ export default class AmmImpl implements AmmImplementation {
     return getMinAmountWithSlippage(actualDestinationAmount, slippageRate);
   }
 
+  /**
+   * `getMaxSwapOutAmount` returns the maximum amount of tokens that can be swapped out of the pool
+   * @param {PublicKey} tokenMint - The mint of the token you want to swap out.
+   * @returns The maximum amount of tokens that can be swapped out of the pool.
+   */
   public async getMaxSwapOutAmount(tokenMint: PublicKey) {
     invariant(
       tokenMint.equals(this.poolState.tokenAMint) || tokenMint.equals(this.poolState.tokenBMint),
@@ -387,6 +389,16 @@ export default class AmmImpl implements AmmImplementation {
     return outTotalAmount.gt(outReserveBalance) ? outReserveBalance : outTotalAmount;
   }
 
+  /**
+   * `swap` is a function that takes in a `PublicKey` of the owner, a `PublicKey` of the input token
+   * mint, an `BN` of the input amount of lamports, and an `BN` of the output amount of lamports. It
+   * returns a `Promise<Transaction>` of the swap transaction
+   * @param {PublicKey} owner - The public key of the user who is swapping
+   * @param {PublicKey} inTokenMint - The mint of the token you're swapping from.
+   * @param {BN} inAmountLamport - The amount of the input token you want to swap.
+   * @param {BN} outAmountLamport - The amount of the output token you want to receive.
+   * @returns A transaction object
+   */
   public async swap(owner: PublicKey, inTokenMint: PublicKey, inAmountLamport: BN, outAmountLamport: BN) {
     const [sourceToken, destinationToken] =
       this.tokenA.address === inTokenMint.toBase58()
@@ -445,8 +457,16 @@ export default class AmmImpl implements AmmImplementation {
     }).add(swapTx);
   }
 
-  public async getBalanceDepositQuote(tokenA, tokenMint) {}
-
+  /**
+   * `getDepositQuote` is a function that takes in a tokenAInAmount, tokenBInAmount, balance, and
+   * slippage, and returns a poolTokenAmountOut, tokenAInAmount, and tokenBInAmount
+   * @param {BN} tokenAInAmount - BN,
+   * @param {BN} tokenBInAmount - BN,
+   * @param {boolean} [balance=true] - return false if the deposit is imbalance (default: true)
+   * @param {number} [slippage] - The amount of slippage you're willing to accept.
+   * @returns The return value is a tuple of the poolTokenAmountOut, tokenAInAmount, and
+   * tokenBInAmount.
+   */
   public async getDepositQuote(
     tokenAInAmount: BN,
     tokenBInAmount: BN,
@@ -561,7 +581,21 @@ export default class AmmImpl implements AmmImplementation {
     };
   }
 
-  public async deposit(owner: PublicKey, tokenAInAmount: BN, tokenBInAmount: BN, poolTokenAmount: BN) {
+  /**
+   * `deposit` creates a transaction that deposits `tokenAInAmount` and `tokenBInAmount` into the pool,
+   * and mints `poolTokenAmount` of the pool's liquidity token
+   * @param {PublicKey} owner - PublicKey - The public key of the user who is depositing liquidity
+   * @param {BN} tokenAInAmount - The amount of token A you want to deposit
+   * @param {BN} tokenBInAmount - The amount of token B you want to deposit
+   * @param {BN} poolTokenAmount - The amount of pool tokens you want to mint.
+   * @returns A transaction object
+   */
+  public async deposit(
+    owner: PublicKey,
+    tokenAInAmount: BN,
+    tokenBInAmount: BN,
+    poolTokenAmount: BN,
+  ): Promise<Transaction> {
     const { tokenAMint, tokenBMint, lpMint } = this.poolState;
 
     const [[userAToken, createTokenAIx], [userBToken, createTokenBIx], [userPoolLp, createLpMintIx]] =
@@ -621,7 +655,24 @@ export default class AmmImpl implements AmmImplementation {
     }).add(depositTx);
   }
 
-  public async getWithdrawQuote(withdrawTokenAmount: BN, tokenMint?: PublicKey, slippage?: number) {
+  /**
+   * `getWithdrawQuote` is a function that takes in a withdraw amount and returns the amount of tokens
+   * that will be withdrawn from the pool
+   * @param {BN} withdrawTokenAmount - The amount of tokens you want to withdraw from the pool.
+   * @param {PublicKey} [tokenMint] - The token you want to withdraw. If you want balanced withdraw, leave this blank.
+   * @param {number} [slippage] - The amount of slippage you're willing to accept.
+   * @returns The return value is a tuple of the poolTokenAmountIn, tokenAOutAmount, and
+   * tokenBOutAmount.
+   */
+  public async getWithdrawQuote(
+    withdrawTokenAmount: BN,
+    tokenMint?: PublicKey,
+    slippage?: number,
+  ): Promise<{
+    poolTokenAmountIn: BN;
+    tokenAOutAmount: BN;
+    tokenBOutAmount: BN;
+  }> {
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
     const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
     const { poolLpSupply, vaultALpSupply, vaultBLpSupply, poolVaultALp, poolVaultBLp } = await this.getSplInfo();
@@ -679,6 +730,16 @@ export default class AmmImpl implements AmmImplementation {
     };
   }
 
+  /**
+   * `withdraw` is a function that takes in the owner's public key, the amount of tokens to withdraw,
+   * and the amount of tokens to withdraw from each pool, and returns a transaction that withdraws the
+   * specified amount of tokens from the pool
+   * @param {PublicKey} owner - PublicKey - The public key of the user who is withdrawing liquidity
+   * @param {BN} withdrawTokenAmount - The amount of LP tokens to withdraw.
+   * @param {BN} tokenAOutAmount - The amount of token A you want to withdraw.
+   * @param {BN} tokenBOutAmount - BN,
+   * @returns A transaction object
+   */
   public async withdraw(owner: PublicKey, withdrawTokenAmount: BN, tokenAOutAmount: BN, tokenBOutAmount: BN) {
     const preInstructions: Array<TransactionInstruction> = [];
     const [[userAToken, createUserAIx], [userBToken, createUserBIx], [userPoolLp, createLpTokenIx]] = await Promise.all(
