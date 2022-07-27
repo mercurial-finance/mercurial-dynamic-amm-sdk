@@ -12,6 +12,5 @@
     "noImplicitAny": false,
     "skipLibCheck": true
   },
-  "include": ["src/"],
   "exclude": ["**/*.test.ts"]
 }
