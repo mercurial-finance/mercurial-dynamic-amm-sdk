@@ -12,11 +12,10 @@ import { getOnchainTime } from './src/amm/utils';
 
 export default AmmImpl;
 export {
-  // Constants
-  PROGRAM_ID,
   // Utils
   getOnchainTime,
   // Constant
+  PROGRAM_ID,
   DEV_POOL_SOL_MSOL,
   DEV_POOL_USDT_SOL,
   DEV_POOL_USDT_USDC,

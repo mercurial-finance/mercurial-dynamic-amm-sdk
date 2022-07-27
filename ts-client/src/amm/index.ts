@@ -258,6 +258,15 @@ export default class AmmImpl implements AmmImplementation {
     return this.poolState.lpMint;
   }
 
+  public async getLpSupply() {
+    const account = await this.program.provider.connection.getAccountInfo(this.poolState.lpMint);
+    invariant(account, ERROR.INVALID_ACCOUNT);
+
+    const lpMintInfo = MintLayout.decode(account.data);
+    const lpSupply = new BN(u64.fromBuffer(lpMintInfo.supply));
+    return lpSupply;
+  }
+
   /**
    * Get the user's balance by looking up the account associated with the user's public key
    * @param {PublicKey} owner - PublicKey - The public key of the user you want to get the balance of
@@ -476,6 +485,10 @@ export default class AmmImpl implements AmmImplementation {
     tokenAInAmount: BN;
     tokenBInAmount: BN;
   }> {
+    invariant(
+      !(!this.isStablePool && !tokenAInAmount.isZero() && !tokenBInAmount.isZero()),
+      'Constant product only support balance deposit',
+    );
     invariant(!(!tokenAInAmount.isZero() && !tokenBInAmount.isZero() && balance), 'Deposit balance is not possible');
 
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
