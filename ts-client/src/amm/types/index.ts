@@ -14,16 +14,11 @@ export type AmmImplementation = {
   getPoolTokenMint: () => PublicKey;
   getUserBalance: (owner: PublicKey) => Promise<BN>;
   getLpSupply: () => Promise<BN>;
-  getSwapQuote: (inTokenMint: PublicKey, inAmountLamport: BN, slippage?: number) => Promise<BN>;
+  getSwapQuote: (inTokenMint: PublicKey, inAmountLamport: BN, slippage: number) => BN;
   swap: (owner: PublicKey, inTokenMint: PublicKey, inAmountLamport: BN, outAmountLamport: BN) => Promise<Transaction>;
-  getDepositQuote: (
-    tokenAInAmount: BN,
-    tokenBInAmount: BN,
-    isImbalance?: boolean,
-    slippage?: number,
-  ) => Promise<DepositQuote>;
+  getDepositQuote: (tokenAInAmount: BN, tokenBInAmount: BN, isImbalance: boolean, slippage: number) => DepositQuote;
   deposit: (owner: PublicKey, tokenAInAmount: BN, tokenBInAmount: BN, poolTokenAmount: BN) => Promise<Transaction>;
-  getWithdrawQuote: (withdrawTokenAmount: BN, tokenMint?: PublicKey, slippage?: number) => Promise<WithdrawQuote>;
+  getWithdrawQuote: (lpTokenAmount: BN, slippage: number, tokenMint?: PublicKey) => WithdrawQuote;
   withdraw: (
     owner: PublicKey,
     withdrawTokenAmount: BN,
@@ -100,6 +95,16 @@ export type PoolInformation = {
   tokenAAmount: BN;
   tokenBAmount: BN;
   apy: number;
+};
+
+export type SplInfo = {
+  vaultAReserve: BN;
+  vaultBReserve: BN;
+  vaultALpSupply: BN;
+  vaultBLpSupply: BN;
+  poolVaultALp: BN;
+  poolVaultBLp: BN;
+  poolLpSupply: BN;
 };
 
 /** Utils */

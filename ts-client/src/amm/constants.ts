@@ -1,6 +1,5 @@
 import { ENV, TokenInfo } from '@solana/spl-token-registry';
-import { Cluster, PublicKey } from '@solana/web3.js';
-import { BN } from '@project-serum/anchor';
+import { PublicKey } from '@solana/web3.js';
 
 export const ERROR = {
   POOL_NOT_LOAD: 'Pool not loaded',
@@ -77,21 +76,17 @@ export const DEVNET_COIN: Array<TokenInfo> = [
   },
 ];
 
-export const DEV_POOL_USDT_USDC = 'BAHscmu1NncGS7t4rc5gSBPv1UFEMkvLaon1Ahdd5rHi';
-export const DEV_POOL_USDT_SOL = 'Bgf1Sy5kfeDgib4go4NgzHuZwek8wE8NZus56z6uizzi';
-export const DEV_POOL_SOL_MSOL = '2rkn2yM4wJcHPV57T8fPWeBksrfSpiNZoEjRgjtxNDEQ';
+export const DEVNET_POOL = Object.freeze({
+  USDT_USDC: 'BAHscmu1NncGS7t4rc5gSBPv1UFEMkvLaon1Ahdd5rHi',
+  USDT_SOL: 'Bgf1Sy5kfeDgib4go4NgzHuZwek8wE8NZus56z6uizzi',
+  SOL_MSOL: '2rkn2yM4wJcHPV57T8fPWeBksrfSpiNZoEjRgjtxNDEQ',
+});
 
-export const MAIN_POOL_USDT_USDC = '32D4zRxNc1EssbJieVHfPhZM3rH6CzfUPrWUuWxD9prG';
-export const MAIN_POOL_USDT_SOL = '5yuefgbJJpmFNK2iiYbLSpv1aZXq7F9AUKkZKErTYCvs';
-export const MAIN_POOL_SOL_STSOL = '7EJSgV2pthhDfb4UiER9vzTqe2eojei9GEQAQnkqJ96e';
-
-// TODO: let's not include staging pools?
-// 6HDsdUKLaEbcz9S7YioomVyWYqgT3E81q5R6EjyaxUpo,GRggGuVnFtRtVD2yiiKPDZ8GPzfbGsxd3FNoPSmupH9U,5MCmQd2HTrtMxFdvi6iy53kr5s4qBmGqLjrZuDBufJnk
-export const AMM_POOLS: Record<Cluster, string[]> = {
-  devnet: [DEV_POOL_USDT_USDC, DEV_POOL_USDT_SOL, DEV_POOL_SOL_MSOL],
-  testnet: [],
-  'mainnet-beta': [MAIN_POOL_USDT_USDC, MAIN_POOL_USDT_SOL, MAIN_POOL_SOL_STSOL],
-};
+export const MAINNET_POOL = Object.freeze({
+  USDT_USDC: '32D4zRxNc1EssbJieVHfPhZM3rH6CzfUPrWUuWxD9prG',
+  USDC_SOL: '5yuefgbJJpmFNK2iiYbLSpv1aZXq7F9AUKkZKErTYCvs',
+  SOL_STSOL: '7EJSgV2pthhDfb4UiER9vzTqe2eojei9GEQAQnkqJ96e',
+});
 
 // Extra accounts for depeg pools. Might add more addresses in the future when more different types of pools are being added
 export const CURVE_TYPE_ACCOUNTS = {

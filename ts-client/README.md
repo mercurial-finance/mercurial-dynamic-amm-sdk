@@ -1,4 +1,4 @@
-# Mercurial Vault SDK
+# Mercurial Amm Dynamic SDK
 
 <p align="center">
 <img align="center" src="https://vaults.mercurial.finance/icons/logo.svg" width="180" height="180" />
@@ -153,7 +153,7 @@ const outTokenAmountLamport = new BN(0.1 * 10 ** stablePool.decimals);
 
 const { poolTokenAmountIn, tokenAOutAmount, tokenBOutAmount } = await stablePool.getWithdrawQuote(
   outTokenAmountLamport,
-  new PublicKey(stablePool.tokenA.address),
+  new PublicKey(stablePool.tokenA.address), // Pass in token A/B mint to perform imbalance withdraw
 );
 const withdrawTx = await stablePool.withdraw(mockWallet.publicKey, poolTokenAmountIn, tokenAOutAmount, tokenBOutAmount); // Web3 Transaction Object
 const withdrawResult = await provider.sendAndConfirm(withdrawTx);
