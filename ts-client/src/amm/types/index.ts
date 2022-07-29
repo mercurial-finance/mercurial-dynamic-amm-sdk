@@ -27,16 +27,6 @@ export type AmmImplementation = {
   ) => Promise<Transaction>;
 };
 
-export type SplInfoBuffer = {
-  vaultAReserveBuffer: AccountInfo<Buffer> | null;
-  vaultBReserveBuffer: AccountInfo<Buffer> | null;
-  vaultALpMintBuffer: AccountInfo<Buffer> | null;
-  vaultBLpMintBuffer: AccountInfo<Buffer> | null;
-  poolVaultALpBuffer: AccountInfo<Buffer> | null;
-  poolVaultBLpBuffer: AccountInfo<Buffer> | null;
-  poolLpMintBuffer: AccountInfo<Buffer> | null;
-};
-
 export type DepositQuote = {
   poolTokenAmountOut: BN;
   tokenAInAmount: BN;
@@ -115,6 +105,7 @@ export type SplInfo = {
   poolVaultALp: BN;
   poolVaultBLp: BN;
   poolLpSupply: BN;
+  currentTime: number;
 };
 
 /** Utils */

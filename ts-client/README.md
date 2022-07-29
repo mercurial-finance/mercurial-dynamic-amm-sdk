@@ -61,13 +61,19 @@ const lpSupply = await constantProductPool.getLpSupply();
 const userLpBalance = await constantProductPool.getUserBalance(mockWallet.publicKey);
 ```
 
+- Update pool state (It's recommended to update the deposit before perform any quotation)
+
+```ts
+await constantProduct.updateState();
+```
+
 - Deposit to constant product
 
 ```ts
 const inAmountALamport = new BN(1 * 10 ** constantProductPool.tokenA.decimals); // 1.0 SOL
 
 // Get deposit quote for constant product
-const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await constantProductPool.getDepositQuote(
+const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = constantProductPool.getDepositQuote(
   inAmountALamport,
   new BN(0),
 );
@@ -86,10 +92,7 @@ const depositResult = await provider.sendAndConfirm(depositTx); // Transaction h
 ```ts
 const inAmountALamport = new BN(0.1 * 10 ** stablePool.tokenA.decimals);
 
-const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await stablePool.getDepositQuote(
-  inAmountALamport,
-  new BN(0),
-);
+const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = stablePool.getDepositQuote(inAmountALamport, new BN(0));
 
 const depositTx = await stablePool.deposit(mockWallet.publicKey, tokenAInAmount, tokenBInAmount, poolTokenAmountOut); // Web3 Transaction Object
 const depositResult = await provider.sendAndConfirm(depositTx); // Transaction hash
@@ -101,7 +104,7 @@ const depositResult = await provider.sendAndConfirm(depositTx); // Transaction h
 const inAmountALamport = new BN(0.1 * 10 ** stablePool.tokenA.decimals);
 const inAmountBLamport = new BN(0.1 * 10 ** stablePool.tokenB.decimals);
 
-const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await stablePool.getDepositQuote(
+const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = stablePool.getDepositQuote(
   inAmountALamport,
   inAmountBLamport,
   false, // pass in false for imbalance deposit quote
@@ -115,7 +118,7 @@ const depositResult = await provider.sendAndConfirm(depositTx); // Transaction h
 ```ts
 const inAmountALamport = new BN(0.1 * 10 ** stablePool.tokenA.decimals);
 
-const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await stablePool.getDepositQuote(
+const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = stablePool.getDepositQuote(
   inAmountALamport,
   new BN(0),
   false, // pass in false for imbalance deposit quote
@@ -129,7 +132,7 @@ const depositResult = await provider.sendAndConfirm(depositTx); // Transaction h
 ```ts
 const outTokenAmountLamport = new BN(0.1 * 10 ** cpPool.decimals);
 
-const { poolTokenAmountIn, tokenAOutAmount, tokenBOutAmount } = await cpPool.getWithdrawQuote(outTokenAmountLamport); // use lp balance for full withdrawal
+const { poolTokenAmountIn, tokenAOutAmount, tokenBOutAmount } = cpPool.getWithdrawQuote(outTokenAmountLamport); // use lp balance for full withdrawal
 const withdrawTx = await cpPool.withdraw(mockWallet.publicKey, poolTokenAmountIn, tokenAOutAmount, tokenBOutAmount); // Web3 Transaction Object
 const withdrawResult = await provider.sendAndConfirm(withdrawTx); // Transaction hash
 ```
@@ -139,9 +142,7 @@ const withdrawResult = await provider.sendAndConfirm(withdrawTx); // Transaction
 ```ts
 const outTokenAmountLamport = new BN(0.1 * 10 ** stablePool.decimals);
 
-const { poolTokenAmountIn, tokenAOutAmount, tokenBOutAmount } = await stablePool.getWithdrawQuote(
-  outTokenAmountLamport,
-); // use lp balance for full withdrawal
+const { poolTokenAmountIn, tokenAOutAmount, tokenBOutAmount } = stablePool.getWithdrawQuote(outTokenAmountLamport); // use lp balance for full withdrawal
 const withdrawTx = await stablePool.withdraw(mockWallet.publicKey, poolTokenAmountIn, tokenAOutAmount, tokenBOutAmount); // Web3 Transaction Object
 const withdrawResult = await provider.sendAndConfirm(withdrawTx);
 ```
@@ -151,7 +152,7 @@ const withdrawResult = await provider.sendAndConfirm(withdrawTx);
 ```ts
 const outTokenAmountLamport = new BN(0.1 * 10 ** stablePool.decimals);
 
-const { poolTokenAmountIn, tokenAOutAmount, tokenBOutAmount } = await stablePool.getWithdrawQuote(
+const { poolTokenAmountIn, tokenAOutAmount, tokenBOutAmount } = stablePool.getWithdrawQuote(
   outTokenAmountLamport,
   new PublicKey(stablePool.tokenA.address), // Pass in token A/B mint to perform imbalance withdraw
 );
@@ -165,10 +166,7 @@ const withdrawResult = await provider.sendAndConfirm(withdrawTx);
 const inAmountLamport = new BN(0.1 * 10 ** constantProductPool.tokenB.decimals);
 
 // Swap SOL → USDT
-const swapQuote = await constantProductPool.getSwapQuote(
-  new PublicKey(constantProductPool.tokenB.address),
-  inAmountLamport,
-);
+const swapQuote = constantProductPool.getSwapQuote(new PublicKey(constantProductPool.tokenB.address), inAmountLamport);
 
 const swapTx = await constantProductPool.swap(
   mockWallet.publicKey,
