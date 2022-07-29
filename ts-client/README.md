@@ -178,3 +178,9 @@ const swapTx = await constantProductPool.swap(
 );
 const swapResult = await provider.sendAndConfirm(withdrawTx);
 ```
+
+- Update pool state
+
+```ts
+constantProductPool.updateState();
+```
