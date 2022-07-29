@@ -1,11 +1,27 @@
 import { AnchorProvider, Program, BN, EventParser } from '@project-serum/anchor';
-import { PublicKey, Connection, Cluster, Transaction, TransactionInstruction, AccountInfo } from '@solana/web3.js';
+import {
+  PublicKey,
+  Connection,
+  Cluster,
+  Transaction,
+  TransactionInstruction,
+  AccountInfo,
+  Account,
+} from '@solana/web3.js';
 import { StaticTokenListResolutionStrategy, TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
 import VaultImpl, { getAmountByShare, getUnmintAmount } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
-import { AmmImplementation, DepositQuote, PoolInformation, PoolState, SplInfo, WithdrawQuote } from './types';
+import {
+  AmmImplementation,
+  DepositQuote,
+  PoolInformation,
+  PoolState,
+  SplInfo,
+  SplInfoBuffer,
+  WithdrawQuote,
+} from './types';
 import { Amm, IDL as AmmIDL } from './idl';
 import { Vault, IDL as VaultIdl } from './vault-idl';
 import {
@@ -117,7 +133,7 @@ const getPoolInfo = async ({
   return poolInfo;
 };
 
-const getSplInfo = async ({
+const getSplInfoBuffer = async ({
   program,
   vaultA,
   vaultB,
@@ -146,9 +162,29 @@ const getSplInfo = async ({
     poolState.lpMint,
   ]);
 
+  return {
+    vaultAReserveBuffer,
+    vaultBReserveBuffer,
+    vaultALpMintBuffer,
+    vaultBLpMintBuffer,
+    poolVaultALpBuffer,
+    poolVaultBLpBuffer,
+    poolLpMintBuffer,
+  };
+};
+
+const deserializeSplInfoBuffer = ({
+  vaultAReserveBuffer,
+  vaultBReserveBuffer,
+  vaultALpMintBuffer,
+  vaultBLpMintBuffer,
+  poolVaultALpBuffer,
+  poolVaultBLpBuffer,
+  poolLpMintBuffer,
+}: SplInfoBuffer) => {
   const vaultAReserveInfo = AccountLayout.decode(vaultAReserveBuffer!.data);
-  const vaultALpMintInfo = MintLayout.decode(vaultALpMintBuffer!.data);
   const vaultBReserveInfo = AccountLayout.decode(vaultBReserveBuffer!.data);
+  const vaultALpMintInfo = MintLayout.decode(vaultALpMintBuffer!.data);
   const vaultBLpMintInfo = MintLayout.decode(vaultBLpMintBuffer!.data);
   const poolVaultALpInfo = AccountLayout.decode(poolVaultALpBuffer!.data);
   const poolVaultBLpInfo = AccountLayout.decode(poolVaultBLpBuffer!.data);
@@ -180,6 +216,7 @@ export default class AmmImpl implements AmmImplementation {
     public poolState: PoolState & PoolInformation & { lpSupply: BN },
     public vaultA: VaultImpl,
     public vaultB: VaultImpl,
+    public splInfoBuffer: SplInfoBuffer,
     private splInfo: SplInfo,
     private depegAccounts: Map<String, AccountInfo<Buffer>>,
     private onChainTime: number,
@@ -234,7 +271,8 @@ export default class AmmImpl implements AmmImplementation {
       apyPda,
     });
 
-    const splInfo = await getSplInfo({ program, vaultA, vaultB, poolState });
+    const splInfoBuffer = await getSplInfoBuffer({ program, vaultA, vaultB, poolState });
+    const splInfo = deserializeSplInfoBuffer(splInfoBuffer);
 
     const depegAccounts = new Map<String, AccountInfo<Buffer>>();
 
@@ -263,6 +301,7 @@ export default class AmmImpl implements AmmImplementation {
       { ...poolState, ...poolInfo },
       vaultA,
       vaultB,
+      splInfoBuffer,
       splInfo,
       depegAccounts,
       onChainTime,
@@ -288,10 +327,19 @@ export default class AmmImpl implements AmmImplementation {
     return 'stable' in this.poolState.curveType;
   }
 
-  public async updatePoolState() {
+  /**
+   * It updates the state of the pool by calling the getPoolState function
+   */
+  public async updateState() {
     const poolState = await getPoolState(this.address, this.program);
     const poolInfo = await this.getPoolInfo();
-    const splInfo = await getSplInfo({ poolState, program: this.program, vaultA: this.vaultA, vaultB: this.vaultB });
+    const splInfoBuffer = await getSplInfoBuffer({
+      poolState,
+      program: this.program,
+      vaultA: this.vaultA,
+      vaultB: this.vaultB,
+    });
+    const splInfo = deserializeSplInfoBuffer(splInfoBuffer);
 
     this.poolState = { ...poolState, ...poolInfo };
     this.splInfo = splInfo;
@@ -305,6 +353,10 @@ export default class AmmImpl implements AmmImplementation {
     return this.poolState.lpMint;
   }
 
+  /**
+   * It gets the total supply of the LP token
+   * @returns The total supply of the LP token.
+   */
   public async getLpSupply() {
     const account = await this.program.provider.connection.getTokenSupply(this.poolState.lpMint);
     invariant(account.value.amount, ERROR.INVALID_ACCOUNT);
@@ -332,6 +384,22 @@ export default class AmmImpl implements AmmImplementation {
     const accountInfoData = AccountLayout.decode(accountInfo.data);
 
     return new BN(u64.fromBuffer(accountInfoData.amount));
+  }
+
+  /**
+   * This function returns the splInfoBuffer array (For Jupiter use)
+   * @returns {SplInfoBuffer} The splInfoBuffer array.
+   */
+  public getAccountsForUpdate() {
+    return this.splInfoBuffer;
+  }
+
+  /**
+   * Update splInfo state (For Jupiter use)
+   * @param {SplInfoBuffer} splInfoBuffer - The buffer that contains the serialized SplInfo object.
+   */
+  public update(splInfoBuffer: SplInfoBuffer) {
+    this.splInfo = deserializeSplInfoBuffer(splInfoBuffer);
   }
 
   /**

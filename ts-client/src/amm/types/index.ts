@@ -1,4 +1,4 @@
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { AccountInfo, PublicKey, Transaction } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { TypeDef } from '@project-serum/anchor/dist/cjs/program/namespace/types';
 import BN from 'bn.js';
@@ -10,7 +10,7 @@ export type AmmImplementation = {
   tokenB: TokenInfo;
   decimals: number;
   isStablePool: boolean;
-  updatePoolState: () => Promise<void>;
+  updateState: () => Promise<void>;
   getPoolTokenMint: () => PublicKey;
   getUserBalance: (owner: PublicKey) => Promise<BN>;
   getLpSupply: () => Promise<BN>;
@@ -25,6 +25,16 @@ export type AmmImplementation = {
     tokenAOutAmount: BN,
     tokenBOutAmount: BN,
   ) => Promise<Transaction>;
+};
+
+export type SplInfoBuffer = {
+  vaultAReserveBuffer: AccountInfo<Buffer> | null;
+  vaultBReserveBuffer: AccountInfo<Buffer> | null;
+  vaultALpMintBuffer: AccountInfo<Buffer> | null;
+  vaultBLpMintBuffer: AccountInfo<Buffer> | null;
+  poolVaultALpBuffer: AccountInfo<Buffer> | null;
+  poolVaultBLpBuffer: AccountInfo<Buffer> | null;
+  poolLpMintBuffer: AccountInfo<Buffer> | null;
 };
 
 export type DepositQuote = {
