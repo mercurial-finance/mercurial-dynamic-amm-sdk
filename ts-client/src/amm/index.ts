@@ -5,7 +5,7 @@ import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana
 import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
 import VaultImpl, { getAmountByShare, getUnmintAmount } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
-import { AmmImplementation, PoolInformation, PoolState } from './types';
+import { AmmImplementation, DepositQuote, PoolInformation, PoolState, SplInfo, WithdrawQuote } from './types';
 import { Amm, IDL as AmmIDL } from './idl';
 import { Vault, IDL as VaultIdl } from './vault-idl';
 import {
@@ -43,13 +43,10 @@ const getPoolState = async (poolMint: PublicKey, program: AmmProgram) => {
   const poolState = (await program.account.pool.fetchNullable(poolMint)) as PoolState;
   invariant(poolState, `Pool ${poolMint.toBase58()} not found`);
 
-  const account = await program.provider.connection.getAccountInfo(poolState.lpMint);
-  invariant(account, ERROR.INVALID_ACCOUNT);
+  const account = await program.provider.connection.getTokenSupply(poolState.lpMint);
+  invariant(account.value.amount, ERROR.INVALID_ACCOUNT);
 
-  const lpMintInfo = MintLayout.decode(account.data);
-  const lpSupply = new BN(u64.fromBuffer(lpMintInfo.supply));
-
-  return { ...poolState, lpSupply };
+  return { ...poolState, lpSupply: new BN(+account.value.amount) };
 };
 
 const getRemainingAccounts = (poolState: PoolState) => {
@@ -120,6 +117,54 @@ const getPoolInfo = async ({
   return poolInfo;
 };
 
+const getSplInfo = async ({
+  program,
+  vaultA,
+  vaultB,
+  poolState,
+}: {
+  program: AmmProgram;
+  vaultA: VaultImpl;
+  vaultB: VaultImpl;
+  poolState: PoolState;
+}) => {
+  const [
+    vaultAReserveBuffer,
+    vaultBReserveBuffer,
+    vaultALpMintBuffer,
+    vaultBLpMintBuffer,
+    poolVaultALpBuffer,
+    poolVaultBLpBuffer,
+    poolLpMintBuffer,
+  ] = await program.provider.connection.getMultipleAccountsInfo([
+    vaultA.vaultState.tokenVault,
+    vaultB.vaultState.tokenVault,
+    vaultA.vaultState.lpMint,
+    vaultB.vaultState.lpMint,
+    poolState.aVaultLp,
+    poolState.bVaultLp,
+    poolState.lpMint,
+  ]);
+
+  const vaultAReserveInfo = AccountLayout.decode(vaultAReserveBuffer!.data);
+  const vaultALpMintInfo = MintLayout.decode(vaultALpMintBuffer!.data);
+  const vaultBReserveInfo = AccountLayout.decode(vaultBReserveBuffer!.data);
+  const vaultBLpMintInfo = MintLayout.decode(vaultBLpMintBuffer!.data);
+  const poolVaultALpInfo = AccountLayout.decode(poolVaultALpBuffer!.data);
+  const poolVaultBLpInfo = AccountLayout.decode(poolVaultBLpBuffer!.data);
+  const poolLpMintInfo = MintLayout.decode(poolLpMintBuffer!.data);
+
+  return {
+    vaultAReserve: new BN(u64.fromBuffer(vaultAReserveInfo.amount)),
+    vaultBReserve: new BN(u64.fromBuffer(vaultBReserveInfo.amount)),
+    vaultALpSupply: new BN(u64.fromBuffer(vaultALpMintInfo.supply)),
+    vaultBLpSupply: new BN(u64.fromBuffer(vaultBLpMintInfo.supply)),
+    poolVaultALp: new BN(u64.fromBuffer(poolVaultALpInfo.amount)),
+    poolVaultBLp: new BN(u64.fromBuffer(poolVaultBLpInfo.amount)),
+    poolLpSupply: new BN(u64.fromBuffer(poolLpMintInfo.supply)),
+  };
+};
+
 export default class AmmImpl implements AmmImplementation {
   public swapCurve: SwapCurve;
   private vaultProgram: VaultProgram;
@@ -135,6 +180,7 @@ export default class AmmImpl implements AmmImplementation {
     public poolState: PoolState & PoolInformation & { lpSupply: BN },
     public vaultA: VaultImpl,
     public vaultB: VaultImpl,
+    private splInfo: SplInfo,
     private depegAccounts: Map<String, AccountInfo<Buffer>>,
     private onChainTime: number,
     opt: Opt,
@@ -188,9 +234,11 @@ export default class AmmImpl implements AmmImplementation {
       apyPda,
     });
 
+    const splInfo = await getSplInfo({ program, vaultA, vaultB, poolState });
+
     const depegAccounts = new Map<String, AccountInfo<Buffer>>();
 
-    if (poolState.curveType['stable'] && !poolState.curveType['stable']['depeg']['depegType']['none']) {
+    if (poolState.curveType['stable'] && !poolState.curveType['stable'].depeg.depegType.none) {
       let extraAddresses: PublicKey[] = [];
       for (const [, address] of Object.entries(CURVE_TYPE_ACCOUNTS)) {
         extraAddresses = extraAddresses.concat(address);
@@ -215,6 +263,7 @@ export default class AmmImpl implements AmmImplementation {
       { ...poolState, ...poolInfo },
       vaultA,
       vaultB,
+      splInfo,
       depegAccounts,
       onChainTime,
       {
@@ -242,8 +291,10 @@ export default class AmmImpl implements AmmImplementation {
   public async updatePoolState() {
     const poolState = await getPoolState(this.address, this.program);
     const poolInfo = await this.getPoolInfo();
+    const splInfo = await getSplInfo({ poolState, program: this.program, vaultA: this.vaultA, vaultB: this.vaultB });
 
     this.poolState = { ...poolState, ...poolInfo };
+    this.splInfo = splInfo;
   }
 
   /**
@@ -255,12 +306,10 @@ export default class AmmImpl implements AmmImplementation {
   }
 
   public async getLpSupply() {
-    const account = await this.program.provider.connection.getAccountInfo(this.poolState.lpMint);
-    invariant(account, ERROR.INVALID_ACCOUNT);
+    const account = await this.program.provider.connection.getTokenSupply(this.poolState.lpMint);
+    invariant(account.value.amount, ERROR.INVALID_ACCOUNT);
 
-    const lpMintInfo = MintLayout.decode(account.data);
-    const lpSupply = new BN(u64.fromBuffer(lpMintInfo.supply));
-    return lpSupply;
+    return new BN(+account.value.amount);
   }
 
   /**
@@ -293,17 +342,13 @@ export default class AmmImpl implements AmmImplementation {
    * @param {number} [slippage] - The maximum amount of slippage you're willing to accept.
    * @returns The amount of the destination token that will be received after the swap.
    */
-  public async getSwapQuote(inTokenMint: PublicKey, inAmountLamport: BN, slippage?: number) {
-    const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
+  public getSwapQuote(inTokenMint: PublicKey, inAmountLamport: BN, slippage: number) {
     invariant(
       inTokenMint.equals(this.poolState.tokenAMint) || inTokenMint.equals(this.poolState.tokenBMint),
       ERROR.INVALID_MINT,
     );
 
-    const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
-
-    const { vaultALpSupply, vaultBLpSupply } = await this.getSplInfo();
-
+    const isFromAToB = inTokenMint.equals(this.poolState.tokenAMint);
     const [
       sourceAmount,
       swapSourceAmount,
@@ -313,31 +358,31 @@ export default class AmmImpl implements AmmImplementation {
       swapSourceVaultLpSupply,
       swapDestinationVaultLpSupply,
       tradeDirection,
-    ] = inTokenMint.equals(this.poolState.tokenAMint)
+    ] = isFromAToB
       ? [
           inAmountLamport,
-          tokenAAmount,
-          tokenBAmount,
+          this.poolState.tokenAAmount,
+          this.poolState.tokenBAmount,
           this.vaultA,
           this.vaultB,
-          vaultALpSupply,
-          vaultBLpSupply,
+          this.splInfo.vaultALpSupply,
+          this.splInfo.vaultBLpSupply,
           TradeDirection.AToB,
         ]
       : [
           inAmountLamport,
-          tokenBAmount,
-          tokenAAmount,
+          this.poolState.tokenBAmount,
+          this.poolState.tokenAAmount,
           this.vaultB,
           this.vaultA,
-          vaultBLpSupply,
-          vaultALpSupply,
+          this.splInfo.vaultBLpSupply,
+          this.splInfo.vaultALpSupply,
           TradeDirection.BToA,
         ];
     const adminFee = this.calculateAdminTradingFee(sourceAmount);
     const tradeFee = this.calculateTradingFee(sourceAmount);
 
-    const sourceVaultWithdrawableAmount = await swapSourceVault.getWithdrawableAmount();
+    const sourceVaultWithdrawableAmount = swapSourceVault.getWithdrawableAmountSync(this.onChainTime);
     // Get vault lp minted when deposit to the vault
     const sourceVaultLp = getUnmintAmount(
       sourceAmount.sub(adminFee),
@@ -356,7 +401,7 @@ export default class AmmImpl implements AmmImplementation {
       tradeDirection,
     );
 
-    const destinationVaultWithdrawableAmount = await swapDestinationVault.getWithdrawableAmount();
+    const destinationVaultWithdrawableAmount = swapDestinationVault.getWithdrawableAmountSync(this.onChainTime);
     // Get vault lp to burn when withdraw from the vault
     const destinationVaultLp = getUnmintAmount(
       destinationAmount,
@@ -370,7 +415,7 @@ export default class AmmImpl implements AmmImplementation {
       swapDestinationVaultLpSupply,
     );
 
-    return getMinAmountWithSlippage(actualDestinationAmount, slippageRate);
+    return getMinAmountWithSlippage(actualDestinationAmount, slippage);
   }
 
   /**
@@ -385,10 +430,9 @@ export default class AmmImpl implements AmmImplementation {
     );
 
     const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
-    const { vaultAReserve, vaultBReserve } = await this.getSplInfo();
     const [outTotalAmount, outReserveBalance] = tokenMint.equals(this.poolState.tokenAMint)
-      ? [tokenAAmount, vaultAReserve]
-      : [tokenBAmount, vaultBReserve];
+      ? [tokenAAmount, this.splInfo.vaultAReserve]
+      : [tokenBAmount, this.splInfo.vaultBReserve];
 
     return outTotalAmount.gt(outReserveBalance) ? outReserveBalance : outTotalAmount;
   }
@@ -400,7 +444,7 @@ export default class AmmImpl implements AmmImplementation {
    * @param {PublicKey} owner - The public key of the user who is swapping
    * @param {PublicKey} inTokenMint - The mint of the token you're swapping from.
    * @param {BN} inAmountLamport - The amount of the input token you want to swap.
-   * @param {BN} outAmountLamport - The amount of the output token you want to receive.
+   * @param {BN} outAmountLamport - The minimum amount of the output token you want to receive.
    * @returns A transaction object
    */
   public async swap(owner: PublicKey, inTokenMint: PublicKey, inAmountLamport: BN, outAmountLamport: BN) {
@@ -457,52 +501,46 @@ export default class AmmImpl implements AmmImplementation {
 
     return new Transaction({
       feePayer: owner,
-      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
+      ...(await this.program.provider.connection.getLatestBlockhash()),
     }).add(swapTx);
   }
 
   /**
    * `getDepositQuote` is a function that takes in a tokenAInAmount, tokenBInAmount, balance, and
-   * slippage, and returns a poolTokenAmountOut, tokenAInAmount, and tokenBInAmount
-   * @param {BN} tokenAInAmount - BN,
-   * @param {BN} tokenBInAmount - BN,
+   * slippage, and returns a poolTokenAmountOut, tokenAInAmount, and tokenBInAmount. `tokenAInAmount` or `tokenBAmount`
+   * can be zero for balance deposit quote.
+   * @param {BN} tokenAInAmount - The amount of token A to be deposit,
+   * @param {BN} tokenBInAmount - The amount of token B to be deposit,
    * @param {boolean} [balance=true] - return false if the deposit is imbalance (default: true)
    * @param {number} [slippage] - The amount of slippage you're willing to accept.
    * @returns The return value is a tuple of the poolTokenAmountOut, tokenAInAmount, and
    * tokenBInAmount.
    */
-  public async getDepositQuote(
-    tokenAInAmount: BN,
-    tokenBInAmount: BN,
-    balance = true,
-    slippage?: number,
-  ): Promise<{
-    poolTokenAmountOut: BN;
-    tokenAInAmount: BN;
-    tokenBInAmount: BN;
-  }> {
+  public getDepositQuote(tokenAInAmount: BN, tokenBInAmount: BN, balance: boolean, slippage: number): DepositQuote {
     invariant(
       !(!this.isStablePool && !tokenAInAmount.isZero() && !tokenBInAmount.isZero()),
-      'Constant product only support balance deposit',
+      'Constant product only supports balanced deposit',
     );
-    invariant(!(!tokenAInAmount.isZero() && !tokenBInAmount.isZero() && balance), 'Deposit balance is not possible');
+    invariant(
+      !(!tokenAInAmount.isZero() && !tokenBInAmount.isZero() && balance),
+      'Deposit balance is not possible when both token in amount is non-zero',
+    );
 
-    const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
-    const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
-
-    const { poolLpSupply, vaultALpSupply, vaultBLpSupply, poolVaultALp, poolVaultBLp } = await this.getSplInfo();
-
-    const vaultAWithdrawableAmount = await this.vaultA.getWithdrawableAmount();
-    const vaultBWithdrawableAmount = await this.vaultB.getWithdrawableAmount();
+    const vaultAWithdrawableAmount = this.vaultA.getWithdrawableAmountSync(this.onChainTime);
+    const vaultBWithdrawableAmount = this.vaultB.getWithdrawableAmountSync(this.onChainTime);
 
     if (tokenAInAmount.isZero() && balance) {
-      const poolTokenAmountOut = this.getShareByAmount(tokenBInAmount, tokenBAmount, poolLpSupply);
+      const poolTokenAmountOut = this.getShareByAmount(
+        tokenBInAmount,
+        this.poolState.tokenBAmount,
+        this.splInfo.poolLpSupply,
+      );
 
       // Calculate for stable pool balance deposit but used `addImbalanceLiquidity`
       if (this.isStablePool) {
         return {
-          poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippageRate),
-          tokenAInAmount: tokenBInAmount.mul(tokenAAmount).div(tokenBAmount),
+          poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippage),
+          tokenAInAmount: tokenBInAmount.mul(this.poolState.tokenAAmount).div(this.poolState.tokenBAmount),
           tokenBInAmount,
         };
       }
@@ -510,80 +548,84 @@ export default class AmmImpl implements AmmImplementation {
       // Constant product pool balance deposit
       const [actualTokenAInAmount, actualTokenBInAmount] = this.computeActualInAmount(
         poolTokenAmountOut,
-        poolLpSupply,
-        poolVaultALp,
-        poolVaultBLp,
-        vaultALpSupply,
-        vaultBLpSupply,
+        this.splInfo.poolLpSupply,
+        this.splInfo.poolVaultALp,
+        this.splInfo.poolVaultBLp,
+        this.splInfo.vaultALpSupply,
+        this.splInfo.vaultBLpSupply,
         vaultAWithdrawableAmount,
         vaultBWithdrawableAmount,
       );
 
       return {
         poolTokenAmountOut,
-        tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippageRate),
-        tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippageRate),
+        tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippage),
+        tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippage),
       };
     }
 
     if (tokenBInAmount.isZero() && balance) {
-      const poolTokenAmountOut = this.getShareByAmount(tokenAInAmount, tokenAAmount, poolLpSupply);
+      const poolTokenAmountOut = this.getShareByAmount(
+        tokenAInAmount,
+        this.poolState.tokenAAmount,
+        this.splInfo.poolLpSupply,
+      );
 
       // Calculate for stable pool balance deposit but used `addImbalanceLiquidity`
       if (this.isStablePool) {
         return {
-          poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippageRate),
+          poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippage),
           tokenAInAmount,
-          tokenBInAmount: tokenAInAmount.mul(tokenBAmount).div(tokenAAmount),
+          tokenBInAmount: tokenAInAmount.mul(this.poolState.tokenBAmount).div(this.poolState.tokenAAmount),
         };
       }
 
       // Constant product pool
       const [actualTokenAInAmount, actualTokenBInAmount] = this.computeActualInAmount(
         poolTokenAmountOut,
-        poolLpSupply,
-        poolVaultALp,
-        poolVaultBLp,
-        vaultALpSupply,
-        vaultBLpSupply,
+        this.splInfo.poolLpSupply,
+        this.splInfo.poolVaultALp,
+        this.splInfo.poolVaultBLp,
+        this.splInfo.vaultALpSupply,
+        this.splInfo.vaultBLpSupply,
         vaultAWithdrawableAmount,
         vaultBWithdrawableAmount,
       );
 
       return {
         poolTokenAmountOut,
-        tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippageRate),
-        tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippageRate),
+        tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippage),
+        tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippage),
       };
     }
 
     // Imbalance deposit
     const actualDepositAAmount = computeActualDepositAmount(
       tokenAInAmount,
-      tokenAAmount,
-      poolVaultALp,
-      vaultALpSupply,
+      this.poolState.tokenAAmount,
+      this.splInfo.poolVaultALp,
+      this.splInfo.vaultALpSupply,
       vaultAWithdrawableAmount,
     );
 
     const actualDepositBAmount = computeActualDepositAmount(
       tokenBInAmount,
-      tokenBAmount,
-      poolVaultBLp,
-      vaultBLpSupply,
+      this.poolState.tokenBAmount,
+      this.splInfo.poolVaultBLp,
+      this.splInfo.vaultBLpSupply,
       vaultBWithdrawableAmount,
     );
     const poolTokenAmountOut = this.swapCurve.computeImbalanceDeposit(
       actualDepositAAmount,
       actualDepositBAmount,
-      tokenAAmount,
-      tokenBAmount,
-      poolLpSupply,
+      this.poolState.tokenAAmount,
+      this.poolState.tokenBAmount,
+      this.splInfo.poolLpSupply,
       this.poolState.fees,
     );
 
     return {
-      poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippageRate),
+      poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippage),
       tokenAInAmount,
       tokenBInAmount,
     };
@@ -659,7 +701,7 @@ export default class AmmImpl implements AmmImplementation {
 
     return new Transaction({
       feePayer: owner,
-      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
+      ...(await this.program.provider.connection.getLatestBlockhash()),
     }).add(depositTx);
   }
 
@@ -672,29 +714,35 @@ export default class AmmImpl implements AmmImplementation {
    * @returns The return value is a tuple of the poolTokenAmountIn, tokenAOutAmount, and
    * tokenBOutAmount.
    */
-  public async getWithdrawQuote(
-    withdrawTokenAmount: BN,
-    tokenMint?: PublicKey,
-    slippage?: number,
-  ): Promise<{
-    poolTokenAmountIn: BN;
-    tokenAOutAmount: BN;
-    tokenBOutAmount: BN;
-  }> {
+  public getWithdrawQuote(withdrawTokenAmount: BN, slippage: number, tokenMint?: PublicKey): WithdrawQuote {
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
-    const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
-    const { poolLpSupply, vaultALpSupply, vaultBLpSupply, poolVaultALp, poolVaultBLp } = await this.getSplInfo();
 
-    const vaultAWithdrawableAmount = await this.vaultA.getWithdrawableAmount();
-    const vaultBWithdrawableAmount = await this.vaultB.getWithdrawableAmount();
+    const vaultAWithdrawableAmount = this.vaultA.getWithdrawableAmountSync(this.onChainTime);
+    const vaultBWithdrawableAmount = this.vaultB.getWithdrawableAmountSync(this.onChainTime);
 
     // balance withdraw
     if (!tokenMint) {
-      const vaultALpBurn = this.getShareByAmount(withdrawTokenAmount, poolLpSupply, poolVaultALp);
-      const vaultBLpBurn = this.getShareByAmount(withdrawTokenAmount, poolLpSupply, poolVaultBLp);
+      const vaultALpBurn = this.getShareByAmount(
+        withdrawTokenAmount,
+        this.splInfo.poolLpSupply,
+        this.splInfo.poolVaultALp,
+      );
+      const vaultBLpBurn = this.getShareByAmount(
+        withdrawTokenAmount,
+        this.splInfo.poolLpSupply,
+        this.splInfo.poolVaultBLp,
+      );
 
-      const tokenAOutAmount = this.getAmountByShare(vaultALpBurn, vaultAWithdrawableAmount, vaultALpSupply);
-      const tokenBOutAmount = this.getAmountByShare(vaultBLpBurn, vaultBWithdrawableAmount, vaultBLpSupply);
+      const tokenAOutAmount = this.getAmountByShare(
+        vaultALpBurn,
+        vaultAWithdrawableAmount,
+        this.splInfo.vaultALpSupply,
+      );
+      const tokenBOutAmount = this.getAmountByShare(
+        vaultBLpBurn,
+        vaultBWithdrawableAmount,
+        this.splInfo.vaultBLpSupply,
+      );
 
       return {
         poolTokenAmountIn: withdrawTokenAmount,
@@ -712,17 +760,17 @@ export default class AmmImpl implements AmmImplementation {
 
     const outAmount = this.swapCurve.computeWithdrawOne(
       withdrawTokenAmount,
-      poolLpSupply,
-      tokenAAmount,
-      tokenBAmount,
+      this.splInfo.poolLpSupply,
+      this.poolState.tokenAAmount,
+      this.poolState.tokenBAmount,
       this.poolState.fees,
       tradeDirection,
     );
 
     const [vaultLpSupply, vaultTotalAmount] =
       tradeDirection == TradeDirection.AToB
-        ? [vaultALpSupply, vaultBWithdrawableAmount]
-        : [vaultBLpSupply, vaultAWithdrawableAmount];
+        ? [this.splInfo.vaultALpSupply, vaultBWithdrawableAmount]
+        : [this.splInfo.vaultBLpSupply, vaultAWithdrawableAmount];
 
     const vaultLpToBurn = outAmount.mul(vaultLpSupply).div(vaultTotalAmount);
     // "Actual" out amount (precision loss)
@@ -743,12 +791,12 @@ export default class AmmImpl implements AmmImplementation {
    * and the amount of tokens to withdraw from each pool, and returns a transaction that withdraws the
    * specified amount of tokens from the pool
    * @param {PublicKey} owner - PublicKey - The public key of the user who is withdrawing liquidity
-   * @param {BN} withdrawTokenAmount - The amount of LP tokens to withdraw.
+   * @param {BN} lpTokenAmount - The amount of LP tokens to withdraw.
    * @param {BN} tokenAOutAmount - The amount of token A you want to withdraw.
-   * @param {BN} tokenBOutAmount - BN,
+   * @param {BN} tokenBOutAmount - The amount of token B you want to withdraw,
    * @returns A transaction object
    */
-  public async withdraw(owner: PublicKey, withdrawTokenAmount: BN, tokenAOutAmount: BN, tokenBOutAmount: BN) {
+  public async withdraw(owner: PublicKey, lpTokenAmount: BN, tokenAOutAmount: BN, tokenBOutAmount: BN) {
     const preInstructions: Array<TransactionInstruction> = [];
     const [[userAToken, createUserAIx], [userBToken, createUserBIx], [userPoolLp, createLpTokenIx]] = await Promise.all(
       [this.poolState.tokenAMint, this.poolState.tokenBMint, this.poolState.lpMint].map((key) =>
@@ -770,7 +818,7 @@ export default class AmmImpl implements AmmImplementation {
 
     const programMethod =
       this.isStablePool && (tokenAOutAmount.isZero() || tokenBOutAmount.isZero())
-        ? this.program.methods.removeLiquiditySingleSide(withdrawTokenAmount, new BN(0)).accounts({
+        ? this.program.methods.removeLiquiditySingleSide(lpTokenAmount, new BN(0)).accounts({
             aTokenVault: this.vaultA.vaultState.tokenVault,
             aVault: this.poolState.aVault,
             aVaultLp: this.poolState.aVaultLp,
@@ -787,7 +835,7 @@ export default class AmmImpl implements AmmImplementation {
             tokenProgram: TOKEN_PROGRAM_ID,
             vaultProgram: this.vaultProgram.programId,
           })
-        : this.program.methods.removeBalanceLiquidity(withdrawTokenAmount, tokenAOutAmount, tokenBOutAmount).accounts({
+        : this.program.methods.removeBalanceLiquidity(lpTokenAmount, tokenAOutAmount, tokenBOutAmount).accounts({
             pool: this.address,
             lpMint: this.poolState.lpMint,
             aVault: this.poolState.aVault,
@@ -814,46 +862,8 @@ export default class AmmImpl implements AmmImplementation {
 
     return new Transaction({
       feePayer: owner,
-      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
+      ...(await this.program.provider.connection.getLatestBlockhash()),
     }).add(withdrawTx);
-  }
-
-  private async getSplInfo() {
-    const [
-      vaultAReserveBuffer,
-      vaultBReserveBuffer,
-      vaultALpMintBuffer,
-      vaultBLpMintBuffer,
-      poolVaultALpBuffer,
-      poolVaultBLpBuffer,
-      poolLpMintBuffer,
-    ] = await this.program.provider.connection.getMultipleAccountsInfo([
-      this.vaultA.vaultState.tokenVault,
-      this.vaultB.vaultState.tokenVault,
-      this.vaultA.vaultState.lpMint,
-      this.vaultB.vaultState.lpMint,
-      this.poolState.aVaultLp,
-      this.poolState.bVaultLp,
-      this.poolState.lpMint,
-    ]);
-
-    const vaultAReserveInfo = AccountLayout.decode(vaultAReserveBuffer!.data);
-    const vaultALpMintInfo = MintLayout.decode(vaultALpMintBuffer!.data);
-    const vaultBReserveInfo = AccountLayout.decode(vaultBReserveBuffer!.data);
-    const vaultBLpMintInfo = MintLayout.decode(vaultBLpMintBuffer!.data);
-    const poolVaultALpInfo = AccountLayout.decode(poolVaultALpBuffer!.data);
-    const poolVaultBLpInfo = AccountLayout.decode(poolVaultBLpBuffer!.data);
-    const poolLpMintInfo = MintLayout.decode(poolLpMintBuffer!.data);
-
-    return {
-      vaultAReserve: new BN(u64.fromBuffer(vaultAReserveInfo.amount)),
-      vaultBReserve: new BN(u64.fromBuffer(vaultBReserveInfo.amount)),
-      vaultALpSupply: new BN(u64.fromBuffer(vaultALpMintInfo.supply)),
-      vaultBLpSupply: new BN(u64.fromBuffer(vaultBLpMintInfo.supply)),
-      poolVaultALp: new BN(u64.fromBuffer(poolVaultALpInfo.amount)),
-      poolVaultBLp: new BN(u64.fromBuffer(poolVaultBLpInfo.amount)),
-      poolLpSupply: new BN(u64.fromBuffer(poolLpMintInfo.supply)),
-    };
   }
 
   private async getPoolInfo() {

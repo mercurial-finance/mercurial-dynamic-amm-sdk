@@ -1,13 +1,6 @@
 import { Cluster, Connection, Keypair, PublicKey } from '@solana/web3.js';
 import AmmImpl from '../index';
-import {
-  DEV_POOL_SOL_MSOL,
-  DEV_POOL_USDT_SOL,
-  DEV_POOL_USDT_USDC,
-  MAIN_POOL_SOL_STSOL,
-  MAIN_POOL_USDT_SOL,
-  MAIN_POOL_USDT_USDC,
-} from '../constants';
+import { DEFAULT_SLIPPAGE, MAINNET_POOL, DEVNET_POOL } from '../constants';
 import { AnchorProvider, BN, Wallet } from '@project-serum/anchor';
 // import { airDropSol } from "./utils";
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
@@ -28,7 +21,7 @@ const DEVNET = {
   cluster: 'devnet',
 };
 
-describe('Get Devnet pool state', () => {
+describe('Interact with Devnet pool', () => {
   const provider = new AnchorProvider(DEVNET.connection, mockWallet, {
     commitment: 'confirmed',
   });
@@ -41,13 +34,13 @@ describe('Get Devnet pool state', () => {
 
   beforeAll(async () => {
     // await airDropSol(DEVNET.connection, mockWallet.publicKey, 2);
-    cpPool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEV_POOL_USDT_SOL), {
+    cpPool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEVNET_POOL.USDT_SOL), {
       cluster: DEVNET.cluster as Cluster,
     });
-    depegPool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEV_POOL_SOL_MSOL), {
+    depegPool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEVNET_POOL.SOL_MSOL), {
       cluster: DEVNET.cluster as Cluster,
     });
-    stablePool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEV_POOL_USDT_USDC), {
+    stablePool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEVNET_POOL.USDT_USDC), {
       cluster: DEVNET.cluster as Cluster,
     });
   });
@@ -56,6 +49,16 @@ describe('Get Devnet pool state', () => {
     expect(cpPool.getPoolTokenMint()).toBeDefined();
     expect(stablePool.getPoolTokenMint()).toBeDefined();
     expect(depegPool.getPoolTokenMint()).toBeDefined();
+  });
+
+  test('Get Pool Lp Supply', async () => {
+    const cpLpSupply = await cpPool.getLpSupply();
+    const stableSupply = await stablePool.getLpSupply();
+    const depegSupply = await depegPool.getLpSupply();
+
+    expect(cpLpSupply).toBeDefined();
+    expect(stableSupply).toBeDefined();
+    expect(depegSupply).toBeDefined();
   });
 
   test('Get Pool Balance', async () => {
@@ -67,7 +70,7 @@ describe('Get Devnet pool state', () => {
   test('Swap SOL → USDT', async () => {
     const inAmountLamport = new BN(0.1 * 10 ** cpPool.tokenB.decimals);
 
-    const quote = await cpPool.getSwapQuote(new PublicKey(cpPool.tokenB.address), inAmountLamport);
+    const quote = await cpPool.getSwapQuote(new PublicKey(cpPool.tokenB.address), inAmountLamport, DEFAULT_SLIPPAGE);
     expect(quote.toNumber()).toBeGreaterThan(0);
 
     const swapTx = await cpPool.swap(
@@ -90,7 +93,7 @@ describe('Get Devnet pool state', () => {
   test('Swap USDT → SOL', async () => {
     const inAmountLamport = new BN(0.1 * 10 ** cpPool.tokenA.decimals);
 
-    const quote = await cpPool.getSwapQuote(new PublicKey(cpPool.tokenA.address), inAmountLamport);
+    const quote = await cpPool.getSwapQuote(new PublicKey(cpPool.tokenA.address), inAmountLamport, DEFAULT_SLIPPAGE);
     expect(quote.toNumber()).toBeGreaterThan(0);
 
     const swapTx = await cpPool.swap(
@@ -112,7 +115,11 @@ describe('Get Devnet pool state', () => {
 
   test('SWAP USDT -> USDC', async () => {
     const inAmountLamport = new BN(0.1 * 10 ** stablePool.tokenA.decimals);
-    const quote = await stablePool.getSwapQuote(new PublicKey(stablePool.tokenA.address), inAmountLamport);
+    const quote = await stablePool.getSwapQuote(
+      new PublicKey(stablePool.tokenA.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
     expect(Number(quote)).toBeGreaterThan(0);
 
     const swapTx = await stablePool.swap(
@@ -134,7 +141,11 @@ describe('Get Devnet pool state', () => {
 
   test('SWAP USDC -> USDT', async () => {
     const inAmountLamport = new BN(0.1 * 10 ** stablePool.tokenB.decimals);
-    const quote = await stablePool.getSwapQuote(new PublicKey(stablePool.tokenB.address), inAmountLamport);
+    const quote = await stablePool.getSwapQuote(
+      new PublicKey(stablePool.tokenB.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
     expect(Number(quote)).toBeGreaterThan(0);
 
     const swapTx = await stablePool.swap(
@@ -157,7 +168,11 @@ describe('Get Devnet pool state', () => {
   test('Swap SOL → mSOL', async () => {
     const inAmountLamport = new BN(0.01 * 10 ** depegPool.tokenA.decimals);
 
-    const quote = await depegPool.getSwapQuote(new PublicKey(depegPool.tokenA.address), inAmountLamport);
+    const quote = await depegPool.getSwapQuote(
+      new PublicKey(depegPool.tokenA.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
     expect(Number(quote)).toBeGreaterThan(0);
 
     const swapTx = await depegPool.swap(
@@ -180,7 +195,11 @@ describe('Get Devnet pool state', () => {
   test('Swap mSOL → SOL', async () => {
     const inAmountLamport = new BN(0.01 * 10 ** depegPool.tokenB.decimals);
 
-    const quote = await depegPool.getSwapQuote(new PublicKey(depegPool.tokenB.address), inAmountLamport);
+    const quote = await depegPool.getSwapQuote(
+      new PublicKey(depegPool.tokenB.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
     expect(Number(quote)).toBeGreaterThan(0);
 
     const swapTx = await depegPool.swap(
@@ -207,6 +226,8 @@ describe('Get Devnet pool state', () => {
     const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await cpPool.getDepositQuote(
       new BN(0),
       inAmountBLamport,
+      true,
+      DEFAULT_SLIPPAGE,
     );
 
     const depositTx = await cpPool.deposit(mockWallet.publicKey, tokenAInAmount, tokenBInAmount, poolTokenAmountOut);
@@ -232,6 +253,8 @@ describe('Get Devnet pool state', () => {
     const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = await cpPool.getDepositQuote(
       inAmountALamport,
       new BN(0),
+      true,
+      DEFAULT_SLIPPAGE,
     );
 
     const depositTx = await cpPool.deposit(mockWallet.publicKey, tokenAInAmount, tokenBInAmount, poolTokenAmountOut);
@@ -259,6 +282,7 @@ describe('Get Devnet pool state', () => {
       inAmountALamport,
       inAmountBLamport,
       false,
+      DEFAULT_SLIPPAGE,
     );
 
     const depositTx = await stablePool.deposit(
@@ -282,11 +306,16 @@ describe('Get Devnet pool state', () => {
     }
   });
 
-  // Single imbalance deposit in stable pool
+  // Single balance deposit in stable pool
   test('Deposit USDT in USDT-USDC (balance)', async () => {
     const inAmountALamport = new BN(0.1 * 10 ** stablePool.tokenA.decimals);
 
-    const { poolTokenAmountOut, tokenBInAmount } = await stablePool.getDepositQuote(inAmountALamport, new BN(0), false);
+    const { poolTokenAmountOut, tokenBInAmount } = await stablePool.getDepositQuote(
+      inAmountALamport,
+      new BN(0),
+      true,
+      DEFAULT_SLIPPAGE,
+    );
 
     const depositTx = await stablePool.deposit(
       mockWallet.publicKey,
@@ -314,7 +343,12 @@ describe('Get Devnet pool state', () => {
     const inAmountALamport = new BN(0.1 * 10 ** depegPool.tokenA.decimals);
     const inAmountBLamport = new BN(0.1 * 10 ** depegPool.tokenB.decimals);
 
-    const { poolTokenAmountOut } = await depegPool.getDepositQuote(inAmountALamport, inAmountBLamport, false);
+    const { poolTokenAmountOut } = await depegPool.getDepositQuote(
+      inAmountALamport,
+      inAmountBLamport,
+      false,
+      DEFAULT_SLIPPAGE,
+    );
 
     const depositTx = await depegPool.deposit(
       mockWallet.publicKey,
@@ -341,7 +375,12 @@ describe('Get Devnet pool state', () => {
   test('Deposit SOL in SOL-mSOL (imbalance)', async () => {
     const inAmountALamport = new BN(0.1 * 10 ** depegPool.tokenA.decimals);
 
-    const { poolTokenAmountOut, tokenBInAmount } = await depegPool.getDepositQuote(inAmountALamport, new BN(0), true);
+    const { poolTokenAmountOut, tokenBInAmount } = await depegPool.getDepositQuote(
+      inAmountALamport,
+      new BN(0),
+      false,
+      DEFAULT_SLIPPAGE,
+    );
 
     const depositTx = await depegPool.deposit(
       mockWallet.publicKey,
@@ -368,7 +407,12 @@ describe('Get Devnet pool state', () => {
   test('Deposit SOL in SOL-mSOL (balance)', async () => {
     const inAmountALamport = new BN(0.1 * 10 ** depegPool.tokenA.decimals);
 
-    const { poolTokenAmountOut, tokenBInAmount } = await depegPool.getDepositQuote(inAmountALamport, new BN(0));
+    const { poolTokenAmountOut, tokenBInAmount } = await depegPool.getDepositQuote(
+      inAmountALamport,
+      new BN(0),
+      true,
+      DEFAULT_SLIPPAGE,
+    );
 
     const depositTx = await depegPool.deposit(
       mockWallet.publicKey,
@@ -395,7 +439,7 @@ describe('Get Devnet pool state', () => {
   test('Withdraw from USDT-SOL pool', async () => {
     const outTokenAmountLamport = new BN(0.1 * 10 ** cpPool.decimals);
 
-    const { tokenAOutAmount, tokenBOutAmount } = await cpPool.getWithdrawQuote(outTokenAmountLamport);
+    const { tokenAOutAmount, tokenBOutAmount } = await cpPool.getWithdrawQuote(outTokenAmountLamport, DEFAULT_SLIPPAGE);
 
     const withdrawTx = await cpPool.withdraw(
       mockWallet.publicKey,
@@ -424,6 +468,7 @@ describe('Get Devnet pool state', () => {
 
     const { tokenAOutAmount, tokenBOutAmount } = await stablePool.getWithdrawQuote(
       outTokenAmountLamport,
+      DEFAULT_SLIPPAGE,
       new PublicKey(stablePool.tokenA.address),
     );
 
@@ -452,7 +497,10 @@ describe('Get Devnet pool state', () => {
   test('Withdraw USDC and USDT from USDT-USDC', async () => {
     const outTokenAmountLamport = new BN(0.1 * 10 ** stablePool.decimals);
 
-    const { tokenAOutAmount, tokenBOutAmount } = await stablePool.getWithdrawQuote(outTokenAmountLamport);
+    const { tokenAOutAmount, tokenBOutAmount } = await stablePool.getWithdrawQuote(
+      outTokenAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
 
     const withdrawTx = await stablePool.withdraw(
       mockWallet.publicKey,
@@ -481,6 +529,7 @@ describe('Get Devnet pool state', () => {
 
     const { tokenAOutAmount, tokenBOutAmount } = await depegPool.getWithdrawQuote(
       outTokenAmountLamport,
+      DEFAULT_SLIPPAGE,
       new PublicKey(depegPool.tokenB.address),
     );
 
@@ -511,6 +560,7 @@ describe('Get Devnet pool state', () => {
 
     const { tokenAOutAmount, tokenBOutAmount } = await depegPool.getWithdrawQuote(
       outTokenAmountLamport,
+      DEFAULT_SLIPPAGE,
       new PublicKey(depegPool.tokenB.address),
     );
 
@@ -536,19 +586,19 @@ describe('Get Devnet pool state', () => {
   });
 });
 
-describe('Get Mainnet pool state', () => {
+describe('Interact with Mainnet pool', () => {
   let stablePool: AmmImpl;
   let cpPool: AmmImpl;
   let depegPool: AmmImpl;
 
   beforeAll(async () => {
-    cpPool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAIN_POOL_USDT_SOL), {
+    cpPool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAINNET_POOL.USDC_SOL), {
       cluster: MAINNET.cluster as Cluster,
     });
-    depegPool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAIN_POOL_SOL_STSOL), {
+    depegPool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAINNET_POOL.SOL_STSOL), {
       cluster: MAINNET.cluster as Cluster,
     });
-    stablePool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAIN_POOL_USDT_USDC), {
+    stablePool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAINNET_POOL.USDT_USDC), {
       cluster: MAINNET.cluster as Cluster,
     });
   });
