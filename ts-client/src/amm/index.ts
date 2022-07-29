@@ -6,22 +6,15 @@ import {
   Transaction,
   TransactionInstruction,
   AccountInfo,
-  Account,
+  ParsedAccountData,
+  SYSVAR_CLOCK_PUBKEY,
 } from '@solana/web3.js';
-import { StaticTokenListResolutionStrategy, TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
+import { TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
 import VaultImpl, { getAmountByShare, getUnmintAmount } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
-import {
-  AmmImplementation,
-  DepositQuote,
-  PoolInformation,
-  PoolState,
-  SplInfo,
-  SplInfoBuffer,
-  WithdrawQuote,
-} from './types';
+import { AmmImplementation, DepositQuote, PoolInformation, PoolState, SplInfo, WithdrawQuote } from './types';
 import { Amm, IDL as AmmIDL } from './idl';
 import { Vault, IDL as VaultIdl } from './vault-idl';
 import {
@@ -152,6 +145,7 @@ const getSplInfoBuffer = async ({
     poolVaultALpBuffer,
     poolVaultBLpBuffer,
     poolLpMintBuffer,
+    clockAccountBuffer,
   ] = await program.provider.connection.getMultipleAccountsInfo([
     vaultA.vaultState.tokenVault,
     vaultB.vaultState.tokenVault,
@@ -160,9 +154,10 @@ const getSplInfoBuffer = async ({
     poolState.aVaultLp,
     poolState.bVaultLp,
     poolState.lpMint,
+    SYSVAR_CLOCK_PUBKEY,
   ]);
 
-  return {
+  return [
     vaultAReserveBuffer,
     vaultBReserveBuffer,
     vaultALpMintBuffer,
@@ -170,10 +165,11 @@ const getSplInfoBuffer = async ({
     poolVaultALpBuffer,
     poolVaultBLpBuffer,
     poolLpMintBuffer,
-  };
+    clockAccountBuffer,
+  ];
 };
 
-const deserializeSplInfoBuffer = ({
+const deserializeSplInfoBuffer = ([
   vaultAReserveBuffer,
   vaultBReserveBuffer,
   vaultALpMintBuffer,
@@ -181,7 +177,8 @@ const deserializeSplInfoBuffer = ({
   poolVaultALpBuffer,
   poolVaultBLpBuffer,
   poolLpMintBuffer,
-}: SplInfoBuffer) => {
+  clockAccountBuffer,
+]: Array<AccountInfo<Buffer> | null>) => {
   const vaultAReserveInfo = AccountLayout.decode(vaultAReserveBuffer!.data);
   const vaultBReserveInfo = AccountLayout.decode(vaultBReserveBuffer!.data);
   const vaultALpMintInfo = MintLayout.decode(vaultALpMintBuffer!.data);
@@ -198,6 +195,7 @@ const deserializeSplInfoBuffer = ({
     poolVaultALp: new BN(u64.fromBuffer(poolVaultALpInfo.amount)),
     poolVaultBLp: new BN(u64.fromBuffer(poolVaultBLpInfo.amount)),
     poolLpSupply: new BN(u64.fromBuffer(poolLpMintInfo.supply)),
+    currentTime: new BN(clockAccountBuffer!.data.readBigInt64LE(32).toString()).toNumber(),
   };
 };
 
@@ -216,10 +214,8 @@ export default class AmmImpl implements AmmImplementation {
     public poolState: PoolState & PoolInformation & { lpSupply: BN },
     public vaultA: VaultImpl,
     public vaultB: VaultImpl,
-    public splInfoBuffer: SplInfoBuffer,
     private splInfo: SplInfo,
     private depegAccounts: Map<String, AccountInfo<Buffer>>,
-    private onChainTime: number,
     opt: Opt,
   ) {
     this.vaultProgram = new Program<Vault>(VaultIdl, VAULT_PROGRAM_ID, this.program.provider);
@@ -230,7 +226,7 @@ export default class AmmImpl implements AmmImplementation {
 
     if ('stable' in this.poolState.curveType) {
       const { amp, depeg, tokenMultiplier } = this.poolState.curveType['stable'];
-      this.swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, this.depegAccounts, onChainTime);
+      this.swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, this.depegAccounts, splInfo.currentTime);
     } else {
       this.swapCurve = new ConstantProductSwap();
     }
@@ -291,8 +287,6 @@ export default class AmmImpl implements AmmImplementation {
       }
     }
 
-    const onChainTime = await getOnchainTime(program.provider.connection);
-
     return new AmmImpl(
       program,
       apyPda,
@@ -301,10 +295,8 @@ export default class AmmImpl implements AmmImplementation {
       { ...poolState, ...poolInfo },
       vaultA,
       vaultB,
-      splInfoBuffer,
       splInfo,
       depegAccounts,
-      onChainTime,
       {
         cluster,
       },
@@ -331,8 +323,12 @@ export default class AmmImpl implements AmmImplementation {
    * It updates the state of the pool by calling the getPoolState function
    */
   public async updateState() {
+    // Update pool state
     const poolState = await getPoolState(this.address, this.program);
     const poolInfo = await this.getPoolInfo();
+    this.poolState = { ...poolState, ...poolInfo };
+
+    // update spl info
     const splInfoBuffer = await getSplInfoBuffer({
       poolState,
       program: this.program,
@@ -340,9 +336,11 @@ export default class AmmImpl implements AmmImplementation {
       vaultB: this.vaultB,
     });
     const splInfo = deserializeSplInfoBuffer(splInfoBuffer);
-
-    this.poolState = { ...poolState, ...poolInfo };
     this.splInfo = splInfo;
+
+    // update swap curve
+    const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
+    this.swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, this.depegAccounts, splInfo.currentTime);
   }
 
   /**
@@ -378,28 +376,50 @@ export default class AmmImpl implements AmmImplementation {
     );
     if (!account) return new BN(0);
 
-    const accountInfo = await this.program.provider.connection.getAccountInfo(account);
-    if (!accountInfo) return new BN(0);
+    const parsedAccountInfo = await this.program.provider.connection.getParsedAccountInfo(account);
+    if (!parsedAccountInfo.value) return new BN(0);
 
-    const accountInfoData = AccountLayout.decode(accountInfo.data);
+    const accountInfoData = (parsedAccountInfo.value!.data as ParsedAccountData).parsed;
 
-    return new BN(u64.fromBuffer(accountInfoData.amount));
+    return new BN(Number(accountInfoData.info.tokenAmount.amount));
   }
 
   /**
-   * This function returns the splInfoBuffer array (For Jupiter use)
-   * @returns {SplInfoBuffer} The splInfoBuffer array.
+   * This function returns the account's publickey array that need to update (For Jupiter use)
+   * @returns {Array<PublicKey>} A list of account's public key.
    */
   public getAccountsForUpdate() {
-    return this.splInfoBuffer;
+    return [
+      this.vaultA.vaultState.tokenVault,
+      this.vaultB.vaultState.tokenVault,
+      this.vaultA.vaultState.lpMint,
+      this.vaultB.vaultState.lpMint,
+      this.poolState.aVaultLp,
+      this.poolState.bVaultLp,
+      this.poolState.lpMint,
+      SYSVAR_CLOCK_PUBKEY,
+    ];
   }
 
   /**
    * Update splInfo state (For Jupiter use)
    * @param {SplInfoBuffer} splInfoBuffer - The buffer that contains the serialized SplInfo object.
    */
-  public update(splInfoBuffer: SplInfoBuffer) {
-    this.splInfo = deserializeSplInfoBuffer(splInfoBuffer);
+  public update(accountInfos: Array<AccountInfo<Buffer>>) {
+    // TODO: get Pool State sync
+
+    // Update splInfo
+    this.splInfo = deserializeSplInfoBuffer(accountInfos);
+
+    // Update swap curve
+    const { amp, depeg, tokenMultiplier } = this.poolState.curveType['stable'];
+    this.swapCurve = new StableSwap(
+      amp.toNumber(),
+      tokenMultiplier,
+      depeg,
+      this.depegAccounts,
+      this.splInfo.currentTime,
+    );
   }
 
   /**
@@ -450,7 +470,7 @@ export default class AmmImpl implements AmmImplementation {
     const adminFee = this.calculateAdminTradingFee(sourceAmount);
     const tradeFee = this.calculateTradingFee(sourceAmount);
 
-    const sourceVaultWithdrawableAmount = swapSourceVault.getWithdrawableAmountSync(this.onChainTime);
+    const sourceVaultWithdrawableAmount = swapSourceVault.getWithdrawableAmountSync(this.splInfo.currentTime);
     // Get vault lp minted when deposit to the vault
     const sourceVaultLp = getUnmintAmount(
       sourceAmount.sub(adminFee),
@@ -469,7 +489,7 @@ export default class AmmImpl implements AmmImplementation {
       tradeDirection,
     );
 
-    const destinationVaultWithdrawableAmount = swapDestinationVault.getWithdrawableAmountSync(this.onChainTime);
+    const destinationVaultWithdrawableAmount = swapDestinationVault.getWithdrawableAmountSync(this.splInfo.currentTime);
     // Get vault lp to burn when withdraw from the vault
     const destinationVaultLp = getUnmintAmount(
       destinationAmount,
@@ -594,8 +614,8 @@ export default class AmmImpl implements AmmImplementation {
       'Deposit balance is not possible when both token in amount is non-zero',
     );
 
-    const vaultAWithdrawableAmount = this.vaultA.getWithdrawableAmountSync(this.onChainTime);
-    const vaultBWithdrawableAmount = this.vaultB.getWithdrawableAmountSync(this.onChainTime);
+    const vaultAWithdrawableAmount = this.vaultA.getWithdrawableAmountSync(this.splInfo.currentTime);
+    const vaultBWithdrawableAmount = this.vaultB.getWithdrawableAmountSync(this.splInfo.currentTime);
 
     if (tokenAInAmount.isZero() && balance) {
       const poolTokenAmountOut = this.getShareByAmount(
@@ -785,8 +805,8 @@ export default class AmmImpl implements AmmImplementation {
   public getWithdrawQuote(withdrawTokenAmount: BN, slippage: number, tokenMint?: PublicKey): WithdrawQuote {
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
 
-    const vaultAWithdrawableAmount = this.vaultA.getWithdrawableAmountSync(this.onChainTime);
-    const vaultBWithdrawableAmount = this.vaultB.getWithdrawableAmountSync(this.onChainTime);
+    const vaultAWithdrawableAmount = this.vaultA.getWithdrawableAmountSync(this.splInfo.currentTime);
+    const vaultBWithdrawableAmount = this.vaultB.getWithdrawableAmountSync(this.splInfo.currentTime);
 
     // balance withdraw
     if (!tokenMint) {
