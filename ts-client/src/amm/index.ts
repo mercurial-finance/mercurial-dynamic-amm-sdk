@@ -340,8 +340,8 @@ export default class AmmImpl implements AmmImplementation {
    * It updates the state of the pool
    */
   public async updateState() {
-    this.vaultA.refreshVaultState();
-    this.vaultB.refreshVaultState();
+    await this.vaultA.refreshVaultState();
+    await this.vaultB.refreshVaultState();
 
     // Update pool state
     const poolState = await getPoolState(this.address, this.program);
@@ -541,20 +541,47 @@ export default class AmmImpl implements AmmImplementation {
   }
 
   /**
-   * `getMaxSwapOutAmount` returns the maximum amount of tokens that can be swapped out of the pool
-   * @param {PublicKey} tokenMint - The mint of the token you want to swap out.
-   * @returns The maximum amount of tokens that can be swapped out of the pool.
+   * Get maximum in amount (source amount) for swap
+   * !!! NOTE it is just estimation
+   * @param tokenMint
    */
-  public async getMaxSwapOutAmount(tokenMint: PublicKey) {
+  public getMaxSwapInAmount(tokenMint: PublicKey) {
+    // Get maximum in amount by swapping maximum withdrawable amount of tokenMint in the pool
     invariant(
       tokenMint.equals(this.poolState.tokenAMint) || tokenMint.equals(this.poolState.tokenBMint),
       ERROR.INVALID_MINT,
     );
 
-    const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
+    const [outTokenMint, swapSourceAmount, swapDestAmount, tradeDirection] = tokenMint.equals(this.poolState.tokenAMint)
+      ? [this.poolState.tokenBMint, this.poolState.tokenAAmount, this.poolState.tokenBAmount, TradeDirection.AToB]
+      : [this.poolState.tokenAMint, this.poolState.tokenBAmount, this.poolState.tokenAAmount, TradeDirection.BToA];
+    let maxOutAmount = this.getMaxSwapOutAmount(outTokenMint);
+    // Impossible to deplete the pool, therefore if maxOutAmount is equals to tokenAmount in pool, subtract it by 1
+    if (maxOutAmount.eq(swapDestAmount)) {
+      maxOutAmount = maxOutAmount.sub(new BN(1)); // Left 1 token in pool
+    }
+    let maxInAmount = this.swapCurve!.computeInAmount(maxOutAmount, swapSourceAmount, swapDestAmount, tradeDirection);
+    const adminFee = this.calculateAdminTradingFee(maxInAmount);
+    const tradeFee = this.calculateTradingFee(maxInAmount);
+    maxInAmount = maxInAmount.sub(adminFee);
+    maxInAmount = maxInAmount.sub(tradeFee);
+    return maxInAmount;
+  }
+
+  /**
+   * `getMaxSwapOutAmount` returns the maximum amount of tokens that can be swapped out of the pool
+   * @param {PublicKey} tokenMint - The mint of the token you want to swap out.
+   * @returns The maximum amount of tokens that can be swapped out of the pool.
+   */
+  public getMaxSwapOutAmount(tokenMint: PublicKey) {
+    invariant(
+      tokenMint.equals(this.poolState.tokenAMint) || tokenMint.equals(this.poolState.tokenBMint),
+      ERROR.INVALID_MINT,
+    );
+
     const [outTotalAmount, outReserveBalance] = tokenMint.equals(this.poolState.tokenAMint)
-      ? [tokenAAmount, this.accountsInfo.vaultAReserve]
-      : [tokenBAmount, this.accountsInfo.vaultBReserve];
+      ? [this.poolState.tokenAAmount, this.accountsInfo.vaultAReserve]
+      : [this.poolState.tokenBAmount, this.accountsInfo.vaultBReserve];
 
     return outTotalAmount.gt(outReserveBalance) ? outReserveBalance : outTotalAmount;
   }
