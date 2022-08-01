@@ -337,13 +337,16 @@ export default class AmmImpl implements AmmImplementation {
   }
 
   /**
-   * It updates the state of the pool by calling the getPoolState function
+   * It updates the state of the pool
    */
   public async updateState() {
     // Update pool state
     const poolState = await getPoolState(this.address, this.program);
     const poolInfo = await this.getPoolInfo();
     this.poolState = { ...poolState, ...poolInfo };
+
+    this.vaultA.refreshVaultState();
+    this.vaultB.refreshVaultState();
 
     // update spl info
     const splInfoBuffer = await getAccountsBuffer({
@@ -354,15 +357,17 @@ export default class AmmImpl implements AmmImplementation {
     });
     this.accountsInfo = deserializeAccountsBuffer(splInfoBuffer);
 
-    // update swap curve
-    const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
-    this.swapCurve = new StableSwap(
-      amp.toNumber(),
-      tokenMultiplier,
-      depeg,
-      this.depegAccounts,
-      this.accountsInfo.currentTime,
-    );
+    if (this.isStablePool) {
+      // update swap curve
+      const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
+      this.swapCurve = new StableSwap(
+        amp.toNumber(),
+        tokenMultiplier,
+        depeg,
+        this.depegAccounts,
+        this.accountsInfo.currentTime,
+      );
+    }
   }
 
   /**
@@ -424,24 +429,29 @@ export default class AmmImpl implements AmmImplementation {
   }
 
   /**
-   * Update splInfo state (For Jupiter use)
-   * @param {SplInfoBuffer} splInfoBuffer - The buffer that contains the serialized SplInfo object.
+   * Update all accountsInfo (For Jupiter use)
+   * @param {Array<AccountInfo<Buffer>>} accountInfos - The buffer that contains the serialized accounts info.
    */
   public update(accountInfos: Array<AccountInfo<Buffer>>) {
+    this.vaultA.refreshVaultState();
+    this.vaultB.refreshVaultState();
+
     // TODO: get Pool Info sync
 
     // Update splInfo
     this.accountsInfo = deserializeAccountsBuffer(accountInfos);
 
-    // Update swap curve
-    const { amp, depeg, tokenMultiplier } = this.poolState.curveType['stable'];
-    this.swapCurve = new StableSwap(
-      amp.toNumber(),
-      tokenMultiplier,
-      depeg,
-      this.depegAccounts,
-      this.accountsInfo.currentTime,
-    );
+    if (this.isStablePool) {
+      // Update swap curve
+      const { amp, depeg, tokenMultiplier } = this.poolState.curveType['stable'];
+      this.swapCurve = new StableSwap(
+        amp.toNumber(),
+        tokenMultiplier,
+        depeg,
+        this.depegAccounts,
+        this.accountsInfo.currentTime,
+      );
+    }
   }
 
   /**
