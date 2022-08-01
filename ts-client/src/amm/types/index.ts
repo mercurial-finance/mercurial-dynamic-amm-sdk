@@ -87,6 +87,8 @@ export interface TokenMultiplier {
 // PoolState
 export type PoolState = TypeDef<AmmIdl['accounts']['0'], IdlTypes<AmmIdl>>;
 
+export type ApyState = TypeDef<AmmIdl['accounts']['1'], IdlTypes<AmmIdl>>;
+
 export type PoolInformation = {
   firstTimestamp: BN;
   currentTimestamp: BN;
@@ -97,7 +99,7 @@ export type PoolInformation = {
   apy: number;
 };
 
-export type SplInfo = {
+export type AccountsInfo = {
   vaultAReserve: BN;
   vaultBReserve: BN;
   vaultALpSupply: BN;

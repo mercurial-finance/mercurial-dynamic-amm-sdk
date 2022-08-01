@@ -14,7 +14,15 @@ import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana
 import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
 import VaultImpl, { getAmountByShare, getUnmintAmount } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
-import { AmmImplementation, DepositQuote, PoolInformation, PoolState, SplInfo, WithdrawQuote } from './types';
+import {
+  AccountsInfo,
+  AmmImplementation,
+  ApyState,
+  DepositQuote,
+  PoolInformation,
+  PoolState,
+  WithdrawQuote,
+} from './types';
 import { Amm, IDL as AmmIDL } from './idl';
 import { Vault, IDL as VaultIdl } from './vault-idl';
 import {
@@ -126,7 +134,7 @@ const getPoolInfo = async ({
   return poolInfo;
 };
 
-const getSplInfoBuffer = async ({
+const getAccountsBuffer = async ({
   program,
   vaultA,
   vaultB,
@@ -169,7 +177,7 @@ const getSplInfoBuffer = async ({
   ];
 };
 
-const deserializeSplInfoBuffer = ([
+const deserializeAccountsBuffer = ([
   vaultAReserveBuffer,
   vaultBReserveBuffer,
   vaultALpMintBuffer,
@@ -209,12 +217,13 @@ export default class AmmImpl implements AmmImplementation {
   private constructor(
     private program: AmmProgram,
     private apyPda: PublicKey,
+    private apyState: ApyState,
     private tokenInfos: Array<TokenInfo>,
     public address: PublicKey,
     public poolState: PoolState & PoolInformation & { lpSupply: BN },
     public vaultA: VaultImpl,
     public vaultB: VaultImpl,
-    private splInfo: SplInfo,
+    private accountsInfo: AccountsInfo,
     private depegAccounts: Map<String, AccountInfo<Buffer>>,
     opt: Opt,
   ) {
@@ -226,7 +235,13 @@ export default class AmmImpl implements AmmImplementation {
 
     if ('stable' in this.poolState.curveType) {
       const { amp, depeg, tokenMultiplier } = this.poolState.curveType['stable'];
-      this.swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, this.depegAccounts, splInfo.currentTime);
+      this.swapCurve = new StableSwap(
+        amp.toNumber(),
+        tokenMultiplier,
+        depeg,
+        this.depegAccounts,
+        accountsInfo.currentTime,
+      );
     } else {
       this.swapCurve = new ConstantProductSwap();
     }
@@ -267,8 +282,9 @@ export default class AmmImpl implements AmmImplementation {
       apyPda,
     });
 
-    const splInfoBuffer = await getSplInfoBuffer({ program, vaultA, vaultB, poolState });
-    const splInfo = deserializeSplInfoBuffer(splInfoBuffer);
+    const accountsBuffer = await getAccountsBuffer({ program, vaultA, vaultB, poolState });
+    const accountsInfo = deserializeAccountsBuffer(accountsBuffer);
+    const apyState = await program.account.apy.fetch(apyPda);
 
     const depegAccounts = new Map<String, AccountInfo<Buffer>>();
 
@@ -290,12 +306,13 @@ export default class AmmImpl implements AmmImplementation {
     return new AmmImpl(
       program,
       apyPda,
+      apyState,
       [tokenInfoA, tokenInfoB],
       pool,
       { ...poolState, ...poolInfo },
       vaultA,
       vaultB,
-      splInfo,
+      accountsInfo,
       depegAccounts,
       {
         cluster,
@@ -329,18 +346,23 @@ export default class AmmImpl implements AmmImplementation {
     this.poolState = { ...poolState, ...poolInfo };
 
     // update spl info
-    const splInfoBuffer = await getSplInfoBuffer({
+    const splInfoBuffer = await getAccountsBuffer({
       poolState,
       program: this.program,
       vaultA: this.vaultA,
       vaultB: this.vaultB,
     });
-    const splInfo = deserializeSplInfoBuffer(splInfoBuffer);
-    this.splInfo = splInfo;
+    this.accountsInfo = deserializeAccountsBuffer(splInfoBuffer);
 
     // update swap curve
     const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
-    this.swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, this.depegAccounts, splInfo.currentTime);
+    this.swapCurve = new StableSwap(
+      amp.toNumber(),
+      tokenMultiplier,
+      depeg,
+      this.depegAccounts,
+      this.accountsInfo.currentTime,
+    );
   }
 
   /**
@@ -406,10 +428,10 @@ export default class AmmImpl implements AmmImplementation {
    * @param {SplInfoBuffer} splInfoBuffer - The buffer that contains the serialized SplInfo object.
    */
   public update(accountInfos: Array<AccountInfo<Buffer>>) {
-    // TODO: get Pool State sync
+    // TODO: get Pool Info sync
 
     // Update splInfo
-    this.splInfo = deserializeSplInfoBuffer(accountInfos);
+    this.accountsInfo = deserializeAccountsBuffer(accountInfos);
 
     // Update swap curve
     const { amp, depeg, tokenMultiplier } = this.poolState.curveType['stable'];
@@ -418,7 +440,7 @@ export default class AmmImpl implements AmmImplementation {
       tokenMultiplier,
       depeg,
       this.depegAccounts,
-      this.splInfo.currentTime,
+      this.accountsInfo.currentTime,
     );
   }
 
@@ -453,8 +475,8 @@ export default class AmmImpl implements AmmImplementation {
           this.poolState.tokenBAmount,
           this.vaultA,
           this.vaultB,
-          this.splInfo.vaultALpSupply,
-          this.splInfo.vaultBLpSupply,
+          this.accountsInfo.vaultALpSupply,
+          this.accountsInfo.vaultBLpSupply,
           TradeDirection.AToB,
         ]
       : [
@@ -463,14 +485,14 @@ export default class AmmImpl implements AmmImplementation {
           this.poolState.tokenAAmount,
           this.vaultB,
           this.vaultA,
-          this.splInfo.vaultBLpSupply,
-          this.splInfo.vaultALpSupply,
+          this.accountsInfo.vaultBLpSupply,
+          this.accountsInfo.vaultALpSupply,
           TradeDirection.BToA,
         ];
     const adminFee = this.calculateAdminTradingFee(sourceAmount);
     const tradeFee = this.calculateTradingFee(sourceAmount);
 
-    const sourceVaultWithdrawableAmount = swapSourceVault.getWithdrawableAmountSync(this.splInfo.currentTime);
+    const sourceVaultWithdrawableAmount = swapSourceVault.getWithdrawableAmountSync(this.accountsInfo.currentTime);
     // Get vault lp minted when deposit to the vault
     const sourceVaultLp = getUnmintAmount(
       sourceAmount.sub(adminFee),
@@ -489,7 +511,9 @@ export default class AmmImpl implements AmmImplementation {
       tradeDirection,
     );
 
-    const destinationVaultWithdrawableAmount = swapDestinationVault.getWithdrawableAmountSync(this.splInfo.currentTime);
+    const destinationVaultWithdrawableAmount = swapDestinationVault.getWithdrawableAmountSync(
+      this.accountsInfo.currentTime,
+    );
     // Get vault lp to burn when withdraw from the vault
     const destinationVaultLp = getUnmintAmount(
       destinationAmount,
@@ -519,8 +543,8 @@ export default class AmmImpl implements AmmImplementation {
 
     const { tokenAAmount, tokenBAmount } = await this.getPoolInfo();
     const [outTotalAmount, outReserveBalance] = tokenMint.equals(this.poolState.tokenAMint)
-      ? [tokenAAmount, this.splInfo.vaultAReserve]
-      : [tokenBAmount, this.splInfo.vaultBReserve];
+      ? [tokenAAmount, this.accountsInfo.vaultAReserve]
+      : [tokenBAmount, this.accountsInfo.vaultBReserve];
 
     return outTotalAmount.gt(outReserveBalance) ? outReserveBalance : outTotalAmount;
   }
@@ -614,14 +638,14 @@ export default class AmmImpl implements AmmImplementation {
       'Deposit balance is not possible when both token in amount is non-zero',
     );
 
-    const vaultAWithdrawableAmount = this.vaultA.getWithdrawableAmountSync(this.splInfo.currentTime);
-    const vaultBWithdrawableAmount = this.vaultB.getWithdrawableAmountSync(this.splInfo.currentTime);
+    const vaultAWithdrawableAmount = this.vaultA.getWithdrawableAmountSync(this.accountsInfo.currentTime);
+    const vaultBWithdrawableAmount = this.vaultB.getWithdrawableAmountSync(this.accountsInfo.currentTime);
 
     if (tokenAInAmount.isZero() && balance) {
       const poolTokenAmountOut = this.getShareByAmount(
         tokenBInAmount,
         this.poolState.tokenBAmount,
-        this.splInfo.poolLpSupply,
+        this.accountsInfo.poolLpSupply,
       );
 
       // Calculate for stable pool balance deposit but used `addImbalanceLiquidity`
@@ -636,11 +660,11 @@ export default class AmmImpl implements AmmImplementation {
       // Constant product pool balance deposit
       const [actualTokenAInAmount, actualTokenBInAmount] = this.computeActualInAmount(
         poolTokenAmountOut,
-        this.splInfo.poolLpSupply,
-        this.splInfo.poolVaultALp,
-        this.splInfo.poolVaultBLp,
-        this.splInfo.vaultALpSupply,
-        this.splInfo.vaultBLpSupply,
+        this.accountsInfo.poolLpSupply,
+        this.accountsInfo.poolVaultALp,
+        this.accountsInfo.poolVaultBLp,
+        this.accountsInfo.vaultALpSupply,
+        this.accountsInfo.vaultBLpSupply,
         vaultAWithdrawableAmount,
         vaultBWithdrawableAmount,
       );
@@ -656,7 +680,7 @@ export default class AmmImpl implements AmmImplementation {
       const poolTokenAmountOut = this.getShareByAmount(
         tokenAInAmount,
         this.poolState.tokenAAmount,
-        this.splInfo.poolLpSupply,
+        this.accountsInfo.poolLpSupply,
       );
 
       // Calculate for stable pool balance deposit but used `addImbalanceLiquidity`
@@ -671,11 +695,11 @@ export default class AmmImpl implements AmmImplementation {
       // Constant product pool
       const [actualTokenAInAmount, actualTokenBInAmount] = this.computeActualInAmount(
         poolTokenAmountOut,
-        this.splInfo.poolLpSupply,
-        this.splInfo.poolVaultALp,
-        this.splInfo.poolVaultBLp,
-        this.splInfo.vaultALpSupply,
-        this.splInfo.vaultBLpSupply,
+        this.accountsInfo.poolLpSupply,
+        this.accountsInfo.poolVaultALp,
+        this.accountsInfo.poolVaultBLp,
+        this.accountsInfo.vaultALpSupply,
+        this.accountsInfo.vaultBLpSupply,
         vaultAWithdrawableAmount,
         vaultBWithdrawableAmount,
       );
@@ -691,16 +715,16 @@ export default class AmmImpl implements AmmImplementation {
     const actualDepositAAmount = computeActualDepositAmount(
       tokenAInAmount,
       this.poolState.tokenAAmount,
-      this.splInfo.poolVaultALp,
-      this.splInfo.vaultALpSupply,
+      this.accountsInfo.poolVaultALp,
+      this.accountsInfo.vaultALpSupply,
       vaultAWithdrawableAmount,
     );
 
     const actualDepositBAmount = computeActualDepositAmount(
       tokenBInAmount,
       this.poolState.tokenBAmount,
-      this.splInfo.poolVaultBLp,
-      this.splInfo.vaultBLpSupply,
+      this.accountsInfo.poolVaultBLp,
+      this.accountsInfo.vaultBLpSupply,
       vaultBWithdrawableAmount,
     );
     const poolTokenAmountOut = this.swapCurve.computeImbalanceDeposit(
@@ -708,7 +732,7 @@ export default class AmmImpl implements AmmImplementation {
       actualDepositBAmount,
       this.poolState.tokenAAmount,
       this.poolState.tokenBAmount,
-      this.splInfo.poolLpSupply,
+      this.accountsInfo.poolLpSupply,
       this.poolState.fees,
     );
 
@@ -805,31 +829,31 @@ export default class AmmImpl implements AmmImplementation {
   public getWithdrawQuote(withdrawTokenAmount: BN, slippage: number, tokenMint?: PublicKey): WithdrawQuote {
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
 
-    const vaultAWithdrawableAmount = this.vaultA.getWithdrawableAmountSync(this.splInfo.currentTime);
-    const vaultBWithdrawableAmount = this.vaultB.getWithdrawableAmountSync(this.splInfo.currentTime);
+    const vaultAWithdrawableAmount = this.vaultA.getWithdrawableAmountSync(this.accountsInfo.currentTime);
+    const vaultBWithdrawableAmount = this.vaultB.getWithdrawableAmountSync(this.accountsInfo.currentTime);
 
     // balance withdraw
     if (!tokenMint) {
       const vaultALpBurn = this.getShareByAmount(
         withdrawTokenAmount,
-        this.splInfo.poolLpSupply,
-        this.splInfo.poolVaultALp,
+        this.accountsInfo.poolLpSupply,
+        this.accountsInfo.poolVaultALp,
       );
       const vaultBLpBurn = this.getShareByAmount(
         withdrawTokenAmount,
-        this.splInfo.poolLpSupply,
-        this.splInfo.poolVaultBLp,
+        this.accountsInfo.poolLpSupply,
+        this.accountsInfo.poolVaultBLp,
       );
 
       const tokenAOutAmount = this.getAmountByShare(
         vaultALpBurn,
         vaultAWithdrawableAmount,
-        this.splInfo.vaultALpSupply,
+        this.accountsInfo.vaultALpSupply,
       );
       const tokenBOutAmount = this.getAmountByShare(
         vaultBLpBurn,
         vaultBWithdrawableAmount,
-        this.splInfo.vaultBLpSupply,
+        this.accountsInfo.vaultBLpSupply,
       );
 
       return {
@@ -848,7 +872,7 @@ export default class AmmImpl implements AmmImplementation {
 
     const outAmount = this.swapCurve.computeWithdrawOne(
       withdrawTokenAmount,
-      this.splInfo.poolLpSupply,
+      this.accountsInfo.poolLpSupply,
       this.poolState.tokenAAmount,
       this.poolState.tokenBAmount,
       this.poolState.fees,
@@ -857,8 +881,8 @@ export default class AmmImpl implements AmmImplementation {
 
     const [vaultLpSupply, vaultTotalAmount] =
       tradeDirection == TradeDirection.AToB
-        ? [this.splInfo.vaultALpSupply, vaultBWithdrawableAmount]
-        : [this.splInfo.vaultBLpSupply, vaultAWithdrawableAmount];
+        ? [this.accountsInfo.vaultALpSupply, vaultBWithdrawableAmount]
+        : [this.accountsInfo.vaultBLpSupply, vaultAWithdrawableAmount];
 
     const vaultLpToBurn = outAmount.mul(vaultLpSupply).div(vaultTotalAmount);
     // "Actual" out amount (precision loss)
