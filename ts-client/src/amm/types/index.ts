@@ -86,7 +86,7 @@ export interface TokenMultiplier {
 
 // PoolState
 export type PoolState = TypeDef<AmmIdl['accounts']['0'], IdlTypes<AmmIdl>>;
-
+export type VirtualPrice = TypeDef<AmmIdl['types']['4'], IdlTypes<AmmIdl>>;
 export type ApyState = TypeDef<AmmIdl['accounts']['1'], IdlTypes<AmmIdl>>;
 
 export type PoolInformation = {

@@ -21,6 +21,7 @@ import {
   DepositQuote,
   PoolInformation,
   PoolState,
+  VirtualPrice,
   WithdrawQuote,
 } from './types';
 import { Amm, IDL as AmmIDL } from './idl';
@@ -54,6 +55,51 @@ type VaultProgram = Program<Vault>;
 
 type Opt = {
   cluster: Cluster;
+};
+
+const VIRTUAL_PRICE_PRECISION = new BN(100_000_000);
+
+// Typescript implementation of https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/src/state.rs#L87
+const getLastVirtualPrice = (apyState: ApyState): VirtualPrice | null => {
+  const { snapshot } = apyState;
+  const virtualPrices = snapshot.virtualPrices as VirtualPrice[];
+
+  let prev = ((_) => {
+    if (snapshot.pointer.eq(new BN(0))) {
+      return virtualPrices.length - 1;
+    } else {
+      return snapshot.pointer.toNumber() - 1;
+    }
+  })();
+
+  const virtualPrice = virtualPrices[prev];
+  if (virtualPrice.price.eq(new BN(0))) {
+    return null;
+  }
+  return virtualPrice;
+};
+
+// Typescript implementation of https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/src/state.rs#L101
+const getFirstVirtualPrice = (apyState: ApyState): VirtualPrice | null => {
+  const { snapshot } = apyState;
+  let initial = snapshot.pointer.toNumber();
+  let current = initial;
+
+  const virtualPrices = snapshot.virtualPrices as VirtualPrice[];
+
+  while ((current + 1) % virtualPrices.length != initial) {
+    if (virtualPrices[current].price.eq(new BN(0))) {
+      current = (current + 1) % virtualPrices.length;
+    } else {
+      break;
+    }
+  }
+
+  let virtualPrice = virtualPrices[current];
+  if (virtualPrice.price.eq(new BN(0))) {
+    return null;
+  }
+  return virtualPrice;
 };
 
 const getPoolState = async (poolMint: PublicKey, program: AmmProgram) => {
@@ -436,8 +482,6 @@ export default class AmmImpl implements AmmImplementation {
     this.vaultA.refreshVaultState();
     this.vaultB.refreshVaultState();
 
-    // TODO: get Pool Info sync
-
     // Update splInfo
     this.accountsInfo = deserializeAccountsBuffer(accountInfos);
 
@@ -452,6 +496,63 @@ export default class AmmImpl implements AmmImplementation {
         this.accountsInfo.currentTime,
       );
     }
+
+    // Compute pool information, Typescript implementation of https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/src/lib.rs#L960
+    const currentTimestamp = new BN(this.accountsInfo.currentTime);
+    const tokenAAmount = getAmountByShare(
+      this.accountsInfo.poolVaultALp,
+      this.vaultA.getWithdrawableAmountSync(currentTimestamp.toNumber()),
+      this.accountsInfo.vaultALpSupply,
+    );
+    const tokenBAmount = getAmountByShare(
+      this.accountsInfo.poolVaultBLp,
+      this.vaultB.getWithdrawableAmountSync(currentTimestamp.toNumber()),
+      this.accountsInfo.vaultBLpSupply,
+    );
+
+    let firstTimestamp = new BN(0);
+    let apy,
+      virtualPriceNumber,
+      firstVirtualPriceNumber = 0;
+
+    const d = this.swapCurve.computeD(this.poolState.tokenAAmount, this.poolState.tokenBAmount);
+    let latestVirtualPrice = d.mul(VIRTUAL_PRICE_PRECISION).div(this.poolState.lpSupply);
+
+    if (latestVirtualPrice.eq(new BN(0))) {
+      const lastVirtualPrice = getLastVirtualPrice(this.apyState);
+      if (lastVirtualPrice) {
+        latestVirtualPrice = lastVirtualPrice.price;
+      }
+    }
+
+    const firstVirtualPrice = getFirstVirtualPrice(this.apyState);
+
+    if (firstVirtualPrice && latestVirtualPrice.gt(new BN(0))) {
+      // Compute APY
+      const second = latestVirtualPrice.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
+      const first = firstVirtualPrice.price.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
+      const timeElapsed = currentTimestamp.sub(firstVirtualPrice.timestamp).toNumber();
+      const rate = second / first;
+      const frequency = (365 * 24 * 3600) / timeElapsed;
+      const compoundRate = rate ** frequency;
+      apy = (compoundRate - 1) * 100;
+
+      virtualPriceNumber = second;
+      firstVirtualPriceNumber = first;
+      firstTimestamp = firstVirtualPrice.timestamp;
+    }
+
+    let poolInformation: PoolInformation = {
+      tokenAAmount,
+      tokenBAmount,
+      currentTimestamp,
+      apy,
+      firstTimestamp,
+      firstVirtualPrice: firstVirtualPriceNumber,
+      virtualPrice: virtualPriceNumber,
+    };
+
+    this.poolState = Object.assign(this.poolState, poolInformation);
   }
 
   /**
@@ -536,6 +637,12 @@ export default class AmmImpl implements AmmImplementation {
       destinationVaultWithdrawableAmount,
       swapDestinationVaultLpSupply,
     );
+
+    const maxSwapOutAmount = this.getMaxSwapOutAmount(
+      tradeDirection == TradeDirection.AToB ? this.poolState.tokenBMint : this.poolState.tokenAMint,
+    );
+
+    invariant(actualDestinationAmount.lt(maxSwapOutAmount), 'Out amount > vault reserve');
 
     return getMinAmountWithSlippage(actualDestinationAmount, slippage);
   }
