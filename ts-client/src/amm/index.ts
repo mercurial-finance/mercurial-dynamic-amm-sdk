@@ -497,7 +497,11 @@ export default class AmmImpl implements AmmImplementation {
       );
     }
 
-    // Compute pool information, Typescript implementation of https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/src/lib.rs#L960
+    this.computeAndUpdatePoolInfo();
+  }
+
+  // Compute pool information, Typescript implementation of https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/src/lib.rs#L960
+  private computeAndUpdatePoolInfo() {
     const currentTimestamp = new BN(this.accountsInfo.currentTime);
     const tokenAAmount = getAmountByShare(
       this.accountsInfo.poolVaultALp,
