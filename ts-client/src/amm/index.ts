@@ -340,13 +340,13 @@ export default class AmmImpl implements AmmImplementation {
    * It updates the state of the pool
    */
   public async updateState() {
+    this.vaultA.refreshVaultState();
+    this.vaultB.refreshVaultState();
+
     // Update pool state
     const poolState = await getPoolState(this.address, this.program);
     const poolInfo = await this.getPoolInfo();
     this.poolState = { ...poolState, ...poolInfo };
-
-    this.vaultA.refreshVaultState();
-    this.vaultB.refreshVaultState();
 
     // update spl info
     const splInfoBuffer = await getAccountsBuffer({
