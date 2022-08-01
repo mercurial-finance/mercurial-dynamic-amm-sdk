@@ -5,6 +5,7 @@ import { AnchorProvider, BN, Wallet } from '@project-serum/anchor';
 // import { airDropSol } from "./utils";
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 import { getOnchainTime } from '@mercurial-finance/vault-sdk';
+import { PoolInformation } from '../types';
 
 let mockWallet = new Wallet(
   process.env.WALLET_PRIVATE_KEY ? Keypair.fromSecretKey(bs58.decode(process.env.WALLET_PRIVATE_KEY)) : new Keypair(),
@@ -44,6 +45,71 @@ describe('Interact with Devnet pool', () => {
     stablePool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEVNET_POOL.USDT_USDC), {
       cluster: DEVNET.cluster as Cluster,
     });
+  });
+
+  test('SwapQuote > vault reserve', async () => {
+    const inAmountLamport = new BN('18446744073709551615');
+
+    let errorMsg: string = '';
+    try {
+      cpPool.getSwapQuote(new PublicKey(cpPool.tokenB.address), inAmountLamport, DEFAULT_SLIPPAGE);
+    } catch (error) {
+      if (error instanceof Error) {
+        errorMsg = error.message;
+      }
+    }
+    expect(errorMsg).toBe('Out amount > vault reserve');
+  });
+
+  test('Update pool info sync', async () => {
+    const accounts = depegPool.getAccountsForUpdate();
+
+    await depegPool.updateState();
+    const onChainSimulatedPoolInfo: PoolInformation = {
+      apy: depegPool.poolState.apy,
+      currentTimestamp: depegPool.poolState.currentTimestamp,
+      firstTimestamp: depegPool.poolState.firstTimestamp,
+      firstVirtualPrice: depegPool.poolState.firstVirtualPrice,
+      tokenAAmount: depegPool.poolState.tokenAAmount,
+      tokenBAmount: depegPool.poolState.tokenBAmount,
+      virtualPrice: depegPool.poolState.virtualPrice,
+    };
+
+    const fetchedAccountsInfo = await provider.connection.getMultipleAccountsInfo(accounts);
+    // @ts-ignore
+    depegPool.update(fetchedAccountsInfo);
+    const localComputedPoolInfo: PoolInformation = {
+      apy: depegPool.poolState.apy,
+      currentTimestamp: depegPool.poolState.currentTimestamp,
+      firstTimestamp: depegPool.poolState.firstTimestamp,
+      firstVirtualPrice: depegPool.poolState.firstVirtualPrice,
+      tokenAAmount: depegPool.poolState.tokenAAmount,
+      tokenBAmount: depegPool.poolState.tokenBAmount,
+      virtualPrice: depegPool.poolState.virtualPrice,
+    };
+
+    // 0.001%
+    const acceptableRatio = 1.00001;
+
+    const apyDiffRatio =
+      Math.max(localComputedPoolInfo.apy, onChainSimulatedPoolInfo.apy) /
+      Math.min(localComputedPoolInfo.apy, onChainSimulatedPoolInfo.apy);
+
+    const tokenAAmountRatio =
+      Math.max(localComputedPoolInfo.tokenAAmount.toNumber(), onChainSimulatedPoolInfo.tokenAAmount.toNumber()) /
+      Math.min(localComputedPoolInfo.tokenAAmount.toNumber(), onChainSimulatedPoolInfo.tokenAAmount.toNumber());
+
+    const tokenBAmountRatio =
+      Math.max(localComputedPoolInfo.tokenBAmount.toNumber(), onChainSimulatedPoolInfo.tokenBAmount.toNumber()) /
+      Math.min(localComputedPoolInfo.tokenBAmount.toNumber(), onChainSimulatedPoolInfo.tokenBAmount.toNumber());
+
+    console.log(localComputedPoolInfo.apy, onChainSimulatedPoolInfo.apy);
+    console.log(localComputedPoolInfo.tokenAAmount.toString(), onChainSimulatedPoolInfo.tokenAAmount.toString());
+    console.log(localComputedPoolInfo.tokenBAmount.toString(), onChainSimulatedPoolInfo.tokenBAmount.toString());
+
+    expect(apyDiffRatio).toBeLessThan(acceptableRatio);
+    expect(tokenAAmountRatio).toBeLessThan(acceptableRatio);
+    expect(tokenBAmountRatio).toBeLessThan(acceptableRatio);
   });
 
   test('Get Pool Token Mint', () => {
