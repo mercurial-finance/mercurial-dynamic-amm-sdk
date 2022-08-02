@@ -34,7 +34,7 @@ import {
   calculateMaxSwapOutAmount,
   calculateSwapQuote,
   computeActualDepositAmount,
-  computeAndUpdatePoolInfo,
+  calculatePoolInfo,
   getMaxAmountWithSlippage,
   getMinAmountWithSlippage,
   getOrCreateATAInstruction,
@@ -240,7 +240,7 @@ export default class AmmImpl implements AmmImplementation {
       swapCurve = new ConstantProductSwap();
     }
 
-    const poolInfo = computeAndUpdatePoolInfo(
+    const poolInfo = calculatePoolInfo(
       accountsInfo.currentTime,
       accountsInfo.poolVaultALp,
       accountsInfo.poolVaultBLp,
@@ -322,7 +322,7 @@ export default class AmmImpl implements AmmImplementation {
       );
     }
 
-    const poolInfo = computeAndUpdatePoolInfo(
+    const poolInfo = calculatePoolInfo(
       this.accountsInfo.currentTime,
       this.accountsInfo.poolVaultALp,
       this.accountsInfo.poolVaultBLp,

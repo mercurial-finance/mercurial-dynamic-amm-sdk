@@ -217,7 +217,7 @@ export const computeActualDepositAmount = (
  * @param {VaultState} vaultB - VaultState of Vault B
  * @returns an object of type PoolInformation.
  */
-export const computeAndUpdatePoolInfo = (
+export const calculatePoolInfo = (
   currentTime: number,
   poolVaultALp: BN,
   poolVaultBLp: BN,

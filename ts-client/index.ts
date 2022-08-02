@@ -1,11 +1,6 @@
 import AmmImpl from './src/amm';
 import { PROGRAM_ID, MAINNET_POOL, DEVNET_POOL } from './src/amm/constants';
-import {
-  getOnchainTime,
-  calculateMaxSwapOutAmount,
-  calculateSwapQuote,
-  computeAndUpdatePoolInfo,
-} from './src/amm/utils';
+import { getOnchainTime, calculateMaxSwapOutAmount, calculateSwapQuote, calculatePoolInfo } from './src/amm/utils';
 
 export default AmmImpl;
 export {
@@ -13,7 +8,7 @@ export {
   getOnchainTime,
   calculateMaxSwapOutAmount,
   calculateSwapQuote,
-  computeAndUpdatePoolInfo,
+  calculatePoolInfo,
   // Constant
   PROGRAM_ID,
   MAINNET_POOL,
