@@ -66,27 +66,27 @@ export type AccountsToCache = {
 };
 
 export type StableSwapCurve = {
-  ['stable']: {
-    ['amp']: BN;
-    ['tokenMultiplier']: TokenMultiplier;
-    ['depeg']: Depeg;
+  stable: {
+    amp: BN;
+    tokenMultiplier: TokenMultiplier;
+    depeg: Depeg;
   };
 };
 
 export type ConstantProductCurve = {
-  ['constantProduct']: {};
+  constantProduct: {};
 };
 
 export type DepegNone = {
-  ['none']: {};
+  none: {};
 };
 
 export type DepegMarinade = {
-  ['marinade']: {};
+  marinade: {};
 };
 
 export type DepegLido = {
-  ['lido']: {};
+  lido: {};
 };
 
 export type DepegType = DepegNone | DepegMarinade | DepegLido;
