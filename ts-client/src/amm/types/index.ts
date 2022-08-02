@@ -4,6 +4,8 @@ import { TypeDef } from '@project-serum/anchor/dist/cjs/program/namespace/types'
 import BN from 'bn.js';
 import { Amm as AmmIdl } from '../idl';
 import { IdlTypes } from '@project-serum/anchor/dist/esm';
+import { VaultState } from '@mercurial-finance/vault-sdk';
+import { SwapCurve } from '../curve';
 
 export type AmmImplementation = {
   tokenA: TokenInfo;
@@ -45,6 +47,23 @@ export interface PoolFees {
   ownerTradeFeeNumerator: BN;
   ownerTradeFeeDenominator: BN;
 }
+
+export type AccountsToCache = {
+  apyPdaBuffer: AccountInfo<Buffer> | null;
+  poolBuffer: AccountInfo<Buffer> | null;
+  vaultAPdaBuffer: AccountInfo<Buffer> | null;
+  vaultBPdaBuffer: AccountInfo<Buffer> | null;
+  vaultAReserveBuffer: AccountInfo<Buffer> | null;
+  vaultBReserveBuffer: AccountInfo<Buffer> | null;
+  vaultALpMintBuffer: AccountInfo<Buffer> | null;
+  vaultBLpMintBuffer: AccountInfo<Buffer> | null;
+  poolVaultALpBuffer: AccountInfo<Buffer> | null;
+  poolVaultBLpBuffer: AccountInfo<Buffer> | null;
+  poolLpMintBuffer: AccountInfo<Buffer> | null;
+  marinadeBuffer: AccountInfo<Buffer> | null;
+  solidoBuffer: AccountInfo<Buffer> | null;
+  clockAccountBuffer: AccountInfo<Buffer> | null;
+};
 
 export type StableSwapCurve = {
   ['stable']: {
@@ -100,6 +119,7 @@ export type PoolInformation = {
 };
 
 export type AccountsInfo = {
+  apy: ApyState;
   vaultAReserve: BN;
   vaultBReserve: BN;
   vaultALpSupply: BN;
@@ -123,3 +143,17 @@ export interface ParsedClockState {
   program: string;
   space: number;
 }
+
+export type SwapQuoteParam = {
+  poolState: PoolState;
+  tokenAAmount: BN;
+  tokenBAmount: BN;
+  vaultA: VaultState;
+  vaultB: VaultState;
+  vaultALpSupply: BN;
+  vaultBLpSupply: BN;
+  currentTime: number;
+  vaultAReserve: BN;
+  vaultBReserve: BN;
+  swapCurve: SwapCurve;
+};

@@ -1,5 +1,6 @@
 import { ENV, TokenInfo } from '@solana/spl-token-registry';
 import { PublicKey } from '@solana/web3.js';
+import { BN } from 'bn.js';
 
 export const ERROR = {
   POOL_NOT_LOAD: 'Pool not loaded',
@@ -109,3 +110,5 @@ export const WRAPPED_SOL_MINT = new PublicKey('So1111111111111111111111111111111
 export const DEFAULT_SLIPPAGE = 1;
 
 export const UNLOCK_AMOUNT_BUFFER = 0.995;
+
+export const VIRTUAL_PRICE_PRECISION = new BN(100_000_000);
