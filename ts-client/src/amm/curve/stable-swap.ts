@@ -1,5 +1,5 @@
 import { SwapCurve, TradeDirection } from '.';
-import { BN, BorshCoder } from '@project-serum/anchor';
+import { BN, BorshCoder, Idl } from '@project-serum/anchor';
 import {
   computeY,
   computeD,
@@ -12,7 +12,6 @@ import {
 import JSBI from 'jsbi';
 import { Token, TokenAmount, Percent, ChainId } from '@saberhq/token-utils';
 import { AccountInfo, Connection, Keypair, PublicKey } from '@solana/web3.js';
-import { Idl } from '@project-serum/anchor/dist/esm';
 import MarinadeIDL from '../marinade-finance.json';
 import { CURVE_TYPE_ACCOUNTS } from '../constants';
 import { Depeg, DepegType, PoolFees, TokenMultiplier } from '../types';
