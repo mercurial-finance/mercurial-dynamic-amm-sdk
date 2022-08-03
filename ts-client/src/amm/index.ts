@@ -18,7 +18,6 @@ import { AccountsInfo, AmmImplementation, DepositQuote, PoolInformation, PoolSta
 import { Amm, IDL as AmmIdl } from './idl';
 import { Vault, IDL as VaultIdl } from './vault-idl';
 import {
-  DEFAULT_SLIPPAGE,
   DEVNET_COIN,
   ERROR,
   CURVE_TYPE_ACCOUNTS,
@@ -57,16 +56,6 @@ const getPoolState = async (poolMint: PublicKey, program: AmmProgram) => {
   invariant(account.value.amount, ERROR.INVALID_ACCOUNT);
 
   return { ...poolState, lpSupply: new BN(+account.value.amount) };
-};
-
-const getVaultState = async (vaultMint: PublicKey, program: VaultProgram) => {
-  const vaultState = (await program.account.vault.fetchNullable(vaultMint)) as VaultState;
-  invariant(vaultState, `Vault ${vaultMint.toBase58()} not found`);
-
-  const account = await program.provider.connection.getTokenSupply(vaultState.lpMint);
-  invariant(account.value.amount, ERROR.INVALID_ACCOUNT);
-
-  return vaultState;
 };
 
 const getRemainingAccounts = (poolState: PoolState) => {
@@ -168,7 +157,7 @@ export default class AmmImpl implements AmmImplementation {
     private vaultProgram: VaultProgram,
     private apyPda: PublicKey,
     private tokenInfos: Array<TokenInfo>,
-    public poolState: PoolState,
+    public poolState: PoolState & { lpSupply: BN },
     public poolInfo: PoolInformation,
     public vaultA: VaultImpl,
     public vaultB: VaultImpl,
