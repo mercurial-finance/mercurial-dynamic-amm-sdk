@@ -343,7 +343,6 @@ export const getDepegAccounts = async (connection: Connection): Promise<Map<Stri
  * It calculates the amount of tokens you will receive after swapping your tokens
  * @param {PublicKey} inTokenMint - The mint of the token you're swapping in.
  * @param {BN} inAmountLamport - The amount of the input token you want to swap.
- * @param {number} slippage - The slippage you want to use.
  * @param {SwapQuoteParam} params - SwapQuoteParam
  * @param {PoolState} params.poolState - pool state that fetch from program
  * @param {VaultState} params.vaultA - vault A state that fetch from vault program
@@ -358,12 +357,7 @@ export const getDepegAccounts = async (connection: Connection): Promise<Map<Stri
  * @param {BN} params.depegAccounts - A map of the depeg accounts. (get from `getDepegAccounts` util)
  * @returns The amount of tokens that will be received after the swap.
  */
-export const calculateSwapQuote = (
-  inTokenMint: PublicKey,
-  inAmountLamport: BN,
-  slippage: number,
-  params: SwapQuoteParam,
-) => {
+export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, params: SwapQuoteParam) => {
   const {
     vaultA,
     vaultB,
@@ -464,5 +458,5 @@ export const calculateSwapQuote = (
 
   invariant(actualDestinationAmount.lt(maxSwapOutAmount), 'Out amount > vault reserve');
 
-  return getMinAmountWithSlippage(actualDestinationAmount, slippage);
+  return actualDestinationAmount;
 };
