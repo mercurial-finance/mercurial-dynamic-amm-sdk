@@ -374,7 +374,7 @@ export default class AmmImpl implements AmmImplementation {
    * `inAmountLamport` of `inToken` into the pool
    * @param {PublicKey} inTokenMint - The mint you want to swap from.
    * @param {BN} inAmountLamport - The amount of lamports you want to swap.
-   * @param {number} [slippage] - The maximum amount of slippage you're willing to accept.
+   * @param {number} [slippage] - The maximum amount of slippage you're willing to accept. (Max to 2 decimal place)
    * @returns The amount of the destination token that will be received after the swap.
    */
   public getSwapQuote(inTokenMint: PublicKey, inAmountLamport: BN, slippage: number) {
@@ -513,7 +513,7 @@ export default class AmmImpl implements AmmImplementation {
    * @param {BN} tokenAInAmount - The amount of token A to be deposit,
    * @param {BN} tokenBInAmount - The amount of token B to be deposit,
    * @param {boolean} [balance=true] - return false if the deposit is imbalance (default: true)
-   * @param {number} [slippage] - The amount of slippage you're willing to accept.
+   * @param {number} [slippage] - The amount of slippage you're willing to accept. (Max to 2 decimal place)
    * @returns The return value is a tuple of the poolTokenAmountOut, tokenAInAmount, and
    * tokenBInAmount.
    */
@@ -711,13 +711,11 @@ export default class AmmImpl implements AmmImplementation {
    * that will be withdrawn from the pool
    * @param {BN} withdrawTokenAmount - The amount of tokens you want to withdraw from the pool.
    * @param {PublicKey} [tokenMint] - The token you want to withdraw. If you want balanced withdraw, leave this blank.
-   * @param {number} [slippage] - The amount of slippage you're willing to accept.
+   * @param {number} [slippage] - The amount of slippage you're willing to accept. (Max to 2 decimal place)
    * @returns The return value is a tuple of the poolTokenAmountIn, tokenAOutAmount, and
    * tokenBOutAmount.
    */
   public getWithdrawQuote(withdrawTokenAmount: BN, slippage: number, tokenMint?: PublicKey): WithdrawQuote {
-    const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
-
     const vaultAWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultA.vaultState);
     const vaultBWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultB.vaultState);
 
@@ -747,8 +745,8 @@ export default class AmmImpl implements AmmImplementation {
 
       return {
         poolTokenAmountIn: withdrawTokenAmount,
-        tokenAOutAmount: getMinAmountWithSlippage(tokenAOutAmount, slippageRate),
-        tokenBOutAmount: getMinAmountWithSlippage(tokenBOutAmount, slippageRate),
+        tokenAOutAmount: getMinAmountWithSlippage(tokenAOutAmount, slippage),
+        tokenBOutAmount: getMinAmountWithSlippage(tokenBOutAmount, slippage),
       };
     }
 
@@ -775,10 +773,7 @@ export default class AmmImpl implements AmmImplementation {
 
     const vaultLpToBurn = outAmount.mul(vaultLpSupply).div(vaultTotalAmount);
     // "Actual" out amount (precision loss)
-    const realOutAmount = getMinAmountWithSlippage(
-      vaultLpToBurn.mul(vaultTotalAmount).div(vaultLpSupply),
-      slippageRate,
-    );
+    const realOutAmount = getMinAmountWithSlippage(vaultLpToBurn.mul(vaultTotalAmount).div(vaultLpSupply), slippage);
 
     return {
       poolTokenAmountIn: withdrawTokenAmount,
