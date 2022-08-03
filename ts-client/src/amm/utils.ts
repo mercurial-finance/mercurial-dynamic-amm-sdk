@@ -7,6 +7,7 @@ import {
 import { BN, EventParser } from '@project-serum/anchor';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
+  AccountInfo,
   Connection,
   ParsedAccountData,
   PublicKey,
@@ -15,8 +16,8 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import invariant from 'invariant';
-import { ERROR, VIRTUAL_PRICE_PRECISION, WRAPPED_SOL_MINT } from './constants';
-import { SwapCurve, TradeDirection } from './curve';
+import { CURVE_TYPE_ACCOUNTS, ERROR, VIRTUAL_PRICE_PRECISION, WRAPPED_SOL_MINT } from './constants';
+import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
   AccountsInfo,
   ApyState,
@@ -323,11 +324,39 @@ export const calculateMaxSwapOutAmount = (
 };
 
 /**
+ * It gets the account info for the two accounts that are used in depeg Pool
+ * @param {Connection} connection - Connection - The connection to the Solana cluster
+ * @returns A map of the depeg accounts.
+ */
+export const getDepegAccounts = async (connection: Connection): Promise<Map<String, AccountInfo<Buffer>>> => {
+  const depegAccounts = new Map<String, AccountInfo<Buffer>>();
+  const [marinadeBuffer, solidoBuffer] = await connection.getMultipleAccountsInfo([
+    CURVE_TYPE_ACCOUNTS.marinade,
+    CURVE_TYPE_ACCOUNTS.solido,
+  ]);
+  depegAccounts.set(CURVE_TYPE_ACCOUNTS.marinade.toBase58(), marinadeBuffer!);
+  depegAccounts.set(CURVE_TYPE_ACCOUNTS.solido.toBase58(), solidoBuffer!);
+
+  return depegAccounts;
+};
+
+/**
  * It calculates the amount of tokens you will receive after swapping your tokens
  * @param {PublicKey} inTokenMint - The mint of the token you're swapping in.
  * @param {BN} inAmountLamport - The amount of the input token you want to swap.
  * @param {number} slippage - The slippage you want to use.
  * @param {SwapQuoteParam} params - SwapQuoteParam
+ * @param {PoolState} params.poolState - pool state that fetch from program
+ * @param {VaultState} params.vaultA - vault A state that fetch from vault program
+ * @param {VaultState} params.vaultB - vault B state that fetch from vault program
+ * @param {BN} params.poolVaultALp - The amount of LP tokens in the pool for token A (`PoolState.aVaultLp` accountInfo)
+ * @param {BN} params.poolVaultBLp - The amount of LP tokens in the pool for token B (`PoolState.bVaultLp` accountInfo)
+ * @param {BN} params.vaultALpSupply - vault A lp supply (`VaultState.lpMint` accountInfo)
+ * @param {BN} params.vaultBLpSupply - vault B lp supply (`VaultState.lpMint` accountInfo)
+ * @param {BN} params.vaultAReserve - vault A reserve (`VaultState.tokenVault` accountInfo)
+ * @param {BN} params.vaultBReserve - vault B reserve (`VaultState.tokenVault` accountInfo)
+ * @param {BN} params.currentTime - on chain time (use `SYSVAR_CLOCK_PUBKEY`)
+ * @param {BN} params.depegAccounts - A map of the depeg accounts. (get from `getDepegAccounts` util)
  * @returns The amount of tokens that will be received after the swap.
  */
 export const calculateSwapQuote = (
@@ -342,15 +371,29 @@ export const calculateSwapQuote = (
     vaultALpSupply,
     vaultBLpSupply,
     poolState,
-    tokenAAmount,
-    tokenBAmount,
+    poolVaultALp,
+    poolVaultBLp,
     currentTime,
-    swapCurve,
+    depegAccounts,
     vaultAReserve,
     vaultBReserve,
   } = params;
   const { tokenAMint, tokenBMint } = poolState;
   invariant(inTokenMint.equals(tokenAMint) || inTokenMint.equals(tokenBMint), ERROR.INVALID_MINT);
+
+  let swapCurve;
+  if ('stable' in poolState.curveType) {
+    const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
+    swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, currentTime);
+  } else {
+    swapCurve = new ConstantProductSwap();
+  }
+
+  const vaultAWithdrawableAmount = calculateWithdrawableAmount(currentTime, vaultA);
+  const vaultBWithdrawableAmount = calculateWithdrawableAmount(currentTime, vaultB);
+
+  const tokenAAmount = getAmountByShare(poolVaultALp, vaultAWithdrawableAmount, vaultALpSupply);
+  const tokenBAmount = getAmountByShare(poolVaultBLp, vaultBWithdrawableAmount, vaultBLpSupply);
 
   const isFromAToB = inTokenMint.equals(tokenAMint);
   const [
