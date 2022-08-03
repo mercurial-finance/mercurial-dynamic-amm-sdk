@@ -759,8 +759,8 @@ export default class AmmImpl implements AmmImplementation {
 
     const [vaultLpSupply, vaultTotalAmount] =
       tradeDirection == TradeDirection.AToB
-        ? [this.accountsInfo.vaultALpSupply, vaultBWithdrawableAmount]
-        : [this.accountsInfo.vaultBLpSupply, vaultAWithdrawableAmount];
+        ? [this.accountsInfo.vaultBLpSupply, vaultBWithdrawableAmount]
+        : [this.accountsInfo.vaultALpSupply, vaultAWithdrawableAmount];
 
     const vaultLpToBurn = outAmount.mul(vaultLpSupply).div(vaultTotalAmount);
     // "Actual" out amount (precision loss)
