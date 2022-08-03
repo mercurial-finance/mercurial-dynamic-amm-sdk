@@ -12,7 +12,7 @@ import {
 import { TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
-import { calculateWithdrawableAmount, VaultState } from '@mercurial-finance/vault-sdk';
+import VaultImpl, { calculateWithdrawableAmount, VaultState } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
 import { AccountsInfo, AmmImplementation, DepositQuote, PoolInformation, PoolState, WithdrawQuote } from './types';
 import { Amm, IDL as AmmIdl } from './idl';
@@ -170,8 +170,8 @@ export default class AmmImpl implements AmmImplementation {
     private tokenInfos: Array<TokenInfo>,
     public poolState: PoolState,
     public poolInfo: PoolInformation,
-    public vaultA: VaultState,
-    public vaultB: VaultState,
+    public vaultA: VaultImpl,
+    public vaultB: VaultImpl,
     private accountsInfo: AccountsInfo,
     private swapCurve: SwapCurve,
     private depegAccounts: Map<String, AccountInfo<Buffer>>,
@@ -205,20 +205,20 @@ export default class AmmImpl implements AmmImplementation {
 
     const poolState = await getPoolState(pool, ammProgram);
 
-    const [vaultA, vaultB] = await Promise.all([
-      getVaultState(poolState.aVault, vaultProgram),
-      getVaultState(poolState.bVault, vaultProgram),
-    ]);
-
     const tokenInfoA = tokenMap.find((token) => token.address === poolState.tokenAMint.toBase58());
     const tokenInfoB = tokenMap.find((token) => token.address === poolState.tokenBMint.toBase58());
     invariant(tokenInfoA, `TokenInfo ${poolState.tokenAMint.toBase58()} A not found`);
     invariant(tokenInfoB, `TokenInfo ${poolState.tokenBMint.toBase58()} A not found`);
 
+    const [vaultA, vaultB] = await Promise.all([
+      VaultImpl.create(provider.connection, tokenInfoA, { cluster }),
+      VaultImpl.create(provider.connection, tokenInfoB, { cluster }),
+    ]);
+
     const accountsBuffer = await getAccountsBuffer({
       connection: provider.connection,
-      vaultA,
-      vaultB,
+      vaultA: vaultA.vaultState,
+      vaultB: vaultB.vaultState,
       apyPda,
       poolState,
     });
@@ -243,8 +243,8 @@ export default class AmmImpl implements AmmImplementation {
       accountsInfo.poolLpSupply,
       accountsInfo.apy,
       swapCurve,
-      vaultA,
-      vaultB,
+      vaultA.vaultState,
+      vaultB.vaultState,
     );
 
     return new AmmImpl(
@@ -287,19 +287,16 @@ export default class AmmImpl implements AmmImplementation {
    */
   public async updateState() {
     const poolState = await getPoolState(this.address, this.program);
-    const [vaultA, vaultB] = await Promise.all([
-      getVaultState(poolState.aVault, this.vaultProgram),
-      getVaultState(poolState.bVault, this.vaultProgram),
-    ]);
-    this.vaultA = vaultA;
-    this.vaultB = vaultB;
+
+    await this.vaultA.refreshVaultState();
+    await this.vaultB.refreshVaultState();
 
     // update spl info
     const accountsBuffer = await getAccountsBuffer({
       poolState,
       connection: this.program.provider.connection,
-      vaultA: this.vaultA,
-      vaultB: this.vaultB,
+      vaultA: this.vaultA.vaultState,
+      vaultB: this.vaultB.vaultState,
       apyPda: this.apyPda,
     });
     this.accountsInfo = deserializeAccountsBuffer(accountsBuffer);
@@ -325,8 +322,8 @@ export default class AmmImpl implements AmmImplementation {
       this.accountsInfo.poolLpSupply,
       this.accountsInfo.apy,
       this.swapCurve,
-      this.vaultA,
-      this.vaultB,
+      this.vaultA.vaultState,
+      this.vaultB.vaultState,
     );
     this.poolState = { ...poolState, ...poolInfo };
   }
@@ -387,8 +384,8 @@ export default class AmmImpl implements AmmImplementation {
       depegAccounts: this.depegAccounts,
       poolVaultALp: this.accountsInfo.poolVaultALp,
       poolVaultBLp: this.accountsInfo.poolVaultBLp,
-      vaultA: this.vaultA,
-      vaultB: this.vaultB,
+      vaultA: this.vaultA.vaultState,
+      vaultB: this.vaultB.vaultState,
       vaultALpSupply: this.accountsInfo.vaultALpSupply,
       vaultBLpSupply: this.accountsInfo.vaultBLpSupply,
       vaultAReserve: this.accountsInfo.vaultAReserve,
@@ -482,14 +479,14 @@ export default class AmmImpl implements AmmImplementation {
     const swapTx = await this.program.methods
       .swap(inAmountLamport, outAmountLamport)
       .accounts({
-        aTokenVault: this.vaultA.tokenVault,
-        bTokenVault: this.vaultB.tokenVault,
+        aTokenVault: this.vaultA.vaultState.tokenVault,
+        bTokenVault: this.vaultB.vaultState.tokenVault,
         aVault: this.poolState.aVault,
         bVault: this.poolState.bVault,
         aVaultLp: this.poolState.aVaultLp,
         bVaultLp: this.poolState.bVaultLp,
-        aVaultLpMint: this.vaultA.lpMint,
-        bVaultLpMint: this.vaultB.lpMint,
+        aVaultLpMint: this.vaultA.vaultState.lpMint,
+        bVaultLpMint: this.vaultB.vaultState.lpMint,
         userSourceToken,
         userDestinationToken,
         user: owner,
@@ -530,8 +527,8 @@ export default class AmmImpl implements AmmImplementation {
       'Deposit balance is not possible when both token in amount is non-zero',
     );
 
-    const vaultAWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultA);
-    const vaultBWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultB);
+    const vaultAWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultA.vaultState);
+    const vaultBWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultB.vaultState);
 
     if (tokenAInAmount.isZero() && balance) {
       const poolTokenAmountOut = this.getShareByAmount(
@@ -681,8 +678,8 @@ export default class AmmImpl implements AmmImplementation {
 
     const depositTx = await programMethod(poolTokenAmount, tokenAInAmount, tokenBInAmount)
       .accounts({
-        aTokenVault: this.vaultA.tokenVault,
-        bTokenVault: this.vaultB.tokenVault,
+        aTokenVault: this.vaultA.vaultState.tokenVault,
+        bTokenVault: this.vaultB.vaultState.tokenVault,
         aVault: this.poolState.aVault,
         bVault: this.poolState.bVault,
         pool: this.address,
@@ -691,8 +688,8 @@ export default class AmmImpl implements AmmImplementation {
         userBToken,
         aVaultLp: this.poolState.aVaultLp,
         bVaultLp: this.poolState.bVaultLp,
-        aVaultLpMint: this.vaultA.lpMint,
-        bVaultLpMint: this.vaultB.lpMint,
+        aVaultLpMint: this.vaultA.vaultState.lpMint,
+        bVaultLpMint: this.vaultB.vaultState.lpMint,
         lpMint: this.poolState.lpMint,
         tokenProgram: TOKEN_PROGRAM_ID,
         vaultProgram: this.vaultProgram.programId,
@@ -721,8 +718,8 @@ export default class AmmImpl implements AmmImplementation {
   public getWithdrawQuote(withdrawTokenAmount: BN, slippage: number, tokenMint?: PublicKey): WithdrawQuote {
     const slippageRate = slippage ?? DEFAULT_SLIPPAGE;
 
-    const vaultAWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultA);
-    const vaultBWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultB);
+    const vaultAWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultA.vaultState);
+    const vaultBWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultB.vaultState);
 
     // balance withdraw
     if (!tokenMint) {
@@ -823,14 +820,14 @@ export default class AmmImpl implements AmmImplementation {
     const programMethod =
       this.isStablePool && (tokenAOutAmount.isZero() || tokenBOutAmount.isZero())
         ? this.program.methods.removeLiquiditySingleSide(lpTokenAmount, new BN(0)).accounts({
-            aTokenVault: this.vaultA.tokenVault,
+            aTokenVault: this.vaultA.vaultState.tokenVault,
             aVault: this.poolState.aVault,
             aVaultLp: this.poolState.aVaultLp,
-            aVaultLpMint: this.vaultA.lpMint,
-            bTokenVault: this.vaultB.tokenVault,
+            aVaultLpMint: this.vaultA.vaultState.lpMint,
+            bTokenVault: this.vaultB.vaultState.tokenVault,
             bVault: this.poolState.bVault,
             bVaultLp: this.poolState.bVaultLp,
-            bVaultLpMint: this.vaultB.lpMint,
+            bVaultLpMint: this.vaultB.vaultState.lpMint,
             lpMint: this.poolState.lpMint,
             pool: this.address,
             userDestinationToken: tokenBOutAmount.isZero() ? userAToken : userBToken,
@@ -843,13 +840,13 @@ export default class AmmImpl implements AmmImplementation {
             pool: this.address,
             lpMint: this.poolState.lpMint,
             aVault: this.poolState.aVault,
-            aTokenVault: this.vaultA.tokenVault,
+            aTokenVault: this.vaultA.vaultState.tokenVault,
             aVaultLp: this.poolState.aVaultLp,
-            aVaultLpMint: this.vaultA.lpMint,
+            aVaultLpMint: this.vaultA.vaultState.lpMint,
             bVault: this.poolState.bVault,
-            bTokenVault: this.vaultB.tokenVault,
+            bTokenVault: this.vaultB.vaultState.tokenVault,
             bVaultLp: this.poolState.bVaultLp,
-            bVaultLpMint: this.vaultB.lpMint,
+            bVaultLpMint: this.vaultB.vaultState.lpMint,
             userAToken,
             userBToken,
             user: owner,
@@ -880,8 +877,8 @@ export default class AmmImpl implements AmmImplementation {
         bVaultLp: this.poolState.bVaultLp,
         pool: this.address,
         lpMint: this.poolState.lpMint,
-        aVaultLpMint: this.vaultA.lpMint,
-        bVaultLpMint: this.vaultB.lpMint,
+        aVaultLpMint: this.vaultA.vaultState.lpMint,
+        bVaultLpMint: this.vaultB.vaultState.lpMint,
         apy: this.apyPda,
       })
       .remainingAccounts(getRemainingAccounts(this.poolState))
