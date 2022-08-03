@@ -103,8 +103,6 @@ export const SEEDS = Object.freeze({
 
 export const POOL_BASE_KEY = new PublicKey('H9NnqW5Thn9dUzW3DRXe2xDhKjwZd4qbjngnZwEvnDuC');
 
-export const SIMULATION_USER = new PublicKey('HrY9qR5TiB2xPzzvbBu5KrBorMfYGQXh9osXydz4jy9s');
-
 export const WRAPPED_SOL_MINT = new PublicKey('So11111111111111111111111111111111111111112');
 
 export const DEFAULT_SLIPPAGE = 1;

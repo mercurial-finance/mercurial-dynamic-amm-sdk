@@ -1,4 +1,4 @@
-import { AnchorProvider, Program, BN, EventParser, BorshCoder, Idl } from '@project-serum/anchor';
+import { AnchorProvider, Program, BN, BorshCoder, Idl } from '@project-serum/anchor';
 import {
   PublicKey,
   Connection,
@@ -24,7 +24,6 @@ import {
   CURVE_TYPE_ACCOUNTS,
   PROGRAM_ID,
   SEEDS,
-  SIMULATION_USER,
   VAULT_PROGRAM_ID,
   WRAPPED_SOL_MINT,
 } from './constants';
@@ -40,6 +39,7 @@ import {
   getOrCreateATAInstruction,
   unwrapSOLInstruction,
   wrapSOLInstruction,
+  getDepegAccounts,
 } from './utils';
 
 type AmmProgram = Program<Amm>;
@@ -97,19 +97,19 @@ const getRemainingAccounts = (poolState: PoolState) => {
 };
 
 const getAccountsBuffer = async ({
-  program,
+  connection,
   vaultA,
   vaultB,
   apyPda,
   poolState,
 }: {
-  program: AmmProgram;
+  connection: Connection;
   vaultA: VaultState;
   vaultB: VaultState;
   apyPda: PublicKey;
   poolState: PoolState;
 }) => {
-  return await program.provider.connection.getMultipleAccountsInfo([
+  return await connection.getMultipleAccountsInfo([
     apyPda,
     vaultA.tokenVault,
     vaultB.tokenVault,
@@ -216,7 +216,7 @@ export default class AmmImpl implements AmmImplementation {
     invariant(tokenInfoB, `TokenInfo ${poolState.tokenBMint.toBase58()} A not found`);
 
     const accountsBuffer = await getAccountsBuffer({
-      program: ammProgram,
+      connection: provider.connection,
       vaultA,
       vaultB,
       apyPda,
@@ -224,13 +224,7 @@ export default class AmmImpl implements AmmImplementation {
     });
     const accountsInfo = deserializeAccountsBuffer(accountsBuffer);
 
-    const depegAccounts = new Map<String, AccountInfo<Buffer>>();
-    const [marinadeBuffer, solidoBuffer] = await provider.connection.getMultipleAccountsInfo([
-      CURVE_TYPE_ACCOUNTS.marinade,
-      CURVE_TYPE_ACCOUNTS.solido,
-    ]);
-    depegAccounts.set(CURVE_TYPE_ACCOUNTS.marinade.toBase58(), marinadeBuffer!);
-    depegAccounts.set(CURVE_TYPE_ACCOUNTS.solido.toBase58(), solidoBuffer!);
+    const depegAccounts = await getDepegAccounts(ammProgram.provider.connection);
 
     let swapCurve;
     if ('stable' in poolState.curveType) {
@@ -303,7 +297,7 @@ export default class AmmImpl implements AmmImplementation {
     // update spl info
     const accountsBuffer = await getAccountsBuffer({
       poolState,
-      program: this.program,
+      connection: this.program.provider.connection,
       vaultA: this.vaultA,
       vaultB: this.vaultB,
       apyPda: this.apyPda,
@@ -390,9 +384,9 @@ export default class AmmImpl implements AmmImplementation {
     return calculateSwapQuote(inTokenMint, inAmountLamport, slippage, {
       currentTime: this.accountsInfo.currentTime,
       poolState: this.poolState,
-      swapCurve: this.swapCurve,
-      tokenAAmount: this.poolInfo.tokenAAmount,
-      tokenBAmount: this.poolInfo.tokenBAmount,
+      depegAccounts: this.depegAccounts,
+      poolVaultALp: this.accountsInfo.poolVaultALp,
+      poolVaultBLp: this.accountsInfo.poolVaultBLp,
       vaultA: this.vaultA,
       vaultB: this.vaultB,
       vaultALpSupply: this.accountsInfo.vaultALpSupply,

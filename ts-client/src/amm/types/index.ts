@@ -146,14 +146,14 @@ export interface ParsedClockState {
 
 export type SwapQuoteParam = {
   poolState: PoolState;
-  tokenAAmount: BN;
-  tokenBAmount: BN;
   vaultA: VaultState;
   vaultB: VaultState;
+  poolVaultALp: BN;
+  poolVaultBLp: BN;
   vaultALpSupply: BN;
   vaultBLpSupply: BN;
-  currentTime: number;
   vaultAReserve: BN;
   vaultBReserve: BN;
-  swapCurve: SwapCurve;
+  currentTime: number;
+  depegAccounts: Map<String, AccountInfo<Buffer>>;
 };
