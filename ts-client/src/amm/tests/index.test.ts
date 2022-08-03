@@ -4,7 +4,6 @@ import { DEFAULT_SLIPPAGE, MAINNET_POOL, DEVNET_POOL } from '../constants';
 import { AnchorProvider, BN, Wallet } from '@project-serum/anchor';
 // import { airDropSol } from "./utils";
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
-import { PoolInformation } from '../types';
 
 let mockWallet = new Wallet(
   process.env.WALLET_PRIVATE_KEY ? Keypair.fromSecretKey(bs58.decode(process.env.WALLET_PRIVATE_KEY)) : new Keypair(),
