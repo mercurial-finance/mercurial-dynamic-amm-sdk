@@ -55,7 +55,7 @@ const getPoolState = async (poolMint: PublicKey, program: AmmProgram) => {
   const account = await program.provider.connection.getTokenSupply(poolState.lpMint);
   invariant(account.value.amount, ERROR.INVALID_ACCOUNT);
 
-  return { ...poolState, lpSupply: new BN(+account.value.amount) };
+  return { ...poolState, lpSupply: new BN(account.value.amount) };
 };
 
 const getRemainingAccounts = (poolState: PoolState) => {
@@ -98,7 +98,7 @@ const getAccountsBuffer = async ({
   apyPda: PublicKey;
   poolState: PoolState;
 }) => {
-  return await connection.getMultipleAccountsInfo([
+  return connection.getMultipleAccountsInfo([
     apyPda,
     vaultA.tokenVault,
     vaultB.tokenVault,
@@ -111,6 +111,7 @@ const getAccountsBuffer = async ({
   ]);
 };
 
+// param order need to be the same from `getAccountsBuffer`
 const deserializeAccountsBuffer = ([
   apyPdaBuffer,
   vaultAReserveBuffer,
@@ -275,10 +276,11 @@ export default class AmmImpl implements AmmImplementation {
    * It updates the state of the pool
    */
   public async updateState() {
-    const poolState = await getPoolState(this.address, this.program);
-
-    await this.vaultA.refreshVaultState();
-    await this.vaultB.refreshVaultState();
+    const [poolState] = await Promise.all([
+      getPoolState(this.address, this.program),
+      this.vaultA.refreshVaultState(),
+      this.vaultB.refreshVaultState(),
+    ]);
 
     // update spl info
     const accountsBuffer = await getAccountsBuffer({
@@ -333,7 +335,7 @@ export default class AmmImpl implements AmmImplementation {
     const account = await this.program.provider.connection.getTokenSupply(this.poolState.lpMint);
     invariant(account.value.amount, ERROR.INVALID_ACCOUNT);
 
-    return new BN(+account.value.amount);
+    return new BN(account.value.amount);
   }
 
   /**
@@ -355,7 +357,7 @@ export default class AmmImpl implements AmmImplementation {
 
     const accountInfoData = (parsedAccountInfo.value!.data as ParsedAccountData).parsed;
 
-    return new BN(Number(accountInfoData.info.tokenAmount.amount));
+    return new BN(accountInfoData.info.tokenAmount.amount);
   }
 
   /**
