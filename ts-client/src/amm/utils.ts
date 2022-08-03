@@ -28,11 +28,26 @@ import {
   VirtualPrice,
 } from './types';
 
+/**
+ * It takes an amount and a slippage rate, and returns the maximum amount that can be received with
+ * that slippage rate
+ * @param {BN} amount - The amount of tokens you want to buy.
+ * @param {number} slippageRate - The maximum percentage of slippage you're willing to accept. (Max to 2 decimal place)
+ * @returns The maximum amount of tokens that can be bought with the given amount of ETH, given the
+ * slippage rate.
+ */
 export const getMaxAmountWithSlippage = (amount: BN, slippageRate: number) => {
   const slippage = ((100 + slippageRate) / 100) * 10000;
   return amount.mul(new BN(slippage)).div(new BN(10000));
 };
 
+/**
+ * It takes an amount and a slippage rate, and returns the minimum amount that will be received after
+ * slippage
+ * @param {BN} amount - The amount of tokens you want to sell.
+ * @param {number} slippageRate - The percentage of slippage you're willing to accept. (Max to 2 decimal place)
+ * @returns The minimum amount that can be received after slippage is applied.
+ */
 export const getMinAmountWithSlippage = (amount: BN, slippageRate: number) => {
   const slippage = ((100 - slippageRate) / 100) * 10000;
   return amount.mul(new BN(slippage)).div(new BN(10000));
@@ -117,22 +132,6 @@ export const getOnchainTime = async (connection: Connection) => {
   return currentTime;
 };
 
-export const parseLogs = async (eventParser: EventParser, logs: string[]) => {
-  let timeout: NodeJS.Timeout;
-  return new Promise((resolve, reject) => {
-    invariant(logs.length, 'Invalid logs');
-    eventParser?.parseLogs(logs, (event) => {
-      timeout && clearTimeout(timeout);
-      resolve(event?.data);
-    });
-    // TODO: find a better solution (create own eventParser)
-    timeout = setTimeout(() => {
-      invariant(true, 'No events found');
-      reject();
-    }, 1500);
-  });
-};
-
 // Typescript implementation of https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/src/state.rs#L87
 const getLastVirtualPrice = (apyState: ApyState): VirtualPrice | null => {
   const { snapshot } = apyState;
@@ -206,7 +205,7 @@ export const computeActualDepositAmount = (
 
 /**
  * Compute pool information, Typescript implementation of https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/src/lib.rs#L960
- * @param {number} currentTime - the current time in seconds
+ * @param {number} currentTime - the on solana chain time in seconds (SYSVAR_CLOCK_PUBKEY)
  * @param {BN} poolVaultALp - The amount of LP tokens in the pool for token A
  * @param {BN} poolVaultBLp - The amount of Lp tokens in the pool for token B,
  * @param {BN} vaultALpSupply - The total amount of Vault A LP tokens in the pool.
