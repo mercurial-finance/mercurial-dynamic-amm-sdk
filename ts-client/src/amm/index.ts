@@ -505,7 +505,7 @@ export default class AmmImpl implements AmmImplementation {
    * can be zero for balance deposit quote.
    * @param {BN} tokenAInAmount - The amount of token A to be deposit,
    * @param {BN} tokenBInAmount - The amount of token B to be deposit,
-   * @param {boolean} [balance=true] - return false if the deposit is imbalance (default: true)
+   * @param {boolean} [balance] - return false if the deposit is imbalance
    * @param {number} [slippage] - The amount of slippage you're willing to accept. (Max to 2 decimal place)
    * @returns The return value is a tuple of the poolTokenAmountOut, tokenAInAmount, and
    * tokenBInAmount.
@@ -554,7 +554,7 @@ export default class AmmImpl implements AmmImplementation {
       return {
         poolTokenAmountOut,
         tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippage),
-        tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippage),
+        tokenBInAmount: actualTokenBInAmount,
       };
     }
 
@@ -588,7 +588,7 @@ export default class AmmImpl implements AmmImplementation {
 
       return {
         poolTokenAmountOut,
-        tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippage),
+        tokenAInAmount: actualTokenAInAmount,
         tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippage),
       };
     }
