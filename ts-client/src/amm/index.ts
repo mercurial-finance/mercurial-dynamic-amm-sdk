@@ -495,7 +495,7 @@ export default class AmmImpl implements AmmImplementation {
 
     return new Transaction({
       feePayer: owner,
-      ...(await this.program.provider.connection.getLatestBlockhash()),
+      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
     }).add(swapTx);
   }
 
@@ -695,7 +695,7 @@ export default class AmmImpl implements AmmImplementation {
 
     return new Transaction({
       feePayer: owner,
-      ...(await this.program.provider.connection.getLatestBlockhash()),
+      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
     }).add(depositTx);
   }
 
@@ -851,7 +851,7 @@ export default class AmmImpl implements AmmImplementation {
 
     return new Transaction({
       feePayer: owner,
-      ...(await this.program.provider.connection.getLatestBlockhash()),
+      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
     }).add(withdrawTx);
   }
 
