@@ -25,6 +25,7 @@ import {
   SEEDS,
   VAULT_PROGRAM_ID,
   WRAPPED_SOL_MINT,
+  UNLOCK_AMOUNT_BUFFER,
 } from './constants';
 import { StableSwap, SwapCurve, TradeDirection } from './curve';
 import { ConstantProductSwap } from './curve/constant-product';
@@ -552,9 +553,9 @@ export default class AmmImpl implements AmmImplementation {
       );
 
       return {
-        poolTokenAmountOut,
+        poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, UNLOCK_AMOUNT_BUFFER),
         tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippage),
-        tokenBInAmount: actualTokenBInAmount,
+        tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippage),
       };
     }
 
@@ -587,8 +588,8 @@ export default class AmmImpl implements AmmImplementation {
       );
 
       return {
-        poolTokenAmountOut,
-        tokenAInAmount: actualTokenAInAmount,
+        poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, UNLOCK_AMOUNT_BUFFER),
+        tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippage),
         tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippage),
       };
     }
