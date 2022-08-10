@@ -5,7 +5,6 @@ import BN from 'bn.js';
 import { Amm as AmmIdl } from '../idl';
 import { IdlTypes } from '@project-serum/anchor/dist/esm';
 import { VaultState } from '@mercurial-finance/vault-sdk';
-import { SwapCurve } from '../curve';
 
 export type AmmImplementation = {
   tokenA: TokenInfo;
