@@ -8,6 +8,8 @@ import {
   calculatePoolInfo,
   getDepegAccounts,
 } from './src/amm/utils';
+import { Amm, IDL as AmmIdl } from './src/amm/idl';
+import { Vault, IDL as VaultIdl } from './src/amm/vault-idl';
 
 export default AmmImpl;
 export {
@@ -24,6 +26,9 @@ export {
   PROGRAM_ID,
   MAINNET_POOL,
   DEVNET_POOL,
+  // IDL
+  AmmIdl,
+  VaultIdl,
 };
 
 export type {
@@ -37,3 +42,4 @@ export type {
   StableSwapCurve,
   SwapQuoteParam,
 } from './src/amm/types';
+export type { Amm, Vault };
