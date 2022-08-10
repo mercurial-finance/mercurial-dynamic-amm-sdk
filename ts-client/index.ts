@@ -42,4 +42,5 @@ export type {
   StableSwapCurve,
   SwapQuoteParam,
 } from './src/amm/types';
+export type { VaultState } from '@mercurial-finance/vault-sdk';
 export type { Amm, Vault };
