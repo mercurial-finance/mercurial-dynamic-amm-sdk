@@ -760,7 +760,7 @@ dependencies = [
 [[package]]
 name = "mercurial-vault"
 version = "0.4.0"
-source = "git+https://github.com/mercurial-finance/mercurial_sdk?rev=46ceca8c700718c53cb88c72ba8d15289447672b#46ceca8c700718c53cb88c72ba8d15289447672b"
+source = "git+https://github.com/mercurial-finance/vault-sdk?rev=6daf57a877c36694c8f5b8267ca1e096a1e619d2#6daf57a877c36694c8f5b8267ca1e096a1e619d2"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
