@@ -21,4 +21,4 @@ overflow-checks = true
 [dependencies]
 anchor-lang = "0.24.2"
 anchor-spl = "0.24.2"
-mercurial-vault = { git="https://github.com/mercurial-finance/mercurial_sdk", features= ["cpi"], rev = "46ceca8c700718c53cb88c72ba8d15289447672b" }
+mercurial-vault = { git="https://github.com/mercurial-finance/vault-sdk", features= ["cpi"], rev = "6daf57a877c36694c8f5b8267ca1e096a1e619d2" }
