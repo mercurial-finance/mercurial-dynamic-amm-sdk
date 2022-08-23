@@ -1,7 +1,14 @@
-name: Continuous Deployment to NPM
+name: CICD on main
 
 on:
-  - pull_request
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'LICENSE'
+      - '.editorconfig'
+    branches:
+      - main
 
 env:
   working_dir: ./ts-client
@@ -30,14 +37,17 @@ jobs:
       - name: Setup .npmrc file to publish to npm
         uses: actions/setup-node@v1
         with:
-          node-version: "16.x"
-          registry-url: "https://registry.npmjs.org"
+          node-version: '16.x'
+          registry-url: 'https://registry.npmjs.org'
       - uses: pnpm/action-setup@v2.2.2
         with:
           version: 6.0.2
       - name: Install modules
         working-directory: ${{ env.working_dir }}
         run: pnpm i
+      - name: Run tests
+        working-directory: ${{ env.working_dir }}
+        run: pnpm run test
       - name: Build
         working-directory: ${{ env.working_dir }}
         run: pnpm run build
@@ -47,6 +57,6 @@ jobs:
         working-directory: ${{ env.working_dir }}
         run: |
           npm version --no-git-tag-version prerelease --preid=${SHORT_SHA} --force
-          npm publish --tag develop
+          npm publish --tag next
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
