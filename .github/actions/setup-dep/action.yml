@@ -1,0 +1,7 @@
+name: "Setup"
+description: "Setup program dependencies"
+runs:
+  using: "composite"
+  steps:
+    - run: sudo apt-get update && sudo apt-get install -y ca-certificates pkg-config build-essential libudev-dev libdigest-sha-perl libssl-dev
+      shell: bash

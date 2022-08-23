@@ -1,5 +1,5 @@
 [package]
-name = "amm"
+name = "mercurial-amm"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2021"

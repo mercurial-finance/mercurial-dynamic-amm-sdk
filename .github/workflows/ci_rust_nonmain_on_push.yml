@@ -1,0 +1,66 @@
+name: CI on non-main
+
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'LICENSE'
+      - '.editorconfig'
+    branches:
+      - develop
+      - staging
+
+env:
+  # working_dir: ./rust-client
+  SOLANA_CLI_VERSION: 1.9.17
+  
+jobs:
+  changed_files:
+    runs-on: ubuntu-latest
+    outputs:
+      program: ${{steps.changed-files-specific.outputs.any_changed}}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get specific changed files
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v18.6
+        with:
+          files: |
+            rust-client
+            programs
+
+  rust-test:
+    needs: changed_files
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/setup-dep
+      - uses: ./.github/actions/setup-solana
+      # Install rust + toolchain
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+      # Cargo build cache
+      - name: Cargo Cache
+        uses: actions/cache@v1
+        with:
+          path: |
+            ~/.cargo/
+            target
+          key: ${{ runner.os }}-cargo-${{ steps.extract_branch.outputs.branch }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ steps.extract_branch.outputs.branch }}
+            ${{ runner.os }}-cargo
+      - name: Cargo fmt check
+        run: cargo fmt -- --check
+        shell: bash
+        # working-directory: ${{ env.working_dir }}
+      - name: Cargo test
+        run: cargo test -- --nocapture
+        shell: bash
+        # working-directory: ${{ env.working_dir }}

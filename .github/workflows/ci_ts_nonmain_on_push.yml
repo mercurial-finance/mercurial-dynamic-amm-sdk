@@ -1,18 +1,17 @@
-name: Continuous Integration
+name: Continuous Integration NPM
 
 on:
   push:
     paths-ignore:
-      - "docs/**"
-      - "README.md"
-      - "LICENSE"
-      - ".editorconfig"
+      - 'docs/**'
+      - 'README.md'
+      - 'LICENSE'
+      - '.editorconfig'
     branches:
-      - main
-  pull_request:
+      - develop
+      - staging
 
 env:
-  WALLET_PRIVATE_KEY: ${{secrets.WALLET_PRIVATE_KEY}}
   working_dir: ./ts-client
 
 jobs:
