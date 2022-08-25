@@ -9,6 +9,7 @@ on:
       - '.editorconfig'
     branches:
       - main
+      - master
 
 env:
   # working_dir: ./rust-client
