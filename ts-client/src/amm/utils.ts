@@ -331,10 +331,10 @@ export const getDepegAccounts = async (connection: Connection): Promise<Map<Stri
   const depegAccounts = new Map<String, AccountInfo<Buffer>>();
   const [marinadeBuffer, solidoBuffer] = await connection.getMultipleAccountsInfo([
     CURVE_TYPE_ACCOUNTS.marinade,
-    CURVE_TYPE_ACCOUNTS.solido,
+    CURVE_TYPE_ACCOUNTS.lido,
   ]);
   depegAccounts.set(CURVE_TYPE_ACCOUNTS.marinade.toBase58(), marinadeBuffer!);
-  depegAccounts.set(CURVE_TYPE_ACCOUNTS.solido.toBase58(), solidoBuffer!);
+  depegAccounts.set(CURVE_TYPE_ACCOUNTS.lido.toBase58(), solidoBuffer!);
 
   return depegAccounts;
 };

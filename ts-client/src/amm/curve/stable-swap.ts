@@ -38,7 +38,7 @@ export class StableSwap implements SwapCurve {
       return msolPrice.mul(PRECISION).div(new BN(0x1_0000_0000));
     }
     if (depegType['lido']) {
-      const account = this.extraAccounts.get(CURVE_TYPE_ACCOUNTS.solido.toBase58());
+      const account = this.extraAccounts.get(CURVE_TYPE_ACCOUNTS.lido.toBase58());
       //https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/tests/test_depeg_price.rs#L33
       const stSolSupply = new BN(account!.data.readBigInt64LE(73).toString());
       const stSolBalance = new BN(account!.data.readBigInt64LE(81).toString());

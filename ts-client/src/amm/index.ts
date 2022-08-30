@@ -76,7 +76,7 @@ const getRemainingAccounts = (poolState: PoolState) => {
 
     if ('lido' in poolState.curveType['stable'].depeg.depegType) {
       accounts.push({
-        pubkey: CURVE_TYPE_ACCOUNTS.solido,
+        pubkey: CURVE_TYPE_ACCOUNTS.lido,
         isWritable: false,
         isSigner: false,
       });
