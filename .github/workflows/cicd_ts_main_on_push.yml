@@ -3,12 +3,12 @@ name: CICD on main
 on:
   push:
     paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'LICENSE'
-      - '.editorconfig'
+      - "docs/**"
+      - "README.md"
+      - "LICENSE"
+      - ".editorconfig"
     branches:
-      - main
+      - master
 
 env:
   working_dir: ./ts-client
@@ -37,8 +37,8 @@ jobs:
       - name: Setup .npmrc file to publish to npm
         uses: actions/setup-node@v1
         with:
-          node-version: '16.x'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "16.x"
+          registry-url: "https://registry.npmjs.org"
       - uses: pnpm/action-setup@v2.2.2
         with:
           version: 6.0.2
