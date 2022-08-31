@@ -1,8 +1,10 @@
 [package]
 name = "mercurial-amm"
-version = "0.1.0"
+version = "0.1.2"
 description = "Created with Anchor"
 edition = "2021"
+license = "MIT"
+readme = "README.md"
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -21,4 +23,5 @@ overflow-checks = true
 [dependencies]
 anchor-lang = "0.24.2"
 anchor-spl = "0.24.2"
-mercurial-vault = { git="https://github.com/mercurial-finance/vault-sdk", features= ["cpi"], rev = "6daf57a877c36694c8f5b8267ca1e096a1e619d2" }
+mercurial-vault = { version = "0.4.2", features = ["cpi"] }
+
