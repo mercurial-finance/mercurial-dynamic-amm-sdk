@@ -15,7 +15,7 @@ env:
   working_dir: ./ts-client
 
 jobs:
-  changed_files:
+  changed_files_ts:
     runs-on: ubuntu-latest
     outputs:
       program: ${{steps.changed-files-specific.outputs.any_changed}}
@@ -31,9 +31,8 @@ jobs:
             ts-client
 
   ts-test:
-    needs: changed_files
+    needs: changed_files_ts
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
       - name: Set up Node.js

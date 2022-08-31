@@ -12,11 +12,10 @@ on:
       - staging
 
 env:
-  # working_dir: ./rust-client
   SOLANA_CLI_VERSION: 1.9.17
   
 jobs:
-  changed_files:
+  changed_files_rust:
     runs-on: ubuntu-latest
     outputs:
       program: ${{steps.changed-files-specific.outputs.any_changed}}
@@ -33,7 +32,7 @@ jobs:
             programs
 
   rust-test:
-    needs: changed_files
+    needs: changed_files_rust
     runs-on: ubuntu-latest
 
     steps:
@@ -59,8 +58,6 @@ jobs:
       - name: Cargo fmt check
         run: cargo fmt -- --check
         shell: bash
-        # working-directory: ${{ env.working_dir }}
       - name: Cargo test
         run: cargo test -- --nocapture
         shell: bash
-        # working-directory: ${{ env.working_dir }}
