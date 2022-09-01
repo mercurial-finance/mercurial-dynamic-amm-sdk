@@ -2,7 +2,7 @@ import { Cluster, Connection, Keypair, PublicKey } from '@solana/web3.js';
 import AmmImpl from '../index';
 import { DEFAULT_SLIPPAGE, MAINNET_POOL, DEVNET_POOL } from '../constants';
 import { AnchorProvider, BN, Wallet } from '@project-serum/anchor';
-import { airDropSol } from "./utils";
+// import { airDropSol } from "./utils";
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 
 let mockWallet = new Wallet(
@@ -34,7 +34,7 @@ describe('Interact with Devnet pool', () => {
   let currentStablePoolBalance: BN;
 
   beforeAll(async () => {
-    await airDropSol(DEVNET.connection, mockWallet.publicKey);
+    // await airDropSol(DEVNET.connection, mockWallet.publicKey);
     
     cpPool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEVNET_POOL.USDT_SOL), {
       cluster: DEVNET.cluster as Cluster,
