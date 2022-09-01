@@ -5,6 +5,7 @@ target
 **/*.rs.bk
 node_modules
 test-ledger
+.pnpm-debug.log
 
 ts-client/dist/
 ts-client/package-lock.json
