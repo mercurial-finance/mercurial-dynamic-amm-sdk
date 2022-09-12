@@ -195,6 +195,8 @@ export default class AmmImpl implements AmmImplementation {
 
     const poolState = await getPoolState(pool, ammProgram);
 
+    invariant(tokenInfoA.address === poolState.tokenAMint.toBase58(), `TokenInfoA provided is incorrect`);
+    invariant(tokenInfoB.address === poolState.tokenBMint.toBase58(), `TokenInfoB provided is incorrect`);
     invariant(tokenInfoA, `TokenInfo ${poolState.tokenAMint.toBase58()} A not found`);
     invariant(tokenInfoB, `TokenInfo ${poolState.tokenBMint.toBase58()} A not found`);
 
