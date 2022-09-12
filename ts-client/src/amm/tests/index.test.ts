@@ -597,7 +597,7 @@ describe('Interact with Mainnet pool', () => {
     depegPool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAINNET_POOL.SOL_STSOL), SOL!, STSOL!, {
       cluster: MAINNET.cluster as Cluster,
     });
-    stablePool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAINNET_POOL.USDT_USDC), USDT!, USDC!, {
+    stablePool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAINNET_POOL.USDT_USDC), USDC!, USDT!, {
       cluster: MAINNET.cluster as Cluster,
     });
   });
