@@ -177,6 +177,8 @@ export default class AmmImpl implements AmmImplementation {
   public static async create(
     connection: Connection,
     pool: PublicKey,
+    tokenInfoA: TokenInfo,
+    tokenInfoB: TokenInfo,
     opt?: {
       cluster?: Cluster;
     },
@@ -191,13 +193,8 @@ export default class AmmImpl implements AmmImplementation {
       ammProgram.programId,
     );
 
-    const tokenListContainer = await new TokenListProvider().resolve();
-    const tokenMap = cluster === 'devnet' ? DEVNET_COIN : tokenListContainer.filterByClusterSlug(cluster).getList();
-
     const poolState = await getPoolState(pool, ammProgram);
 
-    const tokenInfoA = tokenMap.find((token) => token.address === poolState.tokenAMint.toBase58());
-    const tokenInfoB = tokenMap.find((token) => token.address === poolState.tokenBMint.toBase58());
     invariant(tokenInfoA, `TokenInfo ${poolState.tokenAMint.toBase58()} A not found`);
     invariant(tokenInfoB, `TokenInfo ${poolState.tokenBMint.toBase58()} A not found`);
 
