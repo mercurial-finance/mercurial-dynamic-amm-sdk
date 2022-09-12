@@ -1,9 +1,9 @@
 import { Cluster, Connection, Keypair, PublicKey } from '@solana/web3.js';
 import AmmImpl from '../index';
-import { DEFAULT_SLIPPAGE, MAINNET_POOL, DEVNET_POOL } from '../constants';
+import { DEFAULT_SLIPPAGE, MAINNET_POOL, DEVNET_POOL, DEVNET_COIN } from '../constants';
 import { AnchorProvider, BN, Wallet } from '@project-serum/anchor';
-// import { airDropSol } from "./utils";
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
+import { TokenListProvider } from '@solana/spl-token-registry';
 
 let mockWallet = new Wallet(
   process.env.WALLET_PRIVATE_KEY ? Keypair.fromSecretKey(bs58.decode(process.env.WALLET_PRIVATE_KEY)) : new Keypair(),
@@ -35,30 +35,21 @@ describe('Interact with Devnet pool', () => {
 
   beforeAll(async () => {
     // await airDropSol(DEVNET.connection, mockWallet.publicKey);
-    
-    cpPool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEVNET_POOL.USDT_SOL), {
-      cluster: DEVNET.cluster as Cluster,
-    });
-    depegPool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEVNET_POOL.SOL_MSOL), {
-      cluster: DEVNET.cluster as Cluster,
-    });
-    stablePool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEVNET_POOL.USDT_USDC), {
-      cluster: DEVNET.cluster as Cluster,
-    });
-  });
 
-  test('SwapQuote > vault reserve', async () => {
-    const inAmountLamport = new BN('18446744073709551615');
+    const USDT = DEVNET_COIN.find((token) => token.address === '9NGDi2tZtNmCCp8SVLKNuGjuWAVwNF3Vap5tT8km5er9');
+    const USDC = DEVNET_COIN.find((token) => token.address === 'zVzi5VAf4qMEwzv7NXECVx5v2pQ7xnqVVjCXZwS9XzA');
+    const SOL = DEVNET_COIN.find((token) => token.address === 'So11111111111111111111111111111111111111112');
+    const MSOL = DEVNET_COIN.find((token) => token.address === 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So');
 
-    let errorMsg: string = '';
-    try {
-      cpPool.getSwapQuote(new PublicKey(cpPool.tokenB.address), inAmountLamport, DEFAULT_SLIPPAGE);
-    } catch (error) {
-      if (error instanceof Error) {
-        errorMsg = error.message;
-      }
-    }
-    expect(errorMsg).toBe('Out amount > vault reserve');
+    cpPool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEVNET_POOL.USDT_SOL), USDT!, SOL!, {
+      cluster: DEVNET.cluster as Cluster,
+    });
+    depegPool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEVNET_POOL.SOL_MSOL), SOL!, MSOL!, {
+      cluster: DEVNET.cluster as Cluster,
+    });
+    stablePool = await AmmImpl.create(DEVNET.connection, new PublicKey(DEVNET_POOL.USDT_USDC), USDT!, USDC!, {
+      cluster: DEVNET.cluster as Cluster,
+    });
   });
 
   test('Get Pool Token Mint', () => {
@@ -592,13 +583,21 @@ describe('Interact with Mainnet pool', () => {
   let depegPool: AmmImpl;
 
   beforeAll(async () => {
-    cpPool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAINNET_POOL.USDC_SOL), {
+    const tokenListContainer = await new TokenListProvider().resolve();
+    const tokenMap = tokenListContainer.filterByClusterSlug(MAINNET.cluster).getList();
+
+    const USDT = tokenMap.find((token) => token.address === 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
+    const USDC = tokenMap.find((token) => token.address === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+    const SOL = tokenMap.find((token) => token.address === 'So11111111111111111111111111111111111111112');
+    const STSOL = tokenMap.find((token) => token.address === '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj');
+
+    cpPool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAINNET_POOL.USDC_SOL), USDC!, SOL!, {
       cluster: MAINNET.cluster as Cluster,
     });
-    depegPool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAINNET_POOL.SOL_STSOL), {
+    depegPool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAINNET_POOL.SOL_STSOL), SOL!, STSOL!, {
       cluster: MAINNET.cluster as Cluster,
     });
-    stablePool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAINNET_POOL.USDT_USDC), {
+    stablePool = await AmmImpl.create(MAINNET.connection, new PublicKey(MAINNET_POOL.USDT_USDC), USDT!, USDC!, {
       cluster: MAINNET.cluster as Cluster,
     });
   });
