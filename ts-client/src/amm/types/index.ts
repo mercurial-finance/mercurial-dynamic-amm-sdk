@@ -47,6 +47,11 @@ export interface PoolFees {
   ownerTradeFeeDenominator: BN;
 }
 
+export interface SwapResult {
+  amountOut: BN;
+  fee: BN;
+}
+
 export type AccountsToCache = {
   apyPdaBuffer: AccountInfo<Buffer> | null;
   poolBuffer: AccountInfo<Buffer> | null;
