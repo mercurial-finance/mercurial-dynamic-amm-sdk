@@ -369,7 +369,7 @@ export default class AmmImpl implements AmmImplementation {
    * @returns The amount of the destination token that will be received after the swap.
    */
   public getSwapQuote(inTokenMint: PublicKey, inAmountLamport: BN, slippage: number) {
-    const swapQuote = calculateSwapQuote(inTokenMint, inAmountLamport, {
+    const { amountOut: swapQuote } = calculateSwapQuote(inTokenMint, inAmountLamport, {
       currentTime: this.accountsInfo.currentTime,
       poolState: this.poolState,
       depegAccounts: this.depegAccounts,

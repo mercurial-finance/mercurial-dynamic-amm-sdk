@@ -19,12 +19,12 @@ import invariant from 'invariant';
 import { CURVE_TYPE_ACCOUNTS, ERROR, VIRTUAL_PRICE_PRECISION, WRAPPED_SOL_MINT } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
-  AccountsInfo,
   ApyState,
   ParsedClockState,
   PoolInformation,
   PoolState,
   SwapQuoteParam,
+  SwapResult,
   VirtualPrice,
 } from './types';
 
@@ -357,7 +357,7 @@ export const getDepegAccounts = async (connection: Connection): Promise<Map<Stri
  * @param {BN} params.depegAccounts - A map of the depeg accounts. (get from `getDepegAccounts` util)
  * @returns The amount of tokens that will be received after the swap.
  */
-export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, params: SwapQuoteParam) => {
+export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, params: SwapQuoteParam): SwapResult => {
   const {
     vaultA,
     vaultB,
@@ -458,5 +458,8 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
 
   invariant(actualDestinationAmount.lt(maxSwapOutAmount), 'Out amount > vault reserve');
 
-  return actualDestinationAmount;
+  return {
+    amountOut: actualDestinationAmount,
+    fee: adminFee.add(tradeFee),
+  };
 };
