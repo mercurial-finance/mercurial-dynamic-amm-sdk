@@ -1,4 +1,4 @@
-import { SwapCurve, TradeDirection } from '.';
+import { getPriceImpact, OutResult, SwapCurve, TradeDirection } from '.';
 import { BN, BorshCoder, Idl } from '@project-serum/anchor';
 import {
   computeY,
@@ -15,6 +15,7 @@ import { AccountInfo, Connection, Keypair, PublicKey } from '@solana/web3.js';
 import MarinadeIDL from '../marinade-finance.json';
 import { CURVE_TYPE_ACCOUNTS } from '../constants';
 import { Depeg, DepegType, PoolFees, TokenMultiplier } from '../types';
+import Decimal from 'decimal.js';
 
 // Precision for base pool virtual price
 const PRECISION = new BN(1_000_000);
@@ -93,12 +94,37 @@ export class StableSwap implements SwapCurve {
     return denormalizedTokenBAmount;
   }
 
+  private computeOutAmountWithoutSlippage(
+    sourceAmount: BN,
+    swapSourceAmount: BN,
+    swapDestinationAmount: BN,
+    invariantD: BN,
+  ): BN {
+    const SIXTEEN = new BN(16);
+    const FOUR = new BN(4);
+    const TWO = new BN(2);
+    const amp = new BN(this.amp);
+    const a = amp.mul(SIXTEEN);
+    const b = a;
+    const c = invariantD.mul(FOUR).sub(invariantD.mul(amp).mul(SIXTEEN));
+
+    const numerator = TWO.mul(a)
+      .mul(swapSourceAmount)
+      .add(b.mul(swapDestinationAmount))
+      .add(c)
+      .mul(swapDestinationAmount);
+
+    const denominator = a.mul(swapSourceAmount).add(TWO.mul(b).mul(swapDestinationAmount).add(c)).mul(swapSourceAmount);
+
+    return sourceAmount.mul(numerator).div(denominator);
+  }
+
   computeOutAmount(
     sourceAmount: BN,
     swapSourceAmount: BN,
     swapDestinationAmount: BN,
     tradeDirection: TradeDirection,
-  ): BN {
+  ): OutResult {
     this.updateDepegInfoIfExpired();
     const [upscaledSourceAmount, upscaledSwapSourceAmount, upscaledSwapDestinationAmount] =
       tradeDirection == TradeDirection.AToB
@@ -124,8 +150,24 @@ export class StableSwap implements SwapCurve {
       JSBI.BigInt(upscaledSourceAmount.toString()),
     );
     const newSwapDestinationAmount = computeY(JSBI.BigInt(this.amp), newSwapSourceAmount, invariantD);
-    const outAmount = upscaledSwapDestinationAmount.sub(new BN(newSwapDestinationAmount.toString()));
-    return tradeDirection == TradeDirection.AToB ? this.downscaleTokenB(outAmount) : this.downscaleTokenA(outAmount);
+
+    let outAmount = upscaledSwapDestinationAmount.sub(new BN(newSwapDestinationAmount.toString()));
+    let outAmountWithoutSlippage = this.computeOutAmountWithoutSlippage(
+      upscaledSourceAmount,
+      upscaledSwapSourceAmount,
+      upscaledSwapDestinationAmount,
+      new BN(invariantD.toString()),
+    );
+
+    [outAmount, outAmountWithoutSlippage] =
+      tradeDirection == TradeDirection.AToB
+        ? [this.downscaleTokenB(outAmount), this.downscaleTokenB(outAmountWithoutSlippage)]
+        : [this.downscaleTokenA(outAmount), this.downscaleTokenA(outAmountWithoutSlippage)];
+
+    return {
+      outAmount,
+      priceImpact: getPriceImpact(outAmount, outAmountWithoutSlippage),
+    };
   }
 
   computeD(tokenAAmount: BN, tokenBAmount: BN): BN {
@@ -224,60 +266,6 @@ export class StableSwap implements SwapCurve {
     return tradeDirection == TradeDirection.AToB
       ? this.downscaleTokenB(withdrawAmountBeforeFees.toU64())
       : this.downscaleTokenA(withdrawAmountBeforeFees.toU64());
-  }
-
-  computeOutAmountWithoutSlippage(
-    sourceAmount: BN,
-    swapSourceAmount: BN,
-    swapDestinationAmount: BN,
-    tradeDirection: TradeDirection,
-  ): BN {
-    this.updateDepegInfoIfExpired();
-    const [upscaledSourceAmount, upscaledSwapSourceAmount, upscaledSwapDestinationAmount] =
-      tradeDirection == TradeDirection.AToB
-        ? [
-            this.upscaleTokenA(sourceAmount),
-            this.upscaleTokenA(swapSourceAmount),
-            this.upscaleTokenB(swapDestinationAmount),
-          ]
-        : [
-            this.upscaleTokenB(sourceAmount),
-            this.upscaleTokenB(swapSourceAmount),
-            this.upscaleTokenA(swapDestinationAmount),
-          ];
-
-    const invariantD = new BN(
-      computeD(
-        JSBI.BigInt(this.amp),
-        JSBI.BigInt(upscaledSwapSourceAmount.toString()),
-        JSBI.BigInt(upscaledSwapDestinationAmount.toString()),
-      ).toString(),
-    );
-
-    const SIXTEEN = new BN(16);
-    const TWO = new BN(2);
-    const FOUR = new BN(4);
-
-    const amp = new BN(this.amp);
-    const a = amp.mul(SIXTEEN);
-    const b = a;
-    const c = invariantD.mul(FOUR).sub(invariantD.mul(amp).mul(SIXTEEN));
-
-    const numerator = TWO.mul(a)
-      .mul(upscaledSwapSourceAmount)
-      .add(b.mul(upscaledSwapDestinationAmount))
-      .add(c)
-      .mul(upscaledSwapDestinationAmount);
-
-    const denominator = a
-      .mul(upscaledSwapSourceAmount)
-      .add(TWO.mul(b).mul(upscaledSwapDestinationAmount).add(c))
-      .mul(upscaledSwapSourceAmount);
-
-    const upscaledOutAmountWithoutSlippage = upscaledSourceAmount.mul(numerator).div(denominator);
-    return tradeDirection == TradeDirection.AToB
-      ? this.downscaleTokenB(upscaledOutAmountWithoutSlippage)
-      : this.downscaleTokenA(upscaledOutAmountWithoutSlippage);
   }
 }
 // Helper class to convert the type to the type from saber stable calculator
