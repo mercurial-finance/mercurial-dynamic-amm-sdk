@@ -607,4 +607,54 @@ describe('Interact with Mainnet pool', () => {
     expect(depegPool.getPoolTokenMint()).toBeDefined();
     expect(stablePool.getPoolTokenMint()).toBeDefined();
   });
+
+  test('Cpamm price impact', () => {
+    const inTokenMint = new PublicKey(cpPool.tokenA.address);
+    const onePercentAmount = cpPool.poolInfo.tokenAAmount.div(new BN(100));
+    const fiftyPercentAmount = cpPool.poolInfo.tokenAAmount.mul(new BN(50)).div(new BN(100));
+    const oneHundredPercentAmount = cpPool.poolInfo.tokenAAmount;
+    const twoHundredPercentAmount = cpPool.poolInfo.tokenAAmount.mul(new BN(2));
+
+    console.log('Pool token A amount', cpPool.poolInfo.tokenAAmount.toString());
+    console.log('Pool token B amount', cpPool.poolInfo.tokenBAmount.toString());
+
+    const priceImpact1 = cpPool.getPriceImpact(inTokenMint, onePercentAmount);
+    const priceImpact2 = cpPool.getPriceImpact(inTokenMint, fiftyPercentAmount);
+    const priceImpact3 = cpPool.getPriceImpact(inTokenMint, oneHundredPercentAmount);
+    const priceImpact4 = cpPool.getPriceImpact(inTokenMint, twoHundredPercentAmount);
+
+    console.log(`Price impact with in amount ${onePercentAmount.toString()}`, priceImpact1);
+    console.log(`Price impact with in amount ${fiftyPercentAmount.toString()}`, priceImpact2);
+    console.log(`Price impact with in amount ${oneHundredPercentAmount.toString()}`, priceImpact3);
+    console.log(`Price impact with in amount ${twoHundredPercentAmount.toString()}`, priceImpact4);
+
+    expect(priceImpact4.toNumber()).toBeGreaterThan(priceImpact3.toNumber());
+    expect(priceImpact3.toNumber()).toBeGreaterThan(priceImpact2.toNumber());
+    expect(priceImpact2.toNumber()).toBeGreaterThan(priceImpact1.toNumber());
+  });
+
+  test('Ssamm price impact', () => {
+    const inTokenMint = new PublicKey(stablePool.tokenA.address);
+    const onePercentAmount = stablePool.poolInfo.tokenAAmount.div(new BN(100));
+    const fiftyPercentAmount = stablePool.poolInfo.tokenAAmount.mul(new BN(50)).div(new BN(100));
+    const oneHundredPercentAmount = stablePool.poolInfo.tokenAAmount;
+    const twoHundredPercentAmount = stablePool.poolInfo.tokenAAmount.mul(new BN(2));
+
+    console.log('Pool token A amount', stablePool.poolInfo.tokenAAmount.toString());
+    console.log('Pool token B amount', stablePool.poolInfo.tokenBAmount.toString());
+
+    const priceImpact1 = stablePool.getPriceImpact(inTokenMint, onePercentAmount);
+    const priceImpact2 = stablePool.getPriceImpact(inTokenMint, fiftyPercentAmount);
+    const priceImpact3 = stablePool.getPriceImpact(inTokenMint, oneHundredPercentAmount);
+    const priceImpact4 = stablePool.getPriceImpact(inTokenMint, twoHundredPercentAmount);
+
+    console.log(`Price impact with in amount ${onePercentAmount.toString()}`, priceImpact1);
+    console.log(`Price impact with in amount ${fiftyPercentAmount.toString()}`, priceImpact2);
+    console.log(`Price impact with in amount ${oneHundredPercentAmount.toString()}`, priceImpact3);
+    console.log(`Price impact with in amount ${twoHundredPercentAmount.toString()}`, priceImpact4);
+
+    expect(priceImpact4.toNumber()).toBeGreaterThan(priceImpact3.toNumber());
+    expect(priceImpact3.toNumber()).toBeGreaterThan(priceImpact2.toNumber());
+    expect(priceImpact2.toNumber()).toBeGreaterThan(priceImpact1.toNumber());
+  });
 });
