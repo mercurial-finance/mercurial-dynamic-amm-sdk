@@ -1,6 +1,6 @@
 import sqrt from 'bn-sqrt';
 import { BN } from '@project-serum/anchor';
-import { SwapCurve, TradeDirection } from '.';
+import { getPriceImpact, OutResult, SwapCurve, TradeDirection } from '.';
 import { PoolFees } from '../types';
 
 // Typescript implementation of https://github.com/solana-labs/solana-program-library/blob/master/libraries/math/src/checked_ceil_div.rs#L29
@@ -29,20 +29,33 @@ function ceilDiv(lhs: BN, rhs: BN) {
 export class ConstantProductSwap implements SwapCurve {
   constructor() {}
 
+  private computeOutAmountWithoutSlippage(sourceAmount: BN, swapSourceAmount: BN, swapDestinationAmount: BN): BN {
+    return sourceAmount.mul(swapDestinationAmount).div(swapSourceAmount);
+  }
+
   // Typescript implementation of https://github.com/solana-labs/solana-program-library/blob/master/token-swap/program/src/curve/constant_product.rs#L27
   computeOutAmount(
     sourceAmount: BN,
     swapSourceAmount: BN,
     swapDestinationAmount: BN,
     _tradeDirection: TradeDirection,
-  ): BN {
+  ): OutResult {
     let invariant = swapSourceAmount.mul(swapDestinationAmount);
     let [newSwapDestinationAmount, _newSwapSourceAmount] = ceilDiv(invariant, swapSourceAmount.add(sourceAmount));
     let destinationAmountSwapped = swapDestinationAmount.sub(newSwapDestinationAmount);
     if (destinationAmountSwapped.eq(new BN(0))) {
       throw new Error('Swap result in zero');
     }
-    return destinationAmountSwapped;
+    const destinationAmountWithoutSlippage = this.computeOutAmountWithoutSlippage(
+      sourceAmount,
+      swapSourceAmount,
+      swapDestinationAmount,
+    );
+
+    return {
+      outAmount: destinationAmountSwapped,
+      priceImpact: getPriceImpact(destinationAmountSwapped, destinationAmountWithoutSlippage),
+    };
   }
   computeD(tokenAAmount: BN, tokenBAmount: BN): BN {
     return sqrt(tokenAAmount.mul(tokenBAmount));
@@ -82,14 +95,5 @@ export class ConstantProductSwap implements SwapCurve {
     _tradeDirection: TradeDirection,
   ): BN {
     throw new Error('UnsupportedOperation');
-  }
-
-  computeOutAmountWithoutSlippage(
-    sourceAmount: BN,
-    swapSourceAmount: BN,
-    swapDestinationAmount: BN,
-    _tradeDirection: TradeDirection,
-  ): BN {
-    return sourceAmount.mul(swapDestinationAmount).div(swapSourceAmount);
   }
 }

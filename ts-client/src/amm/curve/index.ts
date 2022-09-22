@@ -1,5 +1,11 @@
 import { BN } from '@project-serum/anchor';
+import Decimal from 'decimal.js';
 import { PoolFees } from '../types';
+
+export interface OutResult {
+  outAmount: BN;
+  priceImpact: Decimal;
+}
 
 export interface SwapCurve {
   computeOutAmount(
@@ -7,7 +13,7 @@ export interface SwapCurve {
     swapSourceAmount: BN,
     swapDestinationAmount: BN,
     tradeDirection: TradeDirection,
-  ): BN;
+  ): OutResult;
 
   computeD(tokenAAmount: BN, tokenBAmount: BN): BN;
 
@@ -30,19 +36,17 @@ export interface SwapCurve {
     fees: PoolFees,
     tradeDirection: TradeDirection,
   ): BN;
-
-  computeOutAmountWithoutSlippage(
-    sourceAmount: BN,
-    swapSourceAmount: BN,
-    swapDestinationAmount: BN,
-    tradeDirection: TradeDirection,
-  ): BN;
 }
 
 export enum TradeDirection {
   AToB,
   BToA,
 }
+
+export const getPriceImpact = (amount: BN, amountWithoutSlippage: BN): Decimal => {
+  const diff = amountWithoutSlippage.sub(amount);
+  return new Decimal(diff.toString()).div(new Decimal(amountWithoutSlippage.toString()));
+};
 
 export * from './stable-swap';
 export * from './constant-product';
