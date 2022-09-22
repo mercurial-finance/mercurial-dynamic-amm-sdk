@@ -1,6 +1,7 @@
 name: CICD on main
 
 on:
+  pull_request:
   push:
     paths-ignore:
       - "docs/**"

@@ -1,12 +1,13 @@
 name: CICD on main
 
 on:
+  pull_request:
   push:
     paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'LICENSE'
-      - '.editorconfig'
+      - "docs/**"
+      - "README.md"
+      - "LICENSE"
+      - ".editorconfig"
     branches:
       - main
       - master
