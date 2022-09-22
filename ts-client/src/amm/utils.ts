@@ -15,6 +15,7 @@ import {
   SYSVAR_CLOCK_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
+import Decimal from 'decimal.js';
 import invariant from 'invariant';
 import { CURVE_TYPE_ACCOUNTS, ERROR, VIRTUAL_PRICE_PRECISION, WRAPPED_SOL_MINT } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
@@ -337,6 +338,121 @@ export const getDepegAccounts = async (connection: Connection): Promise<Map<Stri
   depegAccounts.set(CURVE_TYPE_ACCOUNTS.lido.toBase58(), solidoBuffer!);
 
   return depegAccounts;
+};
+
+/**
+ * It calculates the impact on the market price of the trade
+ * @param {PublicKey} inTokenMint - The mint of the token you're swapping in.
+ * @param {BN} inAmountLamport - The amount of the input token you want to swap.
+ * @param {SwapQuoteParam} params - SwapQuoteParam
+ * @param {PoolState} params.poolState - pool state that fetch from program
+ * @param {VaultState} params.vaultA - vault A state that fetch from vault program
+ * @param {VaultState} params.vaultB - vault B state that fetch from vault program
+ * @param {BN} params.poolVaultALp - The amount of LP tokens in the pool for token A (`PoolState.aVaultLp` accountInfo)
+ * @param {BN} params.poolVaultBLp - The amount of LP tokens in the pool for token B (`PoolState.bVaultLp` accountInfo)
+ * @param {BN} params.vaultALpSupply - vault A lp supply (`VaultState.lpMint` accountInfo)
+ * @param {BN} params.vaultBLpSupply - vault B lp supply (`VaultState.lpMint` accountInfo)
+ * @param {BN} params.vaultAReserve - vault A reserve (`VaultState.tokenVault` accountInfo)
+ * @param {BN} params.vaultBReserve - vault B reserve (`VaultState.tokenVault` accountInfo)
+ * @param {BN} params.currentTime - on chain time (use `SYSVAR_CLOCK_PUBKEY`)
+ * @param {BN} params.depegAccounts - A map of the depeg accounts. (get from `getDepegAccounts` util)
+ * @returns The impact on the market price (* 100 for percentage unit)
+ */
+export const calculatePriceImpact = (inTokenMint: PublicKey, inAmountLamport: BN, params: SwapQuoteParam) => {
+  const outAmountWithoutSlippage = calculateSwapQuoteWithoutSlippage(inTokenMint, inAmountLamport, params);
+  const outAmount = calculateSwapQuote(inTokenMint, inAmountLamport, params).amountOut;
+  const diff = outAmountWithoutSlippage.sub(outAmount);
+  return new Decimal(diff.toString()).div(new Decimal(outAmountWithoutSlippage.toString()));
+};
+
+const calculateSwapQuoteWithoutSlippage = (inTokenMint: PublicKey, inAmountLamport: BN, params: SwapQuoteParam) => {
+  const {
+    vaultA,
+    vaultB,
+    vaultALpSupply,
+    vaultBLpSupply,
+    poolState,
+    poolVaultALp,
+    poolVaultBLp,
+    currentTime,
+    depegAccounts,
+  } = params;
+  const { tokenAMint, tokenBMint } = poolState;
+  invariant(inTokenMint.equals(tokenAMint) || inTokenMint.equals(tokenBMint), ERROR.INVALID_MINT);
+
+  let swapCurve: SwapCurve;
+  if ('stable' in poolState.curveType) {
+    const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
+    swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, currentTime);
+  } else {
+    swapCurve = new ConstantProductSwap();
+  }
+
+  const vaultAWithdrawableAmount = calculateWithdrawableAmount(currentTime, vaultA);
+  const vaultBWithdrawableAmount = calculateWithdrawableAmount(currentTime, vaultB);
+
+  const tokenAAmount = getAmountByShare(poolVaultALp, vaultAWithdrawableAmount, vaultALpSupply);
+  const tokenBAmount = getAmountByShare(poolVaultBLp, vaultBWithdrawableAmount, vaultBLpSupply);
+
+  const isFromAToB = inTokenMint.equals(tokenAMint);
+  const [
+    sourceAmount,
+    swapSourceAmount,
+    swapDestinationAmount,
+    swapSourceVault,
+    swapDestinationVault,
+    swapSourceVaultLpSupply,
+    swapDestinationVaultLpSupply,
+    tradeDirection,
+  ] = isFromAToB
+    ? [inAmountLamport, tokenAAmount, tokenBAmount, vaultA, vaultB, vaultALpSupply, vaultBLpSupply, TradeDirection.AToB]
+    : [
+        inAmountLamport,
+        tokenBAmount,
+        tokenAAmount,
+        vaultB,
+        vaultA,
+        vaultBLpSupply,
+        vaultALpSupply,
+        TradeDirection.BToA,
+      ];
+  const adminFee = calculateAdminTradingFee(sourceAmount, poolState);
+  const tradeFee = calculateTradingFee(sourceAmount, poolState);
+
+  const sourceVaultWithdrawableAmount = calculateWithdrawableAmount(currentTime, swapSourceVault);
+  // Get vault lp minted when deposit to the vault
+  const sourceVaultLp = getUnmintAmount(
+    sourceAmount.sub(adminFee),
+    sourceVaultWithdrawableAmount,
+    swapSourceVaultLpSupply,
+  );
+
+  const actualSourceAmount = getAmountByShare(sourceVaultLp, sourceVaultWithdrawableAmount, swapSourceVaultLpSupply);
+
+  let sourceAmountWithFee = actualSourceAmount.sub(tradeFee);
+
+  const destinationAmountWithoutSlippage = swapCurve.computeOutAmountWithoutSlippage(
+    sourceAmountWithFee,
+    swapSourceAmount,
+    swapDestinationAmount,
+    tradeDirection,
+  );
+
+  const destinationVaultWithdrawableAmount = calculateWithdrawableAmount(currentTime, swapDestinationVault);
+  // Get vault lp to burn when withdraw from the vault
+  const destinationVaultLp = getUnmintAmount(
+    destinationAmountWithoutSlippage,
+    destinationVaultWithdrawableAmount,
+    swapDestinationVaultLpSupply,
+  );
+
+  let actualDestinationAmount = getAmountByShare(
+    destinationVaultLp,
+    destinationVaultWithdrawableAmount,
+    swapDestinationVaultLpSupply,
+  );
+
+  return actualDestinationAmount;
 };
 
 /**

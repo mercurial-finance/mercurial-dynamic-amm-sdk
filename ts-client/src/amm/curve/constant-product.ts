@@ -83,4 +83,13 @@ export class ConstantProductSwap implements SwapCurve {
   ): BN {
     throw new Error('UnsupportedOperation');
   }
+
+  computeOutAmountWithoutSlippage(
+    sourceAmount: BN,
+    swapSourceAmount: BN,
+    swapDestinationAmount: BN,
+    _tradeDirection: TradeDirection,
+  ): BN {
+    return sourceAmount.mul(swapDestinationAmount).div(swapSourceAmount);
+  }
 }

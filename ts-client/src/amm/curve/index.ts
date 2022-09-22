@@ -30,6 +30,13 @@ export interface SwapCurve {
     fees: PoolFees,
     tradeDirection: TradeDirection,
   ): BN;
+
+  computeOutAmountWithoutSlippage(
+    sourceAmount: BN,
+    swapSourceAmount: BN,
+    swapDestinationAmount: BN,
+    tradeDirection: TradeDirection,
+  ): BN;
 }
 
 export enum TradeDirection {

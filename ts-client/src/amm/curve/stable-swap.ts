@@ -225,6 +225,60 @@ export class StableSwap implements SwapCurve {
       ? this.downscaleTokenB(withdrawAmountBeforeFees.toU64())
       : this.downscaleTokenA(withdrawAmountBeforeFees.toU64());
   }
+
+  computeOutAmountWithoutSlippage(
+    sourceAmount: BN,
+    swapSourceAmount: BN,
+    swapDestinationAmount: BN,
+    tradeDirection: TradeDirection,
+  ): BN {
+    this.updateDepegInfoIfExpired();
+    const [upscaledSourceAmount, upscaledSwapSourceAmount, upscaledSwapDestinationAmount] =
+      tradeDirection == TradeDirection.AToB
+        ? [
+            this.upscaleTokenA(sourceAmount),
+            this.upscaleTokenA(swapSourceAmount),
+            this.upscaleTokenB(swapDestinationAmount),
+          ]
+        : [
+            this.upscaleTokenB(sourceAmount),
+            this.upscaleTokenB(swapSourceAmount),
+            this.upscaleTokenA(swapDestinationAmount),
+          ];
+
+    const invariantD = new BN(
+      computeD(
+        JSBI.BigInt(this.amp),
+        JSBI.BigInt(upscaledSwapSourceAmount.toString()),
+        JSBI.BigInt(upscaledSwapDestinationAmount.toString()),
+      ).toString(),
+    );
+
+    const SIXTEEN = new BN(16);
+    const TWO = new BN(2);
+    const FOUR = new BN(4);
+
+    const amp = new BN(this.amp);
+    const a = amp.mul(SIXTEEN);
+    const b = a;
+    const c = invariantD.mul(FOUR).sub(invariantD.mul(amp).mul(SIXTEEN));
+
+    const numerator = TWO.mul(a)
+      .mul(upscaledSwapSourceAmount)
+      .add(b.mul(upscaledSwapDestinationAmount))
+      .add(c)
+      .mul(upscaledSwapDestinationAmount);
+
+    const denominator = a
+      .mul(upscaledSwapSourceAmount)
+      .add(TWO.mul(b).mul(upscaledSwapDestinationAmount).add(c))
+      .mul(upscaledSwapSourceAmount);
+
+    const upscaledOutAmountWithoutSlippage = upscaledSourceAmount.mul(numerator).div(denominator);
+    return tradeDirection == TradeDirection.AToB
+      ? this.downscaleTokenB(upscaledOutAmountWithoutSlippage)
+      : this.downscaleTokenA(upscaledOutAmountWithoutSlippage);
+  }
 }
 // Helper class to convert the type to the type from saber stable calculator
 class Helper {
