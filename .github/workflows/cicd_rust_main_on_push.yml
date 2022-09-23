@@ -62,4 +62,5 @@ jobs:
         run: cargo test -- --nocapture
         shell: bash
       - name: Publish Rust to Crates.io
+        if: github.event_name == 'push'
         run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} -p mercurial-amm
