@@ -5,6 +5,7 @@ import BN from 'bn.js';
 import { Amm as AmmIdl } from '../idl';
 import { IdlTypes } from '@project-serum/anchor/dist/esm';
 import { VaultState } from '@mercurial-finance/vault-sdk';
+import Decimal from 'decimal.js';
 
 export type AmmImplementation = {
   tokenA: TokenInfo;
@@ -49,6 +50,7 @@ export interface PoolFees {
 
 export interface SwapResult {
   amountOut: BN;
+  priceImpact: Decimal;
   fee: BN;
 }
 

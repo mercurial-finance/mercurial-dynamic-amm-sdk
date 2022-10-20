@@ -4,6 +4,7 @@ import { DEFAULT_SLIPPAGE, MAINNET_POOL, DEVNET_POOL, DEVNET_COIN } from '../con
 import { AnchorProvider, BN, Wallet } from '@project-serum/anchor';
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 import { TokenListProvider } from '@solana/spl-token-registry';
+import { calculateSwapQuote, getDepegAccounts } from '../utils';
 
 let mockWallet = new Wallet(
   process.env.WALLET_PRIVATE_KEY ? Keypair.fromSecretKey(bs58.decode(process.env.WALLET_PRIVATE_KEY)) : new Keypair(),
@@ -577,7 +578,7 @@ describe('Interact with Devnet pool', () => {
   });
 });
 
-describe('Interact with Mainnet pool', () => {
+describe.only('Interact with Mainnet pool', () => {
   let stablePool: AmmImpl;
   let cpPool: AmmImpl;
   let depegPool: AmmImpl;
@@ -608,52 +609,86 @@ describe('Interact with Mainnet pool', () => {
     expect(stablePool.getPoolTokenMint()).toBeDefined();
   });
 
-  test('Cpamm price impact', () => {
+  test('Cpamm price impact', async () => {
     const inTokenMint = new PublicKey(cpPool.tokenA.address);
     const onePercentAmount = cpPool.poolInfo.tokenAAmount.div(new BN(100));
     const fiftyPercentAmount = cpPool.poolInfo.tokenAAmount.mul(new BN(50)).div(new BN(100));
     const oneHundredPercentAmount = cpPool.poolInfo.tokenAAmount;
-    const twoHundredPercentAmount = cpPool.poolInfo.tokenAAmount.mul(new BN(2));
 
     console.log('Pool token A amount', cpPool.poolInfo.tokenAAmount.toString());
     console.log('Pool token B amount', cpPool.poolInfo.tokenBAmount.toString());
 
-    const priceImpact1 = cpPool.getPriceImpact(inTokenMint, onePercentAmount);
-    const priceImpact2 = cpPool.getPriceImpact(inTokenMint, fiftyPercentAmount);
-    const priceImpact3 = cpPool.getPriceImpact(inTokenMint, oneHundredPercentAmount);
-    const priceImpact4 = cpPool.getPriceImpact(inTokenMint, twoHundredPercentAmount);
+    const [poolVaultALp, poolVaultBLp, vaultAReserve, vaultBReserve] = await Promise.all([
+      MAINNET.connection.getTokenAccountBalance(cpPool.poolState.aVaultLp),
+      MAINNET.connection.getTokenAccountBalance(cpPool.poolState.bVaultLp),
+      MAINNET.connection.getTokenAccountBalance(cpPool.vaultA.vaultState.tokenVault),
+      MAINNET.connection.getTokenAccountBalance(cpPool.vaultB.vaultState.tokenVault),
+    ]);
+
+    const swapQuoteParams = {
+      currentTime: cpPool.poolInfo.currentTimestamp.toNumber(),
+      depegAccounts: new Map(),
+      poolState: cpPool.poolState,
+      poolVaultALp: new BN(poolVaultALp.value.amount),
+      poolVaultBLp: new BN(poolVaultBLp.value.amount),
+      vaultA: cpPool.vaultA.vaultState,
+      vaultB: cpPool.vaultB.vaultState,
+      vaultALpSupply: cpPool.vaultA.lpSupply,
+      vaultBLpSupply: cpPool.vaultB.lpSupply,
+      vaultAReserve: new BN(vaultAReserve.value.amount),
+      vaultBReserve: new BN(vaultBReserve.value.amount),
+    };
+
+    const { priceImpact: priceImpact1 } = calculateSwapQuote(inTokenMint, onePercentAmount, swapQuoteParams);
+    const { priceImpact: priceImpact2 } = calculateSwapQuote(inTokenMint, fiftyPercentAmount, swapQuoteParams);
+    const { priceImpact: priceImpact3 } = calculateSwapQuote(inTokenMint, oneHundredPercentAmount, swapQuoteParams);
 
     console.log(`Price impact with in amount ${onePercentAmount.toString()}`, priceImpact1);
     console.log(`Price impact with in amount ${fiftyPercentAmount.toString()}`, priceImpact2);
     console.log(`Price impact with in amount ${oneHundredPercentAmount.toString()}`, priceImpact3);
-    console.log(`Price impact with in amount ${twoHundredPercentAmount.toString()}`, priceImpact4);
 
-    expect(priceImpact4.toNumber()).toBeGreaterThan(priceImpact3.toNumber());
     expect(priceImpact3.toNumber()).toBeGreaterThan(priceImpact2.toNumber());
     expect(priceImpact2.toNumber()).toBeGreaterThan(priceImpact1.toNumber());
   });
 
-  test('Ssamm price impact', () => {
+  test('Ssamm price impact', async () => {
     const inTokenMint = new PublicKey(stablePool.tokenA.address);
     const onePercentAmount = stablePool.poolInfo.tokenAAmount.div(new BN(100));
     const fiftyPercentAmount = stablePool.poolInfo.tokenAAmount.mul(new BN(50)).div(new BN(100));
     const oneHundredPercentAmount = stablePool.poolInfo.tokenAAmount;
-    const twoHundredPercentAmount = stablePool.poolInfo.tokenAAmount.mul(new BN(2));
 
     console.log('Pool token A amount', stablePool.poolInfo.tokenAAmount.toString());
     console.log('Pool token B amount', stablePool.poolInfo.tokenBAmount.toString());
 
-    const priceImpact1 = stablePool.getPriceImpact(inTokenMint, onePercentAmount);
-    const priceImpact2 = stablePool.getPriceImpact(inTokenMint, fiftyPercentAmount);
-    const priceImpact3 = stablePool.getPriceImpact(inTokenMint, oneHundredPercentAmount);
-    const priceImpact4 = stablePool.getPriceImpact(inTokenMint, twoHundredPercentAmount);
+    const [poolVaultALp, poolVaultBLp, vaultAReserve, vaultBReserve] = await Promise.all([
+      MAINNET.connection.getTokenAccountBalance(stablePool.poolState.aVaultLp),
+      MAINNET.connection.getTokenAccountBalance(stablePool.poolState.bVaultLp),
+      MAINNET.connection.getTokenAccountBalance(stablePool.vaultA.vaultState.tokenVault),
+      MAINNET.connection.getTokenAccountBalance(stablePool.vaultB.vaultState.tokenVault),
+    ]);
+
+    const swapQuoteParams = {
+      currentTime: stablePool.poolInfo.currentTimestamp.toNumber(),
+      depegAccounts: new Map(),
+      poolState: stablePool.poolState,
+      poolVaultALp: new BN(poolVaultALp.value.amount),
+      poolVaultBLp: new BN(poolVaultBLp.value.amount),
+      vaultA: stablePool.vaultA.vaultState,
+      vaultB: stablePool.vaultB.vaultState,
+      vaultALpSupply: stablePool.vaultA.lpSupply,
+      vaultBLpSupply: stablePool.vaultB.lpSupply,
+      vaultAReserve: new BN(vaultAReserve.value.amount),
+      vaultBReserve: new BN(vaultBReserve.value.amount),
+    };
+
+    const { priceImpact: priceImpact1 } = calculateSwapQuote(inTokenMint, onePercentAmount, swapQuoteParams);
+    const { priceImpact: priceImpact2 } = calculateSwapQuote(inTokenMint, fiftyPercentAmount, swapQuoteParams);
+    const { priceImpact: priceImpact3 } = calculateSwapQuote(inTokenMint, oneHundredPercentAmount, swapQuoteParams);
 
     console.log(`Price impact with in amount ${onePercentAmount.toString()}`, priceImpact1);
     console.log(`Price impact with in amount ${fiftyPercentAmount.toString()}`, priceImpact2);
     console.log(`Price impact with in amount ${oneHundredPercentAmount.toString()}`, priceImpact3);
-    console.log(`Price impact with in amount ${twoHundredPercentAmount.toString()}`, priceImpact4);
 
-    expect(priceImpact4.toNumber()).toBeGreaterThan(priceImpact3.toNumber());
     expect(priceImpact3.toNumber()).toBeGreaterThan(priceImpact2.toNumber());
     expect(priceImpact2.toNumber()).toBeGreaterThan(priceImpact1.toNumber());
   });

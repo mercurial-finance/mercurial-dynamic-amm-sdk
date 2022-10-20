@@ -34,7 +34,6 @@ import {
   calculateSwapQuote,
   computeActualDepositAmount,
   calculatePoolInfo,
-  calculatePriceImpact,
   getMaxAmountWithSlippage,
   getMinAmountWithSlippage,
   getOrCreateATAInstruction,
@@ -386,29 +385,6 @@ export default class AmmImpl implements AmmImplementation {
     });
 
     return getMinAmountWithSlippage(swapQuote, slippage);
-  }
-
-  /**
-   * `getPriceImpact` returns the impact on the market price by the trade
-   * `inAmountLamport` of `inToken` into the pool
-   * @param {PublicKey} inTokenMint - The mint you want to swap from.
-   * @param {BN} inAmountLamport - The amount of lamports you want to swap.
-   * @returns The impact on the market price (* 100 for percentage unit)
-   */
-  public getPriceImpact(inTokenMint: PublicKey, inAmountLamport: BN) {
-    return calculatePriceImpact(inTokenMint, inAmountLamport, {
-      currentTime: this.accountsInfo.currentTime,
-      poolState: this.poolState,
-      depegAccounts: this.depegAccounts,
-      poolVaultALp: this.accountsInfo.poolVaultALp,
-      poolVaultBLp: this.accountsInfo.poolVaultBLp,
-      vaultA: this.vaultA.vaultState,
-      vaultB: this.vaultB.vaultState,
-      vaultALpSupply: this.accountsInfo.vaultALpSupply,
-      vaultBLpSupply: this.accountsInfo.vaultBLpSupply,
-      vaultAReserve: this.accountsInfo.vaultAReserve,
-      vaultBReserve: this.accountsInfo.vaultBReserve,
-    });
   }
 
   /**
