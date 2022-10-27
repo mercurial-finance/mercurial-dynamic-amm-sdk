@@ -349,6 +349,7 @@ export default class AmmImpl implements AmmImplementation {
       TOKEN_PROGRAM_ID,
       this.poolState.lpMint,
       owner,
+      true,
     );
     if (!account) return new BN(0);
 

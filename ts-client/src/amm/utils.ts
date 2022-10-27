@@ -61,7 +61,13 @@ export const getOrCreateATAInstruction = async (
 ): Promise<[PublicKey, TransactionInstruction?]> => {
   let toAccount;
   try {
-    toAccount = await Token.getAssociatedTokenAddress(ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, tokenMint, owner);
+    toAccount = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      tokenMint,
+      owner,
+      true,
+    );
     const account = await connection.getAccountInfo(toAccount);
     if (!account) {
       const ix = Token.createAssociatedTokenAccountInstruction(
@@ -109,6 +115,7 @@ export const unwrapSOLInstruction = async (owner: PublicKey) => {
     TOKEN_PROGRAM_ID,
     WRAPPED_SOL_MINT,
     owner,
+    true,
   );
 
   if (wSolATAAccount) {
