@@ -46,6 +46,7 @@ type AmmProgram = Program<Amm>;
 type VaultProgram = Program<Vault>;
 
 type Opt = {
+  allowOwnerOffCurve?: boolean;
   cluster: Cluster;
 };
 
@@ -151,6 +152,7 @@ const deserializeAccountsBuffer = ([
 export default class AmmImpl implements AmmImplementation {
   private opt: Opt = {
     cluster: 'mainnet-beta',
+    allowOwnerOffCurve: false,
   };
 
   private constructor(
@@ -180,6 +182,7 @@ export default class AmmImpl implements AmmImplementation {
     tokenInfoA: TokenInfo,
     tokenInfoB: TokenInfo,
     opt?: {
+      allowOwnerOffCurve?: boolean;
       cluster?: Cluster;
     },
   ): Promise<AmmImpl> {
@@ -251,6 +254,7 @@ export default class AmmImpl implements AmmImplementation {
       swapCurve,
       depegAccounts,
       {
+        allowOwnerOffCurve: opt?.allowOwnerOffCurve,
         cluster,
       },
     );
@@ -466,7 +470,7 @@ export default class AmmImpl implements AmmImplementation {
 
     const postInstructions: Array<TransactionInstruction> = [];
     if (WRAPPED_SOL_MINT.equals(destinationToken)) {
-      const unwrapSOLIx = await unwrapSOLInstruction(owner);
+      const unwrapSOLIx = await unwrapSOLInstruction(owner, this.opt.allowOwnerOffCurve);
       unwrapSOLIx && postInstructions.push(unwrapSOLIx);
     }
 
@@ -662,7 +666,7 @@ export default class AmmImpl implements AmmImplementation {
 
     const postInstructions: Array<TransactionInstruction> = [];
     if ([this.tokenA.address, this.tokenB.address].includes(WRAPPED_SOL_MINT.toBase58())) {
-      const closeWrappedSOLIx = await unwrapSOLInstruction(owner);
+      const closeWrappedSOLIx = await unwrapSOLInstruction(owner, this.opt.allowOwnerOffCurve);
       closeWrappedSOLIx && postInstructions.push(closeWrappedSOLIx);
     }
 
@@ -790,7 +794,7 @@ export default class AmmImpl implements AmmImplementation {
     const preInstructions: Array<TransactionInstruction> = [];
     const [[userAToken, createUserAIx], [userBToken, createUserBIx], [userPoolLp, createLpTokenIx]] = await Promise.all(
       [this.poolState.tokenAMint, this.poolState.tokenBMint, this.poolState.lpMint].map((key) =>
-        getOrCreateATAInstruction(key, owner, this.program.provider.connection),
+        getOrCreateATAInstruction(key, owner, this.program.provider.connection, this.opt.allowOwnerOffCurve),
       ),
     );
 
@@ -802,7 +806,7 @@ export default class AmmImpl implements AmmImplementation {
 
     const postInstructions: Array<TransactionInstruction> = [];
     if ([this.tokenA.address, this.tokenB.address].includes(WRAPPED_SOL_MINT.toBase58())) {
-      const closeWrappedSOLIx = await unwrapSOLInstruction(owner);
+      const closeWrappedSOLIx = await unwrapSOLInstruction(owner, this.opt.allowOwnerOffCurve);
       closeWrappedSOLIx && postInstructions.push(closeWrappedSOLIx);
     }
 
@@ -877,7 +881,7 @@ export default class AmmImpl implements AmmImplementation {
   private async createATAPreInstructions(owner: PublicKey, mintList: Array<PublicKey>) {
     return Promise.all(
       mintList.map((mint) => {
-        return getOrCreateATAInstruction(mint, owner, this.program.provider.connection);
+        return getOrCreateATAInstruction(mint, owner, this.program.provider.connection, this.opt.allowOwnerOffCurve);
       }),
     );
   }

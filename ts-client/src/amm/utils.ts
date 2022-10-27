@@ -15,7 +15,6 @@ import {
   SYSVAR_CLOCK_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
-import Decimal from 'decimal.js';
 import invariant from 'invariant';
 import { CURVE_TYPE_ACCOUNTS, ERROR, VIRTUAL_PRICE_PRECISION, WRAPPED_SOL_MINT } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
@@ -58,6 +57,7 @@ export const getOrCreateATAInstruction = async (
   tokenMint: PublicKey,
   owner: PublicKey,
   connection: Connection,
+  allowOwnerOffCurve?: boolean,
 ): Promise<[PublicKey, TransactionInstruction?]> => {
   let toAccount;
   try {
@@ -66,7 +66,7 @@ export const getOrCreateATAInstruction = async (
       TOKEN_PROGRAM_ID,
       tokenMint,
       owner,
-      true,
+      allowOwnerOffCurve ?? false,
     );
     const account = await connection.getAccountInfo(toAccount);
     if (!account) {
@@ -109,13 +109,13 @@ export const wrapSOLInstruction = (from: PublicKey, to: PublicKey, amount: numbe
   ];
 };
 
-export const unwrapSOLInstruction = async (owner: PublicKey) => {
+export const unwrapSOLInstruction = async (owner: PublicKey, allowOwnerOffCurve?: boolean) => {
   const wSolATAAccount = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
     WRAPPED_SOL_MINT,
     owner,
-    true,
+    allowOwnerOffCurve ?? false,
   );
 
   if (wSolATAAccount) {
