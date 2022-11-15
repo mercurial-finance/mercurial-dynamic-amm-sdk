@@ -743,8 +743,10 @@ export default class AmmImpl implements AmmImplementation {
 
       return {
         poolTokenAmountIn: withdrawTokenAmount,
-        tokenAOutAmount: getMinAmountWithSlippage(tokenAOutAmount, slippage),
-        tokenBOutAmount: getMinAmountWithSlippage(tokenBOutAmount, slippage),
+        tokenAOutAmount,
+        tokenBOutAmount,
+        minTokenAOutAmount: getMinAmountWithSlippage(tokenAOutAmount, slippage),
+        minTokenBOutAmount: getMinAmountWithSlippage(tokenBOutAmount, slippage),
       };
     }
 
@@ -771,12 +773,15 @@ export default class AmmImpl implements AmmImplementation {
 
     const vaultLpToBurn = outAmount.mul(vaultLpSupply).div(vaultTotalAmount);
     // "Actual" out amount (precision loss)
-    const realOutAmount = getMinAmountWithSlippage(vaultLpToBurn.mul(vaultTotalAmount).div(vaultLpSupply), slippage);
+    const realOutAmount = vaultLpToBurn.mul(vaultTotalAmount).div(vaultLpSupply);
+    const minRealOutAmount = getMinAmountWithSlippage(realOutAmount, slippage);
 
     return {
       poolTokenAmountIn: withdrawTokenAmount,
       tokenAOutAmount: isWithdrawingTokenA ? realOutAmount : new BN(0),
-      tokenBOutAmount: isWithdrawingTokenB ? realOutAmount : new BN(0),
+      tokenBOutAmount: isWithdrawingTokenA ? realOutAmount : new BN(0),
+      minTokenAOutAmount: isWithdrawingTokenA ? minRealOutAmount : new BN(0),
+      minTokenBOutAmount: isWithdrawingTokenB ? minRealOutAmount : new BN(0),
     };
   }
 
