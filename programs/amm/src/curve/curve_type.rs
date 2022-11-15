@@ -77,6 +77,8 @@ pub enum CurveType {
         token_multiplier: TokenMultiplier,
         /// Depeg pool information. Contains functions to allow token amount to be repeg using stake / interest bearing token virtual price
         depeg: Depeg,
+        /// The last amp updated timestamp. Used to prevent update_curve_info called infinitely many times within a short period
+        last_amp_updated_timestamp: u64,
     },
 }
 
@@ -86,6 +88,7 @@ impl Default for CurveType {
             amp: 60,
             token_multiplier: TokenMultiplier::default(),
             depeg: Depeg::default(),
+            last_amp_updated_timestamp: 0,
         }
     }
 }

@@ -136,4 +136,7 @@ pub enum PoolError {
     /// Invalid depeg information
     #[msg("Invalid depeg information")]
     InvalidDepegInformation,
+
+    #[msg("Update time constraint violated")]
+    UpdateTimeConstraint,
 }
