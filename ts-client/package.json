@@ -12,7 +12,7 @@
     "dist"
   ],
   "dependencies": {
-    "@mercurial-finance/vault-sdk": "0.3.0",
+    "@mercurial-finance/vault-sdk": "0.3.1",
     "@project-serum/anchor": "0.24.2",
     "@saberhq/anchor-contrib": "^1.13.32",
     "@saberhq/stableswap-sdk": "^1.13.32",
