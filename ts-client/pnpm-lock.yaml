@@ -1,7 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
-  '@mercurial-finance/vault-sdk': 0.3.1
+  '@mercurial-finance/vault-sdk': 0.3.2
   '@project-serum/anchor': 0.24.2
   '@saberhq/anchor-contrib': ^1.13.32
   '@saberhq/stableswap-sdk': ^1.13.32
@@ -30,7 +30,7 @@ specifiers:
   typescript: ^4.7.2
 
 dependencies:
-  '@mercurial-finance/vault-sdk': 0.3.1_plhixtjxfbfr3mbxehj34lupl4
+  '@mercurial-finance/vault-sdk': 0.3.2_plhixtjxfbfr3mbxehj34lupl4
   '@project-serum/anchor': 0.24.2
   '@saberhq/anchor-contrib': 1.13.32_qjqqlliiyt67bamxdpx2peapje
   '@saberhq/stableswap-sdk': 1.13.32_kfuchqkrygq6klwqz2zf7kvhx4
@@ -715,26 +715,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@mercurial-finance/francium-sdk/1.4.2:
-    resolution: {integrity: sha512-vi6QZWm/m6ng+OUjVfLIzn5V7L1nEixMSQx5lHr7mwo8inVZP9hFfiH7iVHWXbgIRVF3322NCKsL+NREJjqj8A==}
-    dependencies:
-      '@project-serum/anchor': 0.16.2
-      '@project-serum/borsh': 0.2.5_@solana+web3.js@1.66.2
-      '@project-serum/serum': 0.13.65
-      '@solana/spl-token': 0.1.8
-      '@solana/web3.js': 1.66.2
-      axios: 1.1.3
-      bigint-buffer: 1.1.5
-      bignumber.js: 9.0.2
-      bn.js: 5.2.1
-      buffer-layout: 1.2.2
-      lodash: 4.17.21
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - encoding
-      - react-native
-      - utf-8-validate
+  /@mercurial-finance/francium-sdk/1.4.3:
+    resolution: {integrity: sha512-beFsxFx9WsHsImCSZAPXlitE4kQMugHczATishmJdxXGEHvBfJ3hrncjaWf+znwlMTknx8zYgPFfeP9JzbHHgw==}
     dev: false
 
   /@mercurial-finance/optimist/0.1.5_7tuo5cpb45itfemqbtb5zeks2m:
@@ -798,12 +780,12 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@mercurial-finance/vault-sdk/0.3.1_plhixtjxfbfr3mbxehj34lupl4:
-    resolution: {integrity: sha512-Q091W2D3y+wAxFJQm+5ILmMJTh+FljSlRx8BIcNXcOd0j9NTQFPWHyVbDmP4W71aO7BpZS4L77nT/JAMGUJDLg==}
+  /@mercurial-finance/vault-sdk/0.3.2_plhixtjxfbfr3mbxehj34lupl4:
+    resolution: {integrity: sha512-q5mulo3KQKzfC0eqKB83+5oRW0iwR7mje6PDN2Y85cMS4OWpQc7y2uYWN8toVgwQKFfnkomp/mDnuRsgqZHTnw==}
     dependencies:
       '@blockworks-foundation/mango-client': 3.6.10
       '@mercurial-finance/apricot-sdk': 0.17.6
-      '@mercurial-finance/francium-sdk': 1.4.2
+      '@mercurial-finance/francium-sdk': 1.4.3
       '@mercurial-finance/optimist': 0.1.5_7tuo5cpb45itfemqbtb5zeks2m
       '@mercurial-finance/port-sdk': 0.2.69_nc5m64g6mxgpazstopbz3u74oq
       '@mercurial-finance/solend-sdk': 0.6.5
@@ -824,7 +806,6 @@ packages:
       - '@saberhq/solana-contrib'
       - '@saberhq/token-utils'
       - bufferutil
-      - debug
       - encoding
       - react-native
       - utf-8-validate
@@ -844,30 +825,6 @@ packages:
 
   /@project-serum/anchor/0.11.1:
     resolution: {integrity: sha512-oIdm4vTJkUy6GmE6JgqDAuQPKI7XM4TPJkjtoIzp69RZe0iAD9JP2XHx7lV1jLdYXeYHqDXfBt3zcq7W91K6PA==}
-    engines: {node: '>=11'}
-    dependencies:
-      '@project-serum/borsh': 0.2.5_@solana+web3.js@1.66.2
-      '@solana/web3.js': 1.66.2
-      base64-js: 1.5.1
-      bn.js: 5.2.1
-      bs58: 4.0.1
-      buffer-layout: 1.2.2
-      camelcase: 5.3.1
-      crypto-hash: 1.3.0
-      eventemitter3: 4.0.7
-      find: 0.3.0
-      js-sha256: 0.9.0
-      pako: 2.0.4
-      snake-case: 3.0.4
-      toml: 3.0.0
-    transitivePeerDependencies:
-      - bufferutil
-      - encoding
-      - utf-8-validate
-    dev: false
-
-  /@project-serum/anchor/0.16.2:
-    resolution: {integrity: sha512-wOJwObd4wOZ5tRRMCKYjeMNsEmf7vuC71KQRnw6wthhErL8c/818n4gYIZCf/1ZPl/8WPruIlmtQHDSEyy2+0Q==}
     engines: {node: '>=11'}
     dependencies:
       '@project-serum/borsh': 0.2.5_@solana+web3.js@1.66.2
@@ -1533,20 +1490,6 @@ packages:
     resolution: {integrity: sha512-jgsaNduz+ndvGyFt3uSuWqvy4lCnIJiovtouQN5JZHOKCS2QuhEdbcQHFhVksz2N2U9hXJo8odG7ETyWlEeuDw==}
     dev: true
 
-  /asynckit/0.4.0:
-    resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
-    dev: false
-
-  /axios/1.1.3:
-    resolution: {integrity: sha512-00tXVRwKx/FZr/IDVFt4C+f9FYairX517WoGCL6dpOntqLkZofjhu43F/Xl44UOpqa+9sLFDrG/XAnFsUYgkDA==}
-    dependencies:
-      follow-redirects: 1.15.1
-      form-data: 4.0.0
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
   /babel-jest/28.1.3_@babel+core@7.18.9:
     resolution: {integrity: sha512-epUaPOEWMk3cWX0M/sPvCHHCe9fMFAa/9hXEgKP8nFfNl/jlGkE9ucq9NqkZGXLDduCJYS0UvSlPUwC0S+rH6Q==}
     engines: {node: ^12.13.0 || ^14.15.0 || ^16.10.0 || >=17.0.0}
@@ -1642,10 +1585,6 @@ packages:
     requiresBuild: true
     dependencies:
       bindings: 1.5.0
-    dev: false
-
-  /bignumber.js/9.0.2:
-    resolution: {integrity: sha512-GAcQvbpsM0pUb0zw1EI0KhQEZ+lRwR5fYaAp3vPOYuP7aDvGy6cVN6XHLauvF8SOga2y0dcLcjt3iQDTSEliyw==}
     dev: false
 
   /binary-extensions/2.2.0:
@@ -1891,13 +1830,6 @@ packages:
   /color-name/1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
 
-  /combined-stream/1.0.8:
-    resolution: {integrity: sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==}
-    engines: {node: '>= 0.8'}
-    dependencies:
-      delayed-stream: 1.0.0
-    dev: false
-
   /commander/2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
     dev: false
@@ -2001,11 +1933,6 @@ packages:
   /delay/5.0.0:
     resolution: {integrity: sha512-ReEBKkIfe4ya47wlPYf/gu5ib6yUG0/Aez0JQZQz94kiWtRQvZIQbTiehsnwHvLSWJnQdhVeqYue7Id1dKr0qw==}
     engines: {node: '>=10'}
-    dev: false
-
-  /delayed-stream/1.0.0:
-    resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
-    engines: {node: '>=0.4.0'}
     dev: false
 
   /detect-newline/3.1.0:
@@ -2210,25 +2137,6 @@ packages:
     resolution: {integrity: sha512-b6suED+5/3rTpUBdG1gupIl8MPFCAMA0QXwmljLhvCUKcUvdE4gWky9zpuGCcXHOsz4J9wPGNWq6OKpmIzz3hQ==}
     hasBin: true
     dev: true
-
-  /follow-redirects/1.15.1:
-    resolution: {integrity: sha512-yLAMQs+k0b2m7cVxpS1VKJVvoz7SS9Td1zss3XRwXj+ZDH00RJgnuLx7E44wx02kQLrdM3aOOy+FpzS7+8OizA==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
-    dev: false
-
-  /form-data/4.0.0:
-    resolution: {integrity: sha512-ETEklSGi5t0QMZuiXoA/Q6vcnxcLQP5vdugSpuAyi6SVGi2clPPp+xgEhuMaHC+zGgn31Kd235W35f7Hykkaww==}
-    engines: {node: '>= 6'}
-    dependencies:
-      asynckit: 0.4.0
-      combined-stream: 1.0.8
-      mime-types: 2.1.35
-    dev: false
 
   /fs.realpath/1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
@@ -3166,18 +3074,6 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /mime-db/1.52.0:
-    resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
-    engines: {node: '>= 0.6'}
-    dev: false
-
-  /mime-types/2.1.35:
-    resolution: {integrity: sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==}
-    engines: {node: '>= 0.6'}
-    dependencies:
-      mime-db: 1.52.0
-    dev: false
-
   /mimic-fn/2.1.0:
     resolution: {integrity: sha512-OqbOk5oEQeAZ8WXWydlu9HJjz9WVdEIvamMCcXmuqUYjTknH/sqsWvhQ3vgwKFRR1HpjvNBKQ37nbJgYzGqGcg==}
     engines: {node: '>=6'}
@@ -3453,10 +3349,6 @@ packages:
       kleur: 3.0.3
       sisteransi: 1.0.5
     dev: true
-
-  /proxy-from-env/1.1.0:
-    resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
-    dev: false
 
   /punycode/2.1.1:
     resolution: {integrity: sha512-XRsRjdf+j5ml+y/6GKHPZbrF/8p2Yga0JPtdqTIY2Xe5ohJPD9saDJJLPvp9+NSBprVvevdXZybnj2cv8OEd0A==}
