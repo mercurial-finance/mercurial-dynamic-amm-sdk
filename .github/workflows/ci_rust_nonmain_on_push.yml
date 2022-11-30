@@ -1,18 +1,19 @@
 name: CI on non-main
 
 on:
-  push:
+  pull_request:
     paths-ignore:
       - 'docs/**'
       - 'README.md'
       - 'LICENSE'
       - '.editorconfig'
     branches:
+      - main
       - develop
       - staging
 
 env:
-  SOLANA_CLI_VERSION: 1.9.17
+  SOLANA_CLI_VERSION: 1.14.6
   
 jobs:
   changed_files_rust:
@@ -34,7 +35,7 @@ jobs:
   rust-test:
     needs: changed_files_rust
     runs-on: ubuntu-latest
-
+    if: needs.changed_files_rust.outputs.program == 'true'
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/setup-dep

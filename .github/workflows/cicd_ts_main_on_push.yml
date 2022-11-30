@@ -33,6 +33,7 @@ jobs:
 
   ts-test-publish:
     needs: changed_files_ts
+    if: needs.changed_files_ts.outputs.program == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
