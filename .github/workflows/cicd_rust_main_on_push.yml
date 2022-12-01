@@ -13,7 +13,7 @@ on:
       - master
 
 env:
-  SOLANA_CLI_VERSION: 1.9.17
+  SOLANA_CLI_VERSION: 1.14.6
 
 jobs:
   changed_files_rust:
@@ -34,6 +34,7 @@ jobs:
 
   rust-test-publish:
     needs: changed_files_rust
+    if: needs.changed_files_rust.outputs.program == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

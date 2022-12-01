@@ -1,13 +1,14 @@
 name: Continuous Integration NPM
 
 on:
-  push:
+  pull_request:
     paths-ignore:
       - 'docs/**'
       - 'README.md'
       - 'LICENSE'
       - '.editorconfig'
     branches:
+      - main
       - develop
       - staging
 
@@ -32,6 +33,7 @@ jobs:
 
   ts-test:
     needs: changed_files_ts
+    if: needs.changed_files_ts.outputs.program == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
