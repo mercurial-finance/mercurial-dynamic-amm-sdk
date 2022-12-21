@@ -779,7 +779,7 @@ export default class AmmImpl implements AmmImplementation {
     return {
       poolTokenAmountIn: withdrawTokenAmount,
       tokenAOutAmount: isWithdrawingTokenA ? realOutAmount : new BN(0),
-      tokenBOutAmount: isWithdrawingTokenA ? realOutAmount : new BN(0),
+      tokenBOutAmount: isWithdrawingTokenB ? realOutAmount : new BN(0),
       minTokenAOutAmount: isWithdrawingTokenA ? minRealOutAmount : new BN(0),
       minTokenBOutAmount: isWithdrawingTokenB ? minRealOutAmount : new BN(0),
     };
