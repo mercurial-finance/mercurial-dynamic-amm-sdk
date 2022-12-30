@@ -89,6 +89,11 @@ export const MAINNET_POOL = Object.freeze({
   SOL_STSOL: '7EJSgV2pthhDfb4UiER9vzTqe2eojei9GEQAQnkqJ96e',
 });
 
+export const INTEREST_BEARING_TOKENS = Object.freeze({
+  stSOL: '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj',
+  mSOL: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',
+});
+
 // Extra accounts for depeg pools. Might add more addresses in the future when more different types of pools are being added
 export const CURVE_TYPE_ACCOUNTS = {
   // Stake account of Marinade finance. Used to retrieve mSol virtual price

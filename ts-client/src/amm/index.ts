@@ -8,11 +8,14 @@ import {
   AccountInfo,
   ParsedAccountData,
   SYSVAR_CLOCK_PUBKEY,
+  Keypair,
+  SYSVAR_RENT_PUBKEY,
+  SystemProgram,
 } from '@solana/web3.js';
 import { TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
-import VaultImpl, { calculateWithdrawableAmount, VaultState } from '@mercurial-finance/vault-sdk';
+import VaultImpl, { calculateWithdrawableAmount, getVaultPdas, VaultState } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
 import { AccountsInfo, AmmImplementation, DepositQuote, PoolInformation, PoolState, WithdrawQuote } from './types';
 import { Amm, IDL as AmmIdl } from './idl';
@@ -26,6 +29,7 @@ import {
   VAULT_PROGRAM_ID,
   WRAPPED_SOL_MINT,
   UNLOCK_AMOUNT_BUFFER,
+  INTEREST_BEARING_TOKENS,
 } from './constants';
 import { StableSwap, SwapCurve, TradeDirection } from './curve';
 import { ConstantProductSwap } from './curve/constant-product';
@@ -40,6 +44,7 @@ import {
   unwrapSOLInstruction,
   wrapSOLInstruction,
   getDepegAccounts,
+  computeTokenMultiplier,
 } from './utils';
 
 type AmmProgram = Program<Amm>;
@@ -67,7 +72,7 @@ const getRemainingAccounts = (poolState: PoolState) => {
     isSigner: boolean;
   }> = [];
   if ('stable' in poolState.curveType) {
-    if ('marinade' in poolState.curveType['stable'].depeg.depegType) {
+    if ('marinade' in (poolState.curveType['stable'] as any).depeg.depegType) {
       accounts.push({
         pubkey: CURVE_TYPE_ACCOUNTS.marinade,
         isWritable: false,
@@ -75,7 +80,7 @@ const getRemainingAccounts = (poolState: PoolState) => {
       });
     }
 
-    if ('lido' in poolState.curveType['stable'].depeg.depegType) {
+    if ('lido' in (poolState.curveType['stable'] as any).depeg.depegType) {
       accounts.push({
         pubkey: CURVE_TYPE_ACCOUNTS.lido,
         isWritable: false,
@@ -176,6 +181,132 @@ export default class AmmImpl implements AmmImplementation {
     };
   }
 
+  public static async createStablePool(
+    connection: Connection,
+    admin: PublicKey,
+    {
+      isStable,
+      tokenInfoA,
+      tokenInfoB,
+      tokenAAmount,
+      tokenBAmount,
+      amp,
+      fee,
+    }: {
+      isStable: boolean;
+      tokenInfoA: TokenInfo;
+      tokenInfoB: TokenInfo;
+      tokenAAmount: BN;
+      tokenBAmount: BN;
+      amp: BN;
+      fee: BN;
+    },
+  ) {
+    const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
+    const ammProgram = new Program<Amm>(AmmIdl, PROGRAM_ID, provider);
+    const vaultProgram = new Program<Vault>(VaultIdl, VAULT_PROGRAM_ID, provider);
+
+    invariant(
+      !Object.values(INTEREST_BEARING_TOKENS).includes(tokenInfoA.address as any),
+      'Token A cannot be interest bearing tokens',
+    );
+
+    const isStSOL = tokenInfoB.address === INTEREST_BEARING_TOKENS.stSOL;
+    const isMSOL = tokenInfoB.address === INTEREST_BEARING_TOKENS.mSOL;
+    const depegType = isStSOL ? { lido: {} } : isMSOL ? { marinade: {} } : { none: {} };
+    const curveType = isStable
+      ? {
+          stable: {
+            amp,
+            tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
+            depeg: { baseVirtualPrice: new BN(0), baseCachedUpdated: new BN(0), depegType },
+          },
+        }
+      : { constantProduct: {} };
+    const invariantD = new BN(0); // TODO: computeD
+
+    const poolKeyPair = Keypair.generate();
+    const poolLpKeyPair = Keypair.generate();
+    const [aVaultAccount, bVaultAccount] = await Promise.all([
+      vaultProgram.account.vault.fetchNullable(tokenInfoA.address),
+      vaultProgram.account.vault.fetchNullable(tokenInfoB.address),
+    ]);
+
+    invariant(aVaultAccount, 'Token A is not a vault');
+    invariant(bVaultAccount, 'Token B is not a vault');
+
+    const [apyPda] = await PublicKey.findProgramAddress(
+      [Buffer.from(SEEDS.APY), poolKeyPair.publicKey.toBuffer()],
+      ammProgram.programId,
+    );
+    const [{ vaultPda: vaultPdaA }, { vaultPda: vaultPdaB }] = await Promise.all([
+      getVaultPdas(new PublicKey(tokenInfoA.address), new PublicKey(vaultProgram.programId)),
+      getVaultPdas(new PublicKey(tokenInfoB.address), new PublicKey(vaultProgram.programId)),
+    ]);
+    const [[aVaultLpPda], [bVaultLpPda]] = await Promise.all([
+      PublicKey.findProgramAddress([vaultPdaA.toBuffer(), poolKeyPair.publicKey.toBuffer()], ammProgram.programId),
+      PublicKey.findProgramAddress([vaultPdaB.toBuffer(), poolKeyPair.publicKey.toBuffer()], ammProgram.programId),
+    ]);
+
+    let preInstructions: Array<TransactionInstruction> = [];
+    const [adminLpMint, createLpMintIx] = await getOrCreateATAInstruction(poolLpKeyPair.publicKey, admin, connection);
+    createLpMintIx && preInstructions.push(createLpMintIx);
+    const [[adminTokenA, createAdminTokenAIx], [adminTokenB, createAdminTokenBIx]] = await Promise.all([
+      getOrCreateATAInstruction(aVaultAccount.tokenMint, admin, connection),
+      getOrCreateATAInstruction(bVaultAccount.tokenMint, admin, connection),
+    ]);
+    createAdminTokenAIx && preInstructions.push(createAdminTokenAIx);
+    createAdminTokenBIx && preInstructions.push(createAdminTokenBIx);
+
+    const createPoolIx = await ammProgram.methods
+      .initialize(curveType, tokenAAmount, tokenBAmount, invariantD)
+      .accounts({
+        admin,
+        adminPoolLp: adminLpMint,
+        adminTokenA,
+        adminTokenB,
+        adminTokenAFee: adminTokenA,
+        adminTokenBFee: adminTokenB,
+        apy: apyPda,
+        aTokenVault: aVaultAccount.tokenVault,
+        bTokenVault: bVaultAccount.tokenVault,
+        aVault: vaultPdaA,
+        bVault: vaultPdaB,
+        aVaultLp: aVaultLpPda,
+        bVaultLp: bVaultLpPda,
+        aVaultLpMint: aVaultAccount.lpMint,
+        bVaultLpMint: bVaultAccount.lpMint,
+        lpMint: poolLpKeyPair.publicKey,
+        pool: poolKeyPair.publicKey,
+        rent: SYSVAR_RENT_PUBKEY,
+        systemProgram: SystemProgram.programId,
+        tokenAMint: aVaultAccount.tokenMint,
+        tokenBMint: bVaultAccount.tokenMint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        vaultProgram: vaultProgram.programId,
+      })
+      .instruction();
+    preInstructions.push(createPoolIx);
+
+    const tradeFeeNumerator = new BN(0); // TODO: computeTradeFee
+    const tradeFeeDenominator = new BN(0); // TODO: computeTradeFee
+    const ownerTradeFeeNumerator = new BN(0); // TODO: computeOwnerTradeFee
+    const ownerTradeFeeDenominator = new BN(0); // TODO: computeOwnerTradeFee
+    const createPoolTx = await ammProgram.methods
+      .setPoolFees({ tradeFeeNumerator, tradeFeeDenominator, ownerTradeFeeNumerator, ownerTradeFeeDenominator })
+      .accounts({
+        admin,
+        pool: poolKeyPair.publicKey,
+      })
+      .preInstructions(preInstructions)
+      .transaction();
+
+    return new Transaction({
+      feePayer: admin,
+      ...(await connection.getLatestBlockhash('finalized')),
+    }).add(createPoolTx);
+  }
+
   public static async create(
     connection: Connection,
     pool: PublicKey,
@@ -221,7 +352,7 @@ export default class AmmImpl implements AmmImplementation {
 
     let swapCurve;
     if ('stable' in poolState.curveType) {
-      const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
+      const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'] as any;
       swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, accountsInfo.currentTime);
     } else {
       swapCurve = new ConstantProductSwap();

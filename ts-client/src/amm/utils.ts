@@ -25,6 +25,7 @@ import {
   PoolState,
   SwapQuoteParam,
   SwapResult,
+  TokenMultiplier,
   VirtualPrice,
 } from './types';
 
@@ -384,7 +385,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
 
   let swapCurve: SwapCurve;
   if ('stable' in poolState.curveType) {
-    const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
+    const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'] as any;
     swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, currentTime);
   } else {
     swapCurve = new ConstantProductSwap();
@@ -470,5 +471,25 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
     amountOut: actualDestinationAmount,
     fee: adminFee.add(tradeFee),
     priceImpact,
+  };
+};
+
+/**
+ * It takes two numbers, and returns three numbers
+ * @param {number} decimalA - The number of decimal places for token A.
+ * @param {number} decimalB - The number of decimal places for token B.
+ * @returns A TokenMultiplier object with the following properties:
+ * - tokenAMultiplier
+ * - tokenBMultiplier
+ * - precisionFactor
+ */
+export const computeTokenMultiplier = (decimalA: number, decimalB: number): TokenMultiplier => {
+  const precisionFactor = Math.max(decimalA, decimalB);
+  const tokenAMultiplier = new BN(10 ** (precisionFactor - decimalA));
+  const tokenBMultiplier = new BN(10 ** (precisionFactor - decimalB));
+  return {
+    tokenAMultiplier,
+    tokenBMultiplier,
+    precisionFactor,
   };
 };
