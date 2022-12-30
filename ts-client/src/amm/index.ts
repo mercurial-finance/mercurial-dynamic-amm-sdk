@@ -15,9 +15,23 @@ import {
 import { TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
-import VaultImpl, { calculateWithdrawableAmount, getVaultPdas, VaultState } from '@mercurial-finance/vault-sdk';
+import VaultImpl, {
+  calculateWithdrawableAmount,
+  getUnmintAmount,
+  getVaultPdas,
+  VaultState,
+  getAmountByShare,
+} from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
-import { AccountsInfo, AmmImplementation, DepositQuote, PoolInformation, PoolState, WithdrawQuote } from './types';
+import {
+  AccountsInfo,
+  AmmImplementation,
+  DepegType,
+  DepositQuote,
+  PoolInformation,
+  PoolState,
+  WithdrawQuote,
+} from './types';
 import { Amm, IDL as AmmIdl } from './idl';
 import { Vault, IDL as VaultIdl } from './vault-idl';
 import {
@@ -45,6 +59,7 @@ import {
   wrapSOLInstruction,
   getDepegAccounts,
   computeTokenMultiplier,
+  getOnchainTime,
 } from './utils';
 
 type AmmProgram = Program<Amm>;
@@ -154,6 +169,13 @@ const deserializeAccountsBuffer = ([
   };
 };
 
+const computeFeeFraction = (feePct: number): { numerator: BN; denominator: BN } => {
+  return {
+    numerator: new BN(feePct * 1_000),
+    denominator: new BN(100_000),
+  };
+};
+
 export default class AmmImpl implements AmmImplementation {
   private opt: Opt = {
     cluster: 'mainnet-beta',
@@ -191,7 +213,9 @@ export default class AmmImpl implements AmmImplementation {
       tokenAAmount,
       tokenBAmount,
       amp,
-      fee,
+      // Smallest fee supported is 0.001%
+      lpFeePct,
+      adminFeePct,
     }: {
       isStable: boolean;
       tokenInfoA: TokenInfo;
@@ -199,7 +223,8 @@ export default class AmmImpl implements AmmImplementation {
       tokenAAmount: BN;
       tokenBAmount: BN;
       amp: BN;
-      fee: BN;
+      lpFeePct: number;
+      adminFeePct: number;
     },
   ) {
     const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
@@ -213,20 +238,50 @@ export default class AmmImpl implements AmmImplementation {
 
     const isStSOL = tokenInfoB.address === INTEREST_BEARING_TOKENS.stSOL;
     const isMSOL = tokenInfoB.address === INTEREST_BEARING_TOKENS.mSOL;
-    const depegType = isStSOL ? { lido: {} } : isMSOL ? { marinade: {} } : { none: {} };
+    const depegType: DepegType = isStSOL ? { lido: {} } : isMSOL ? { marinade: {} } : { none: {} };
     const curveType = isStable
       ? {
           stable: {
             amp,
             tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
-            depeg: { baseVirtualPrice: new BN(0), baseCachedUpdated: new BN(0), depegType },
+            depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType },
           },
         }
       : { constantProduct: {} };
-    const invariantD = new BN(0); // TODO: computeD
+
+    const [vaultA, vaultB] = await Promise.all([
+      VaultImpl.create(provider.connection, tokenInfoA),
+      VaultImpl.create(provider.connection, tokenInfoB),
+    ]);
+
+    const [vaultAWithdrawableAmount, vaultBWithdrawableAmount, onChainTime] = await Promise.all([
+      vaultA.getWithdrawableAmount(),
+      vaultB.getWithdrawableAmount(),
+      getOnchainTime(provider.connection),
+    ]);
+
+    const expectedVaultALp = getUnmintAmount(tokenAAmount, vaultAWithdrawableAmount, vaultA.lpSupply);
+    const expectedVaultBLp = getUnmintAmount(tokenBAmount, vaultBWithdrawableAmount, vaultB.lpSupply);
+
+    const tokenAAmountWithLoss = getAmountByShare(expectedVaultALp, vaultAWithdrawableAmount, vaultA.lpSupply);
+    const tokenBAmountWithLoss = getAmountByShare(expectedVaultBLp, vaultBWithdrawableAmount, vaultB.lpSupply);
+
+    const extraAccounts = depegType['none'] ? new Map() : await getDepegAccounts(provider.connection);
+
+    const calculator = new StableSwap(
+      amp.toNumber(),
+      curveType.stable?.tokenMultiplier,
+      curveType.stable?.depeg,
+      extraAccounts,
+      onChainTime,
+    );
+
+    const invariantD = calculator.computeD(tokenAAmountWithLoss, tokenBAmountWithLoss);
 
     const poolKeyPair = Keypair.generate();
     const poolLpKeyPair = Keypair.generate();
+    const poolLpDecimal = Math.max(tokenInfoA.decimals, tokenInfoB.decimals);
+
     const [aVaultAccount, bVaultAccount] = await Promise.all([
       vaultProgram.account.vault.fetchNullable(tokenInfoA.address),
       vaultProgram.account.vault.fetchNullable(tokenInfoB.address),
@@ -258,6 +313,15 @@ export default class AmmImpl implements AmmImplementation {
     createAdminTokenAIx && preInstructions.push(createAdminTokenAIx);
     createAdminTokenBIx && preInstructions.push(createAdminTokenBIx);
 
+    const createPoolLpMintTx = Token.createInitMintInstruction(
+      TOKEN_PROGRAM_ID,
+      poolLpKeyPair.publicKey,
+      poolLpDecimal,
+      poolKeyPair.publicKey,
+      null,
+    );
+    createPoolLpMintTx && preInstructions.push(createPoolLpMintTx);
+
     const createPoolIx = await ammProgram.methods
       .initialize(curveType, tokenAAmount, tokenBAmount, invariantD)
       .accounts({
@@ -288,12 +352,16 @@ export default class AmmImpl implements AmmImplementation {
       .instruction();
     preInstructions.push(createPoolIx);
 
-    const tradeFeeNumerator = new BN(0); // TODO: computeTradeFee
-    const tradeFeeDenominator = new BN(0); // TODO: computeTradeFee
-    const ownerTradeFeeNumerator = new BN(0); // TODO: computeOwnerTradeFee
-    const ownerTradeFeeDenominator = new BN(0); // TODO: computeOwnerTradeFee
+    const tradeFee = computeFeeFraction(lpFeePct);
+    const adminFee = computeFeeFraction(adminFeePct);
+
     const createPoolTx = await ammProgram.methods
-      .setPoolFees({ tradeFeeNumerator, tradeFeeDenominator, ownerTradeFeeNumerator, ownerTradeFeeDenominator })
+      .setPoolFees({
+        tradeFeeNumerator: tradeFee.numerator,
+        tradeFeeDenominator: tradeFee.denominator,
+        ownerTradeFeeNumerator: adminFee.numerator,
+        ownerTradeFeeDenominator: adminFee.denominator,
+      })
       .accounts({
         admin,
         pool: poolKeyPair.publicKey,
