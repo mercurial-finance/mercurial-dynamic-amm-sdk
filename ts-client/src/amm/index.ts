@@ -270,8 +270,8 @@ export default class AmmImpl implements AmmImplementation {
 
     const calculator = new StableSwap(
       amp.toNumber(),
-      curveType.stable?.tokenMultiplier,
-      curveType.stable?.depeg,
+      curveType.stable!.tokenMultiplier,
+      curveType.stable!.depeg,
       extraAccounts,
       onChainTime,
     );
@@ -282,22 +282,22 @@ export default class AmmImpl implements AmmImplementation {
     const poolLpKeyPair = Keypair.generate();
     const poolLpDecimal = Math.max(tokenInfoA.decimals, tokenInfoB.decimals);
 
+    const [{ vaultPda: vaultPdaA }, { vaultPda: vaultPdaB }] = await Promise.all([
+      getVaultPdas(new PublicKey(tokenInfoA.address), new PublicKey(vaultProgram.programId)),
+      getVaultPdas(new PublicKey(tokenInfoB.address), new PublicKey(vaultProgram.programId)),
+    ]);
     const [aVaultAccount, bVaultAccount] = await Promise.all([
-      vaultProgram.account.vault.fetchNullable(tokenInfoA.address),
-      vaultProgram.account.vault.fetchNullable(tokenInfoB.address),
+      vaultProgram.account.vault.fetchNullable(vaultPdaA),
+      vaultProgram.account.vault.fetchNullable(vaultPdaB),
     ]);
 
-    invariant(aVaultAccount, 'Token A is not a vault');
-    invariant(bVaultAccount, 'Token B is not a vault');
+    invariant(aVaultAccount, 'Vault A Account is not found');
+    invariant(bVaultAccount, 'Vault B Account is not found');
 
     const [apyPda] = await PublicKey.findProgramAddress(
       [Buffer.from(SEEDS.APY), poolKeyPair.publicKey.toBuffer()],
       ammProgram.programId,
     );
-    const [{ vaultPda: vaultPdaA }, { vaultPda: vaultPdaB }] = await Promise.all([
-      getVaultPdas(new PublicKey(tokenInfoA.address), new PublicKey(vaultProgram.programId)),
-      getVaultPdas(new PublicKey(tokenInfoB.address), new PublicKey(vaultProgram.programId)),
-    ]);
     const [[aVaultLpPda], [bVaultLpPda]] = await Promise.all([
       PublicKey.findProgramAddress([vaultPdaA.toBuffer(), poolKeyPair.publicKey.toBuffer()], ammProgram.programId),
       PublicKey.findProgramAddress([vaultPdaB.toBuffer(), poolKeyPair.publicKey.toBuffer()], ammProgram.programId),
@@ -381,6 +381,7 @@ export default class AmmImpl implements AmmImplementation {
     tokenInfoA: TokenInfo,
     tokenInfoB: TokenInfo,
     opt?: {
+      vaultSeedBaseKey?: PublicKey;
       allowOwnerOffCurve?: boolean;
       cluster?: Cluster;
     },
@@ -403,8 +404,8 @@ export default class AmmImpl implements AmmImplementation {
     invariant(tokenInfoB, `TokenInfo ${poolState.tokenBMint.toBase58()} A not found`);
 
     const [vaultA, vaultB] = await Promise.all([
-      VaultImpl.create(provider.connection, tokenInfoA, { cluster }),
-      VaultImpl.create(provider.connection, tokenInfoB, { cluster }),
+      VaultImpl.create(provider.connection, tokenInfoA, { cluster, seedBaseKey: opt?.vaultSeedBaseKey }),
+      VaultImpl.create(provider.connection, tokenInfoB, { cluster, seedBaseKey: opt?.vaultSeedBaseKey }),
     ]);
 
     const accountsBuffer = await getAccountsBuffer({
