@@ -212,7 +212,7 @@ export default class AmmImpl implements AmmImplementation {
       (accList, { tokenInfoA, tokenInfoB }) => Array.from(new Set([...accList, tokenInfoA, tokenInfoB])),
       [],
     );
-    const vaultsImpl = await VaultImpl.createAll(connection, tokenInfos);
+    const vaultsImpl = await VaultImpl.createMultiple(connection, tokenInfos);
 
     const accountsToFetch = await Promise.all(
       poolsState.map(async (poolState, index) => {
