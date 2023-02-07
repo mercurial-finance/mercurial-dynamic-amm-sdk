@@ -13,6 +13,7 @@ on:
 
 env:
   WALLET_PRIVATE_KEY: ${{secrets.WALLET_PRIVATE_KEY}}
+  MAINNET_RPC_ENDPOINT: ${{secrets.MAINNET_RPC_ENDPOINT}}
   working_dir: ./ts-client
 
 jobs:
