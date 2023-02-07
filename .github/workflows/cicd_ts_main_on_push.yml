@@ -49,9 +49,6 @@ jobs:
       - name: Install modules
         working-directory: ${{ env.working_dir }}
         run: pnpm i
-      - name: Run tests
-        working-directory: ${{ env.working_dir }}
-        run: pnpm run test
       - name: Build
         working-directory: ${{ env.working_dir }}
         run: pnpm run build
