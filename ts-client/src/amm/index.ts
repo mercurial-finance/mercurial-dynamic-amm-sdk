@@ -43,6 +43,7 @@ import {
   createProgram,
   getAssociatedTokenAccount,
   deserializeAccount,
+  chunkedGetMultipleAccountInfos,
 } from './utils';
 
 type AmmProgram = Program<Amm>;
@@ -114,7 +115,10 @@ const getAccountsBuffer = async (
   connection: Connection,
   accountsToFetch: Array<AccountsType>,
 ): Promise<Map<string, AccountTypeInfo>> => {
-  const accounts = await connection.getMultipleAccountsInfo(accountsToFetch.map((account) => account.pubkey));
+  const accounts = await chunkedGetMultipleAccountInfos(
+    connection,
+    accountsToFetch.map((account) => account.pubkey),
+  );
 
   return accountsToFetch.reduce((accMap, account, index) => {
     const accountInfo = accounts[index];
