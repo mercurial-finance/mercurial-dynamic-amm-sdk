@@ -183,7 +183,7 @@ export default class AmmImpl implements AmmImplementation {
     };
   }
 
-  public static async createAll(
+  public static async createMultiple(
     connection: Connection,
     poolList: Array<{ pool: PublicKey; tokenInfoA: TokenInfo; tokenInfoB: TokenInfo }>,
     opt?: {

@@ -48,7 +48,7 @@ describe('Interact with Devnet pool', () => {
       { pool: new PublicKey(DEVNET_POOL.USDT_USDC), tokenInfoA: USDT!, tokenInfoB: USDC! },
     ];
 
-    const [pool1, pool2, pool3] = await AmmImpl.createAll(DEVNET.connection, pools, {
+    const [pool1, pool2, pool3] = await AmmImpl.createMultiple(DEVNET.connection, pools, {
       cluster: DEVNET.cluster as Cluster,
     });
     cpPool = pool1;
@@ -600,7 +600,7 @@ describe('Interact with Mainnet pool', () => {
       { pool: new PublicKey(MAINNET_POOL.SOL_STSOL), tokenInfoA: SOL!, tokenInfoB: STSOL! },
       { pool: new PublicKey(MAINNET_POOL.USDT_USDC), tokenInfoA: USDC!, tokenInfoB: USDT! },
     ];
-    const [pool1, pool2, pool3] = await AmmImpl.createAll(MAINNET.connection, pools, {
+    const [pool1, pool2, pool3] = await AmmImpl.createMultiple(MAINNET.connection, pools, {
       cluster: MAINNET.cluster as Cluster,
     });
     cpPool = pool1;
