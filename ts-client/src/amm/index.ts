@@ -54,6 +54,20 @@ type Opt = {
   cluster: Cluster;
 };
 
+const getAllPoolState = async (poolMints: Array<PublicKey>, program: AmmProgram) => {
+  const poolStates = (await program.account.pool.fetchMultiple(poolMints)) as Array<PoolState>;
+  invariant(poolStates.length === poolMints.length, 'Some of the pool state not found');
+
+  return await Promise.all(
+    poolStates.map(async (poolState) => {
+      const account = await program.provider.connection.getTokenSupply(poolState.lpMint);
+      invariant(account.value.amount, ERROR.INVALID_ACCOUNT);
+
+      return { ...poolState, lpSupply: new BN(account.value.amount) };
+    }),
+  );
+};
+
 const getPoolState = async (poolMint: PublicKey, program: AmmProgram) => {
   const poolState = (await program.account.pool.fetchNullable(poolMint)) as PoolState;
   invariant(poolState, `Pool ${poolMint.toBase58()} not found`);
@@ -189,14 +203,18 @@ export default class AmmImpl implements AmmImplementation {
       }
     >();
 
+    const poolsState = await getAllPoolState(
+      poolList.map(({ pool }) => pool),
+      ammProgram,
+    );
+
     const accountsToFetch = await Promise.all(
-      poolList.map(async ({ pool, tokenInfoA, tokenInfoB }) => {
+      poolsState.map(async (poolState, index) => {
+        const { pool, tokenInfoA, tokenInfoB } = poolList[index];
         const [apyPda] = await PublicKey.findProgramAddress(
           [Buffer.from(SEEDS.APY), pool.toBuffer()],
           ammProgram.programId,
         );
-
-        const poolState = await getPoolState(pool, ammProgram);
 
         invariant(tokenInfoA.address === poolState.tokenAMint.toBase58(), `TokenInfoA provided is incorrect`);
         invariant(tokenInfoB.address === poolState.tokenBMint.toBase58(), `TokenInfoB provided is incorrect`);
