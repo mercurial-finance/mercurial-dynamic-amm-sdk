@@ -41,6 +41,8 @@ import {
   wrapSOLInstruction,
   getDepegAccounts,
   createProgram,
+  getAssociatedTokenAccount,
+  deserializeAccount,
 } from './utils';
 
 type AmmProgram = Program<Amm>;
@@ -320,6 +322,25 @@ export default class AmmImpl implements AmmImplementation {
     return ammImpls;
   }
 
+  public static async fetchMultipleUserBalance(
+    connection: Connection,
+    lpMintList: Array<PublicKey>,
+    owner: PublicKey,
+  ): Promise<Array<BN>> {
+    const ataAccounts = await Promise.all(lpMintList.map((lpMint) => getAssociatedTokenAccount(lpMint, owner)));
+
+    const accountsInfo = await connection.getMultipleAccountsInfo(ataAccounts);
+
+    return accountsInfo.map((accountInfo) => {
+      if (!accountInfo) return new BN(0);
+
+      const accountBalance = deserializeAccount(accountInfo.data);
+      if (!accountBalance) throw new Error('Failed to parse user account for LP token.');
+
+      return new BN(accountBalance.amount);
+    });
+  }
+
   public static async create(
     connection: Connection,
     pool: PublicKey,
@@ -552,13 +573,7 @@ export default class AmmImpl implements AmmImplementation {
    * @returns The amount of tokens the user has.
    */
   public async getUserBalance(owner: PublicKey) {
-    const account = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      this.poolState.lpMint,
-      owner,
-      true,
-    );
+    const account = await getAssociatedTokenAccount(this.poolState.lpMint, owner, this.opt.allowOwnerOffCurve);
     if (!account) return new BN(0);
 
     const parsedAccountInfo = await this.program.provider.connection.getParsedAccountInfo(account);

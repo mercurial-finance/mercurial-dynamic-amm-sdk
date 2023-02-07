@@ -5,9 +5,15 @@ import {
   getUnmintAmount,
 } from '@mercurial-finance/vault-sdk';
 import { AnchorProvider, BN, Program } from '@project-serum/anchor';
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  Token,
+  TOKEN_PROGRAM_ID,
   AccountInfo,
+  AccountLayout,
+  u64,
+} from '@solana/spl-token';
+import {
   Cluster,
   Connection,
   ParsedAccountData,
@@ -69,6 +75,20 @@ export const getMaxAmountWithSlippage = (amount: BN, slippageRate: number) => {
 export const getMinAmountWithSlippage = (amount: BN, slippageRate: number) => {
   const slippage = ((100 - slippageRate) / 100) * 10000;
   return amount.mul(new BN(slippage)).div(new BN(10000));
+};
+
+export const getAssociatedTokenAccount = async (
+  tokenMint: PublicKey,
+  owner: PublicKey,
+  allowOwnerOffCurve: boolean = false,
+) => {
+  return await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    tokenMint,
+    owner,
+    allowOwnerOffCurve,
+  );
 };
 
 export const getOrCreateATAInstruction = async (
@@ -147,6 +167,44 @@ export const unwrapSOLInstruction = async (owner: PublicKey, allowOwnerOffCurve?
     return closedWrappedSolInstruction;
   }
   return null;
+};
+
+export const deserializeAccount = (data: Buffer | undefined): AccountInfo | undefined => {
+  if (data == undefined || data.length == 0) {
+    return undefined;
+  }
+
+  const accountInfo = AccountLayout.decode(data);
+  accountInfo.mint = new PublicKey(accountInfo.mint);
+  accountInfo.owner = new PublicKey(accountInfo.owner);
+  accountInfo.amount = u64.fromBuffer(accountInfo.amount);
+
+  if (accountInfo.delegateOption === 0) {
+    accountInfo.delegate = null;
+    accountInfo.delegatedAmount = new u64(0);
+  } else {
+    accountInfo.delegate = new PublicKey(accountInfo.delegate);
+    accountInfo.delegatedAmount = u64.fromBuffer(accountInfo.delegatedAmount);
+  }
+
+  accountInfo.isInitialized = accountInfo.state !== 0;
+  accountInfo.isFrozen = accountInfo.state === 2;
+
+  if (accountInfo.isNativeOption === 1) {
+    accountInfo.rentExemptReserve = u64.fromBuffer(accountInfo.isNative);
+    accountInfo.isNative = true;
+  } else {
+    accountInfo.rentExemptReserve = null;
+    accountInfo.isNative = false;
+  }
+
+  if (accountInfo.closeAuthorityOption === 0) {
+    accountInfo.closeAuthority = null;
+  } else {
+    accountInfo.closeAuthority = new PublicKey(accountInfo.closeAuthority);
+  }
+
+  return accountInfo;
 };
 
 export const getOnchainTime = async (connection: Connection) => {
