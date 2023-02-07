@@ -1,7 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
-  '@mercurial-finance/vault-sdk': 0.3.9
+  '@mercurial-finance/vault-sdk': 0.3.10-12ba0e0f.0
   '@project-serum/anchor': 0.24.2
   '@saberhq/anchor-contrib': ^1.13.32
   '@saberhq/stableswap-sdk': ^1.13.32
@@ -30,7 +30,7 @@ specifiers:
   typescript: ^4.7.2
 
 dependencies:
-  '@mercurial-finance/vault-sdk': 0.3.9_plhixtjxfbfr3mbxehj34lupl4
+  '@mercurial-finance/vault-sdk': 0.3.10-12ba0e0f.0_plhixtjxfbfr3mbxehj34lupl4
   '@project-serum/anchor': 0.24.2
   '@saberhq/anchor-contrib': 1.13.32_qjqqlliiyt67bamxdpx2peapje
   '@saberhq/stableswap-sdk': 1.13.32_kfuchqkrygq6klwqz2zf7kvhx4
@@ -813,8 +813,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@mercurial-finance/vault-sdk/0.3.9_plhixtjxfbfr3mbxehj34lupl4:
-    resolution: {integrity: sha512-aZ+c+uoxLXlkyCSTs6RRBUA8tVMcTb1O1eV5/8f/BgK3axTgw3cvt7BLvP3159DxcNGVy987hEn+ZwjlzTDygg==}
+  /@mercurial-finance/vault-sdk/0.3.10-12ba0e0f.0_plhixtjxfbfr3mbxehj34lupl4:
+    resolution: {integrity: sha512-nohTrSu6D1g7m5Rhku76nMiOO/MPmCaukG6L/RIcA0HUs0nbwz8MpP1mCSxnRvZBOS3Vh4Q5qLjwjfVeuCHX5Q==}
     dependencies:
       '@blockworks-foundation/mango-client': 3.6.10
       '@mercurial-finance/apricot-sdk': 0.17.6

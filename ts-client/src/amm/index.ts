@@ -208,6 +208,12 @@ export default class AmmImpl implements AmmImplementation {
       ammProgram,
     );
 
+    const tokenInfos = poolList.reduce<Array<TokenInfo>>(
+      (accList, { tokenInfoA, tokenInfoB }) => Array.from(new Set([...accList, tokenInfoA, tokenInfoB])),
+      [],
+    );
+    const vaultsImpl = await VaultImpl.createAll(connection, tokenInfos);
+
     const accountsToFetch = await Promise.all(
       poolsState.map(async (poolState, index) => {
         const { pool, tokenInfoA, tokenInfoB } = poolList[index];
@@ -218,13 +224,14 @@ export default class AmmImpl implements AmmImplementation {
 
         invariant(tokenInfoA.address === poolState.tokenAMint.toBase58(), `TokenInfoA provided is incorrect`);
         invariant(tokenInfoB.address === poolState.tokenBMint.toBase58(), `TokenInfoB provided is incorrect`);
-        invariant(tokenInfoA, `TokenInfo ${poolState.tokenAMint.toBase58()} A not found`);
-        invariant(tokenInfoB, `TokenInfo ${poolState.tokenBMint.toBase58()} A not found`);
+        invariant(tokenInfoA, `TokenInfo ${poolState.tokenAMint.toBase58()} not found`);
+        invariant(tokenInfoB, `TokenInfo ${poolState.tokenBMint.toBase58()} not found`);
 
-        const [vaultA, vaultB] = await Promise.all([
-          VaultImpl.create(provider.connection, tokenInfoA, { cluster }),
-          VaultImpl.create(provider.connection, tokenInfoB, { cluster }),
-        ]);
+        const vaultA = vaultsImpl.find(({ tokenInfo }) => tokenInfo.address === tokenInfoA.address);
+        const vaultB = vaultsImpl.find(({ tokenInfo }) => tokenInfo.address === tokenInfoB.address);
+
+        invariant(vaultA, `Vault ${poolState.tokenAMint.toBase58()} not found`);
+        invariant(vaultB, `Vault ${poolState.tokenBMint.toBase58()} not found`);
 
         poolInfoMap.set(poolState.lpMint.toBase58(), {
           pool,
