@@ -9,11 +9,12 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
   TOKEN_PROGRAM_ID,
-  AccountInfo,
+  AccountInfo as AccountInfoInt,
   AccountLayout,
   u64,
 } from '@solana/spl-token';
 import {
+  AccountInfo,
   Cluster,
   Connection,
   ParsedAccountData,
@@ -169,7 +170,7 @@ export const unwrapSOLInstruction = async (owner: PublicKey, allowOwnerOffCurve?
   return null;
 };
 
-export const deserializeAccount = (data: Buffer | undefined): AccountInfo | undefined => {
+export const deserializeAccount = (data: Buffer | undefined): AccountInfoInt | undefined => {
   if (data == undefined || data.length == 0) {
     return undefined;
   }
