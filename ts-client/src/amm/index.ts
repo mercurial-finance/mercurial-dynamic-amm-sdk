@@ -1,4 +1,4 @@
-import { AnchorProvider, Program, BN, BorshCoder, Idl } from '@project-serum/anchor';
+import { Program, BN, BorshCoder, Idl } from '@project-serum/anchor';
 import {
   PublicKey,
   Connection,
@@ -9,24 +9,24 @@ import {
   ParsedAccountData,
   SYSVAR_CLOCK_PUBKEY,
 } from '@solana/web3.js';
-import { TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
+import { TokenInfo } from '@solana/spl-token-registry';
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
-import VaultImpl, { calculateWithdrawableAmount, VaultState } from '@mercurial-finance/vault-sdk';
+import VaultImpl, { calculateWithdrawableAmount } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
-import { AccountsInfo, AmmImplementation, DepositQuote, PoolInformation, PoolState, WithdrawQuote } from './types';
-import { Amm, IDL as AmmIdl } from './idl';
-import { Vault, IDL as VaultIdl } from './vault-idl';
 import {
-  DEVNET_COIN,
-  ERROR,
-  CURVE_TYPE_ACCOUNTS,
-  PROGRAM_ID,
-  SEEDS,
-  VAULT_PROGRAM_ID,
-  WRAPPED_SOL_MINT,
-  UNLOCK_AMOUNT_BUFFER,
-} from './constants';
+  AccountType,
+  AccountsInfo,
+  AmmImplementation,
+  ApyState,
+  DepositQuote,
+  PoolInformation,
+  PoolState,
+  WithdrawQuote,
+} from './types';
+import { Amm, IDL as AmmIdl } from './idl';
+import { Vault } from './vault-idl';
+import { ERROR, CURVE_TYPE_ACCOUNTS, SEEDS, WRAPPED_SOL_MINT, UNLOCK_AMOUNT_BUFFER } from './constants';
 import { StableSwap, SwapCurve, TradeDirection } from './curve';
 import { ConstantProductSwap } from './curve/constant-product';
 import {
@@ -40,6 +40,7 @@ import {
   unwrapSOLInstruction,
   wrapSOLInstruction,
   getDepegAccounts,
+  createProgram,
 } from './utils';
 
 type AmmProgram = Program<Amm>;
@@ -67,7 +68,7 @@ const getRemainingAccounts = (poolState: PoolState) => {
     isSigner: boolean;
   }> = [];
   if ('stable' in poolState.curveType) {
-    if ('marinade' in poolState.curveType['stable'].depeg.depegType) {
+    if ('marinade' in (poolState.curveType['stable'] as any).depeg.depegType) {
       accounts.push({
         pubkey: CURVE_TYPE_ACCOUNTS.marinade,
         isWritable: false,
@@ -75,7 +76,7 @@ const getRemainingAccounts = (poolState: PoolState) => {
       });
     }
 
-    if ('lido' in poolState.curveType['stable'].depeg.depegType) {
+    if ('lido' in (poolState.curveType['stable'] as any).depeg.depegType) {
       accounts.push({
         pubkey: CURVE_TYPE_ACCOUNTS.lido,
         isWritable: false,
@@ -87,66 +88,51 @@ const getRemainingAccounts = (poolState: PoolState) => {
   return accounts;
 };
 
-const getAccountsBuffer = async ({
-  connection,
-  vaultA,
-  vaultB,
-  apyPda,
-  poolState,
-}: {
-  connection: Connection;
-  vaultA: VaultState;
-  vaultB: VaultState;
-  apyPda: PublicKey;
-  poolState: PoolState;
-}) => {
-  return connection.getMultipleAccountsInfo([
-    apyPda,
-    vaultA.tokenVault,
-    vaultB.tokenVault,
-    vaultA.lpMint,
-    vaultB.lpMint,
-    poolState.aVaultLp,
-    poolState.bVaultLp,
-    poolState.lpMint,
-    SYSVAR_CLOCK_PUBKEY,
-  ]);
+type DecoderType = { [x: string]: (accountData: Buffer) => BN | ApyState };
+const decodeAccountTypeMapper = (type: AccountType): ((accountData: Buffer) => BN | ApyState) => {
+  const poolCoder = new BorshCoder(AmmIdl as Idl);
+  const decoder: DecoderType = {
+    [AccountType.APY]: (accountData) => poolCoder.accounts.decode('apy', accountData) as ApyState,
+    [AccountType.VAULT_A_RESERVE]: (accountData) => new BN(u64.fromBuffer(AccountLayout.decode(accountData).amount)),
+    [AccountType.VAULT_B_RESERVE]: (accountData) => new BN(u64.fromBuffer(AccountLayout.decode(accountData).amount)),
+    [AccountType.VAULT_A_LP]: (accountData) => new BN(u64.fromBuffer(MintLayout.decode(accountData).supply)),
+    [AccountType.VAULT_B_LP]: (accountData) => new BN(u64.fromBuffer(MintLayout.decode(accountData).supply)),
+    [AccountType.POOL_VAULT_A_LP]: (accountData) => new BN(u64.fromBuffer(AccountLayout.decode(accountData).amount)),
+    [AccountType.POOL_VAULT_B_LP]: (accountData) => new BN(u64.fromBuffer(AccountLayout.decode(accountData).amount)),
+    [AccountType.POOL_LP_MINT]: (accountData) => new BN(u64.fromBuffer(MintLayout.decode(accountData).supply)),
+    [AccountType.SYSVAR_CLOCK]: (accountData) => new BN(accountData.readBigInt64LE(32).toString()),
+  };
+
+  return decoder[type as unknown as string];
 };
 
-// param order need to be the same from `getAccountsBuffer`
-const deserializeAccountsBuffer = ([
-  apyPdaBuffer,
-  vaultAReserveBuffer,
-  vaultBReserveBuffer,
-  vaultALpMintBuffer,
-  vaultBLpMintBuffer,
-  poolVaultALpBuffer,
-  poolVaultBLpBuffer,
-  poolLpMintBuffer,
-  clockAccountBuffer,
-]: Array<AccountInfo<Buffer> | null>): AccountsInfo => {
-  const poolCoder = new BorshCoder(AmmIdl as Idl);
+type AccountTypeInfo = { type: AccountType; account: AccountInfo<Buffer> };
+type AccountsType = { type: AccountType; pubkey: PublicKey };
+const getAccountsBuffer = async (
+  connection: Connection,
+  accountsToFetch: Array<AccountsType>,
+): Promise<Map<string, AccountTypeInfo>> => {
+  const accounts = await connection.getMultipleAccountsInfo(accountsToFetch.map((account) => account.pubkey));
 
-  const apy = poolCoder.accounts.decode('apy', apyPdaBuffer!.data);
-  const vaultAReserveInfo = AccountLayout.decode(vaultAReserveBuffer!.data);
-  const vaultBReserveInfo = AccountLayout.decode(vaultBReserveBuffer!.data);
-  const vaultALpMintInfo = MintLayout.decode(vaultALpMintBuffer!.data);
-  const vaultBLpMintInfo = MintLayout.decode(vaultBLpMintBuffer!.data);
-  const poolVaultALpInfo = AccountLayout.decode(poolVaultALpBuffer!.data);
-  const poolVaultBLpInfo = AccountLayout.decode(poolVaultBLpBuffer!.data);
-  const poolLpMintInfo = MintLayout.decode(poolLpMintBuffer!.data);
+  return accountsToFetch.reduce((accMap, account, index) => {
+    const accountInfo = accounts[index];
+    accMap.set(account.pubkey.toBase58(), {
+      type: account.type,
+      account: accountInfo,
+    });
 
-  return {
-    apy,
-    vaultAReserve: new BN(u64.fromBuffer(vaultAReserveInfo.amount)),
-    vaultBReserve: new BN(u64.fromBuffer(vaultBReserveInfo.amount)),
-    vaultALpSupply: new BN(u64.fromBuffer(vaultALpMintInfo.supply)),
-    vaultBLpSupply: new BN(u64.fromBuffer(vaultBLpMintInfo.supply)),
-    poolVaultALp: new BN(u64.fromBuffer(poolVaultALpInfo.amount)),
-    poolVaultBLp: new BN(u64.fromBuffer(poolVaultBLpInfo.amount)),
-    poolLpSupply: new BN(u64.fromBuffer(poolLpMintInfo.supply)),
-    currentTime: new BN(clockAccountBuffer!.data.readBigInt64LE(32).toString()).toNumber(),
-  };
+    return accMap;
+  }, new Map());
+};
+
+const deserializeAccountsBuffer = (accountInfoMap: Map<string, AccountTypeInfo>): Map<string, BN | ApyState> => {
+  return Array.from(accountInfoMap).reduce((accValue, [publicKey, { type, account }]) => {
+    const decodedAccountInfo = decodeAccountTypeMapper(type);
+
+    accValue.set(publicKey, decodedAccountInfo(account!.data));
+
+    return accValue;
+  }, new Map());
 };
 
 export default class AmmImpl implements AmmImplementation {
@@ -165,6 +151,7 @@ export default class AmmImpl implements AmmImplementation {
     public poolInfo: PoolInformation,
     public vaultA: VaultImpl,
     public vaultB: VaultImpl,
+    private accountsBufferMap: Map<string, AccountTypeInfo>,
     private accountsInfo: AccountsInfo,
     private swapCurve: SwapCurve,
     private depegAccounts: Map<String, AccountInfo<Buffer>>,
@@ -174,6 +161,163 @@ export default class AmmImpl implements AmmImplementation {
       ...this.opt,
       ...opt,
     };
+  }
+
+  public static async createAll(
+    connection: Connection,
+    poolList: Array<{ pool: PublicKey; tokenInfoA: TokenInfo; tokenInfoB: TokenInfo }>,
+    opt?: {
+      allowOwnerOffCurve?: boolean;
+      cluster?: Cluster;
+    },
+  ): Promise<AmmImpl[]> {
+    const cluster = opt?.cluster ?? 'mainnet-beta';
+    const { provider, vaultProgram, ammProgram } = createProgram(connection, cluster);
+    const poolInfoMap = new Map<
+      string,
+      {
+        pool: PublicKey;
+        poolState: PoolState & { lpSupply: BN };
+        vaultA: VaultImpl;
+        vaultB: VaultImpl;
+      }
+    >();
+
+    const accountsToFetch = await Promise.all(
+      poolList.map(async ({ pool, tokenInfoA, tokenInfoB }) => {
+        const [apyPda] = await PublicKey.findProgramAddress(
+          [Buffer.from(SEEDS.APY), pool.toBuffer()],
+          ammProgram.programId,
+        );
+
+        const poolState = await getPoolState(pool, ammProgram);
+
+        invariant(tokenInfoA.address === poolState.tokenAMint.toBase58(), `TokenInfoA provided is incorrect`);
+        invariant(tokenInfoB.address === poolState.tokenBMint.toBase58(), `TokenInfoB provided is incorrect`);
+        invariant(tokenInfoA, `TokenInfo ${poolState.tokenAMint.toBase58()} A not found`);
+        invariant(tokenInfoB, `TokenInfo ${poolState.tokenBMint.toBase58()} A not found`);
+
+        const [vaultA, vaultB] = await Promise.all([
+          VaultImpl.create(provider.connection, tokenInfoA, { cluster }),
+          VaultImpl.create(provider.connection, tokenInfoB, { cluster }),
+        ]);
+
+        poolInfoMap.set(poolState.lpMint.toBase58(), {
+          pool,
+          poolState,
+          vaultA,
+          vaultB,
+        });
+        return [
+          { pubkey: apyPda, type: AccountType.APY },
+          { pubkey: vaultA.vaultState.tokenVault, type: AccountType.VAULT_A_RESERVE },
+          { pubkey: vaultB.vaultState.tokenVault, type: AccountType.VAULT_B_RESERVE },
+          { pubkey: vaultA.vaultState.lpMint, type: AccountType.VAULT_A_LP },
+          { pubkey: vaultB.vaultState.lpMint, type: AccountType.VAULT_B_LP },
+          { pubkey: poolState.aVaultLp, type: AccountType.POOL_VAULT_A_LP },
+          { pubkey: poolState.bVaultLp, type: AccountType.POOL_VAULT_B_LP },
+          { pubkey: poolState.lpMint, type: AccountType.POOL_LP_MINT },
+        ];
+      }),
+    );
+
+    const flatAccountsToFetch = accountsToFetch.flat();
+    const accountsBufferMap = await getAccountsBuffer(connection, [
+      ...flatAccountsToFetch,
+      { pubkey: SYSVAR_CLOCK_PUBKEY, type: AccountType.SYSVAR_CLOCK },
+    ]);
+    const accountsInfoMap = deserializeAccountsBuffer(accountsBufferMap);
+
+    const ammImpls = await Promise.all(
+      accountsToFetch.map(async (accounts) => {
+        const [apyPda, tokenAVault, tokenBVault, vaultALp, vaultBLp, poolVaultA, poolVaultB, poolLpMint] = accounts; // must follow order
+        const apy = accountsInfoMap.get(apyPda.pubkey.toBase58()) as ApyState;
+        const currentTime = accountsInfoMap.get(SYSVAR_CLOCK_PUBKEY.toBase58()) as BN;
+        const poolVaultALp = accountsInfoMap.get(poolVaultA.pubkey.toBase58()) as BN;
+        const poolVaultBLp = accountsInfoMap.get(poolVaultB.pubkey.toBase58()) as BN;
+        const vaultALpSupply = accountsInfoMap.get(vaultALp.pubkey.toBase58()) as BN;
+        const vaultBLpSupply = accountsInfoMap.get(vaultBLp.pubkey.toBase58()) as BN;
+        const vaultAReserve = accountsInfoMap.get(tokenAVault.pubkey.toBase58()) as BN;
+        const vaultBReserve = accountsInfoMap.get(tokenBVault.pubkey.toBase58()) as BN;
+        const poolLpSupply = accountsInfoMap.get(poolLpMint.pubkey.toBase58()) as BN;
+
+        invariant(
+          !!apy &&
+            !!currentTime &&
+            !!vaultALpSupply &&
+            !!vaultBLpSupply &&
+            !!vaultAReserve &&
+            !!vaultBReserve &&
+            !!poolVaultALp &&
+            !!poolVaultBLp &&
+            !!poolLpSupply,
+          'Account Info not found',
+        );
+
+        const accountsInfo = {
+          apy,
+          currentTime,
+          poolVaultALp,
+          poolVaultBLp,
+          vaultALpSupply,
+          vaultBLpSupply,
+          vaultAReserve,
+          vaultBReserve,
+          poolLpSupply,
+        };
+
+        const depegAccounts = await getDepegAccounts(ammProgram.provider.connection);
+
+        const poolInfoData = poolInfoMap.get(poolLpMint.pubkey.toBase58());
+
+        invariant(poolInfoData, 'Cannot find pool info');
+
+        const { pool, poolState, vaultA, vaultB } = poolInfoData;
+
+        let swapCurve;
+        if ('stable' in poolState.curveType) {
+          const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'] as any;
+          swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, currentTime);
+        } else {
+          swapCurve = new ConstantProductSwap();
+        }
+
+        const poolInfo = calculatePoolInfo(
+          currentTime,
+          poolVaultALp,
+          poolVaultBLp,
+          vaultALpSupply,
+          vaultBLpSupply,
+          poolLpSupply,
+          apy,
+          swapCurve,
+          vaultA.vaultState,
+          vaultB.vaultState,
+        );
+
+        return new AmmImpl(
+          pool,
+          ammProgram,
+          vaultProgram,
+          apyPda.pubkey,
+          [vaultA.tokenInfo, vaultB.tokenInfo],
+          poolState,
+          poolInfo,
+          vaultA,
+          vaultB,
+          accountsBufferMap,
+          accountsInfo,
+          swapCurve,
+          depegAccounts,
+          {
+            allowOwnerOffCurve: opt?.allowOwnerOffCurve,
+            cluster,
+          },
+        );
+      }),
+    );
+
+    return ammImpls;
   }
 
   public static async create(
@@ -186,10 +330,8 @@ export default class AmmImpl implements AmmImplementation {
       cluster?: Cluster;
     },
   ): Promise<AmmImpl> {
-    const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
     const cluster = opt?.cluster ?? 'mainnet-beta';
-    const ammProgram = new Program<Amm>(AmmIdl, PROGRAM_ID, provider);
-    const vaultProgram = new Program<Vault>(VaultIdl, VAULT_PROGRAM_ID, provider);
+    const { provider, vaultProgram, ammProgram } = createProgram(connection, cluster);
 
     const [apyPda] = await PublicKey.findProgramAddress(
       [Buffer.from(SEEDS.APY), pool.toBuffer()],
@@ -208,33 +350,72 @@ export default class AmmImpl implements AmmImplementation {
       VaultImpl.create(provider.connection, tokenInfoB, { cluster }),
     ]);
 
-    const accountsBuffer = await getAccountsBuffer({
-      connection: provider.connection,
-      vaultA: vaultA.vaultState,
-      vaultB: vaultB.vaultState,
-      apyPda,
-      poolState,
-    });
-    const accountsInfo = deserializeAccountsBuffer(accountsBuffer);
+    const accountsBufferMap = await getAccountsBuffer(connection, [
+      { pubkey: apyPda, type: AccountType.APY },
+      { pubkey: vaultA.vaultState.tokenVault, type: AccountType.VAULT_A_RESERVE },
+      { pubkey: vaultB.vaultState.tokenVault, type: AccountType.VAULT_B_RESERVE },
+      { pubkey: vaultA.vaultState.lpMint, type: AccountType.VAULT_A_LP },
+      { pubkey: vaultB.vaultState.lpMint, type: AccountType.VAULT_B_LP },
+      { pubkey: poolState.aVaultLp, type: AccountType.POOL_VAULT_A_LP },
+      { pubkey: poolState.bVaultLp, type: AccountType.POOL_VAULT_B_LP },
+      { pubkey: poolState.lpMint, type: AccountType.POOL_LP_MINT },
+      { pubkey: SYSVAR_CLOCK_PUBKEY, type: AccountType.SYSVAR_CLOCK },
+    ]);
+    const accountsInfoMap = deserializeAccountsBuffer(accountsBufferMap);
+
+    const apy = accountsInfoMap.get(apyPda.toBase58()) as ApyState;
+    const currentTime = accountsInfoMap.get(SYSVAR_CLOCK_PUBKEY.toBase58()) as BN;
+    const poolVaultALp = accountsInfoMap.get(poolState.aVaultLp.toBase58()) as BN;
+    const poolVaultBLp = accountsInfoMap.get(poolState.bVaultLp.toBase58()) as BN;
+    const vaultALpSupply = accountsInfoMap.get(vaultA.vaultState.lpMint.toBase58()) as BN;
+    const vaultBLpSupply = accountsInfoMap.get(vaultB.vaultState.lpMint.toBase58()) as BN;
+    const vaultAReserve = accountsInfoMap.get(vaultA.vaultState.tokenVault.toBase58()) as BN;
+    const vaultBReserve = accountsInfoMap.get(vaultB.vaultState.tokenVault.toBase58()) as BN;
+    const poolLpSupply = accountsInfoMap.get(poolState.lpMint.toBase58()) as BN;
+
+    invariant(
+      !!apy &&
+        !!currentTime &&
+        !!vaultALpSupply &&
+        !!vaultBLpSupply &&
+        !!vaultAReserve &&
+        !!vaultBReserve &&
+        !!poolVaultALp &&
+        !!poolVaultBLp &&
+        !!poolLpSupply,
+      'Account Info not found',
+    );
+
+    const accountsInfo = {
+      apy,
+      currentTime,
+      poolVaultALp,
+      poolVaultBLp,
+      vaultALpSupply,
+      vaultBLpSupply,
+      vaultAReserve,
+      vaultBReserve,
+      poolLpSupply,
+    };
 
     const depegAccounts = await getDepegAccounts(ammProgram.provider.connection);
 
     let swapCurve;
     if ('stable' in poolState.curveType) {
-      const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
-      swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, accountsInfo.currentTime);
+      const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'] as any;
+      swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, currentTime);
     } else {
       swapCurve = new ConstantProductSwap();
     }
 
     const poolInfo = calculatePoolInfo(
-      accountsInfo.currentTime,
-      accountsInfo.poolVaultALp,
-      accountsInfo.poolVaultBLp,
-      accountsInfo.vaultALpSupply,
-      accountsInfo.vaultBLpSupply,
-      accountsInfo.poolLpSupply,
-      accountsInfo.apy,
+      currentTime,
+      poolVaultALp,
+      poolVaultBLp,
+      vaultALpSupply,
+      vaultBLpSupply,
+      poolLpSupply,
+      apy,
       swapCurve,
       vaultA.vaultState,
       vaultB.vaultState,
@@ -250,6 +431,7 @@ export default class AmmImpl implements AmmImplementation {
       poolInfo,
       vaultA,
       vaultB,
+      accountsBufferMap,
       accountsInfo,
       swapCurve,
       depegAccounts,
@@ -286,36 +468,58 @@ export default class AmmImpl implements AmmImplementation {
       this.vaultB.refreshVaultState(),
     ]);
 
-    // update spl info
-    const accountsBuffer = await getAccountsBuffer({
-      poolState,
-      connection: this.program.provider.connection,
-      vaultA: this.vaultA.vaultState,
-      vaultB: this.vaultB.vaultState,
-      apyPda: this.apyPda,
-    });
-    this.accountsInfo = deserializeAccountsBuffer(accountsBuffer);
+    const accountsInfoMap = deserializeAccountsBuffer(this.accountsBufferMap);
+
+    const apy = accountsInfoMap.get(this.apyPda.toBase58()) as ApyState;
+    const currentTime = accountsInfoMap.get(SYSVAR_CLOCK_PUBKEY.toBase58()) as BN;
+    const poolVaultALp = accountsInfoMap.get(poolState.aVaultLp.toBase58()) as BN;
+    const poolVaultBLp = accountsInfoMap.get(poolState.bVaultLp.toBase58()) as BN;
+    const vaultALpSupply = accountsInfoMap.get(this.vaultA.vaultState.lpMint.toBase58()) as BN;
+    const vaultBLpSupply = accountsInfoMap.get(this.vaultB.vaultState.lpMint.toBase58()) as BN;
+    const vaultAReserve = accountsInfoMap.get(this.vaultA.vaultState.tokenVault.toBase58()) as BN;
+    const vaultBReserve = accountsInfoMap.get(this.vaultB.vaultState.tokenVault.toBase58()) as BN;
+    const poolLpSupply = accountsInfoMap.get(poolState.lpMint.toBase58()) as BN;
+
+    invariant(
+      !!apy &&
+        !!currentTime &&
+        !!vaultALpSupply &&
+        !!vaultBLpSupply &&
+        !!vaultAReserve &&
+        !!vaultBReserve &&
+        !!poolVaultALp &&
+        !!poolVaultBLp &&
+        !!poolLpSupply,
+      'Account Info not found',
+    );
+
+    const accountsInfo = {
+      apy,
+      currentTime,
+      poolVaultALp,
+      poolVaultBLp,
+      vaultALpSupply,
+      vaultBLpSupply,
+      vaultAReserve,
+      vaultBReserve,
+      poolLpSupply,
+    };
+    this.accountsInfo = accountsInfo;
 
     if (this.isStablePool) {
       // update swap curve
       const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
-      this.swapCurve = new StableSwap(
-        amp.toNumber(),
-        tokenMultiplier,
-        depeg,
-        this.depegAccounts,
-        this.accountsInfo.currentTime,
-      );
+      this.swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, this.depegAccounts, currentTime);
     }
 
     const poolInfo = calculatePoolInfo(
-      this.accountsInfo.currentTime,
-      this.accountsInfo.poolVaultALp,
-      this.accountsInfo.poolVaultBLp,
-      this.accountsInfo.vaultALpSupply,
-      this.accountsInfo.vaultBLpSupply,
-      this.accountsInfo.poolLpSupply,
-      this.accountsInfo.apy,
+      currentTime,
+      poolVaultALp,
+      poolVaultBLp,
+      vaultALpSupply,
+      vaultBLpSupply,
+      poolLpSupply,
+      apy,
       this.swapCurve,
       this.vaultA.vaultState,
       this.vaultB.vaultState,
@@ -375,7 +579,7 @@ export default class AmmImpl implements AmmImplementation {
    */
   public getSwapQuote(inTokenMint: PublicKey, inAmountLamport: BN, slippage: number) {
     const { amountOut: swapQuote } = calculateSwapQuote(inTokenMint, inAmountLamport, {
-      currentTime: this.accountsInfo.currentTime,
+      currentTime: this.accountsInfo.currentTime.toNumber(),
       poolState: this.poolState,
       depegAccounts: this.depegAccounts,
       poolVaultALp: this.accountsInfo.poolVaultALp,
@@ -525,8 +729,14 @@ export default class AmmImpl implements AmmImplementation {
       'Deposit balance is not possible when both token in amount is non-zero',
     );
 
-    const vaultAWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultA.vaultState);
-    const vaultBWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultB.vaultState);
+    const vaultAWithdrawableAmount = calculateWithdrawableAmount(
+      this.accountsInfo.currentTime.toNumber(),
+      this.vaultA.vaultState,
+    );
+    const vaultBWithdrawableAmount = calculateWithdrawableAmount(
+      this.accountsInfo.currentTime.toNumber(),
+      this.vaultB.vaultState,
+    );
 
     if (tokenAInAmount.isZero() && balance) {
       const poolTokenAmountOut = this.getShareByAmount(
@@ -714,8 +924,14 @@ export default class AmmImpl implements AmmImplementation {
    * tokenBOutAmount.
    */
   public getWithdrawQuote(withdrawTokenAmount: BN, slippage: number, tokenMint?: PublicKey): WithdrawQuote {
-    const vaultAWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultA.vaultState);
-    const vaultBWithdrawableAmount = calculateWithdrawableAmount(this.accountsInfo.currentTime, this.vaultB.vaultState);
+    const vaultAWithdrawableAmount = calculateWithdrawableAmount(
+      this.accountsInfo.currentTime.toNumber(),
+      this.vaultA.vaultState,
+    );
+    const vaultBWithdrawableAmount = calculateWithdrawableAmount(
+      this.accountsInfo.currentTime.toNumber(),
+      this.vaultB.vaultState,
+    );
 
     // balance withdraw
     if (!tokenMint) {

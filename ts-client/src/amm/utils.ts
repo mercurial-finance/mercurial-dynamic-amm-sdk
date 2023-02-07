@@ -4,10 +4,11 @@ import {
   VaultState,
   getUnmintAmount,
 } from '@mercurial-finance/vault-sdk';
-import { BN, EventParser } from '@project-serum/anchor';
+import { AnchorProvider, BN, Program } from '@project-serum/anchor';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   AccountInfo,
+  Cluster,
   Connection,
   ParsedAccountData,
   PublicKey,
@@ -16,7 +17,14 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import invariant from 'invariant';
-import { CURVE_TYPE_ACCOUNTS, ERROR, VIRTUAL_PRICE_PRECISION, WRAPPED_SOL_MINT } from './constants';
+import {
+  CURVE_TYPE_ACCOUNTS,
+  ERROR,
+  VIRTUAL_PRICE_PRECISION,
+  WRAPPED_SOL_MINT,
+  PROGRAM_ID,
+  VAULT_PROGRAM_ID,
+} from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
   ApyState,
@@ -27,6 +35,16 @@ import {
   SwapResult,
   VirtualPrice,
 } from './types';
+import { Amm, IDL as AmmIdl } from './idl';
+import { Vault, IDL as VaultIdl } from './vault-idl';
+
+export const createProgram = (connection: Connection, cluster: Cluster) => {
+  const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
+  const ammProgram = new Program<Amm>(AmmIdl, PROGRAM_ID, provider);
+  const vaultProgram = new Program<Vault>(VaultIdl, VAULT_PROGRAM_ID, provider);
+
+  return { provider, ammProgram, vaultProgram };
+};
 
 /**
  * It takes an amount and a slippage rate, and returns the maximum amount that can be received with
@@ -226,7 +244,7 @@ export const computeActualDepositAmount = (
  * @returns an object of type PoolInformation.
  */
 export const calculatePoolInfo = (
-  currentTime: number,
+  currentTimestamp: BN,
   poolVaultALp: BN,
   poolVaultBLp: BN,
   vaultALpSupply: BN,
@@ -237,10 +255,8 @@ export const calculatePoolInfo = (
   vaultA: VaultState,
   vaultB: VaultState,
 ) => {
-  const currentTimestamp = new BN(currentTime);
-
-  const vaultAWithdrawableAmount = calculateWithdrawableAmount(currentTime, vaultA);
-  const vaultBWithdrawableAmount = calculateWithdrawableAmount(currentTime, vaultB);
+  const vaultAWithdrawableAmount = calculateWithdrawableAmount(currentTimestamp.toNumber(), vaultA);
+  const vaultBWithdrawableAmount = calculateWithdrawableAmount(currentTimestamp.toNumber(), vaultB);
 
   const tokenAAmount = getAmountByShare(poolVaultALp, vaultAWithdrawableAmount, vaultALpSupply);
   const tokenBAmount = getAmountByShare(poolVaultBLp, vaultBWithdrawableAmount, vaultBLpSupply);
@@ -384,8 +400,8 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
 
   let swapCurve: SwapCurve;
   if ('stable' in poolState.curveType) {
-    const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
-    swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, currentTime);
+    const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'] as any;
+    swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, new BN(currentTime));
   } else {
     swapCurve = new ConstantProductSwap();
   }

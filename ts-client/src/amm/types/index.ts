@@ -73,6 +73,18 @@ export type AccountsToCache = {
   clockAccountBuffer: AccountInfo<Buffer> | null;
 };
 
+export enum AccountType {
+  APY = 'apy',
+  VAULT_A_RESERVE = 'vaultAReserve',
+  VAULT_B_RESERVE = 'vaultBReserve',
+  VAULT_A_LP = 'vaultALp',
+  VAULT_B_LP = 'vaultBLp',
+  POOL_VAULT_A_LP = 'poolVaultALp',
+  POOL_VAULT_B_LP = 'poolVaultBLp',
+  POOL_LP_MINT = 'poolLpMint',
+  SYSVAR_CLOCK = 'sysClockVar',
+}
+
 export type StableSwapCurve = {
   stable: {
     amp: BN;
@@ -135,7 +147,7 @@ export type AccountsInfo = {
   poolVaultALp: BN;
   poolVaultBLp: BN;
   poolLpSupply: BN;
-  currentTime: number;
+  currentTime: BN;
 };
 
 /** Utils */

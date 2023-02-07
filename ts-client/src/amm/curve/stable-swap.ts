@@ -27,7 +27,7 @@ export class StableSwap implements SwapCurve {
     private tokenMultiplier: TokenMultiplier,
     private depeg: Depeg,
     private extraAccounts: Map<String, AccountInfo<Buffer>>,
-    private onChainTime: number,
+    private onChainTime: BN,
   ) {}
 
   private getBasePoolVirtualPrice(depegType: DepegType): BN {
@@ -50,7 +50,7 @@ export class StableSwap implements SwapCurve {
 
   private async updateDepegInfoIfExpired() {
     if (!this.depeg.depegType['none']) {
-      const expired = this.onChainTime > this.depeg.baseCacheUpdated.add(BASE_CACHE_EXPIRE).toNumber();
+      const expired = this.onChainTime.toNumber() > this.depeg.baseCacheUpdated.add(BASE_CACHE_EXPIRE).toNumber();
       if (expired) {
         this.depeg.baseVirtualPrice = this.getBasePoolVirtualPrice(this.depeg.depegType);
         this.depeg.baseCacheUpdated = new BN(this.onChainTime);
