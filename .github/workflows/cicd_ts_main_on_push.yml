@@ -56,7 +56,6 @@ jobs:
         run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       - name: Publish to npm
         working-directory: ${{ env.working_dir }}
-        if: github.event_name == 'push'
         run: |
           npm version --no-git-tag-version prerelease --preid=${SHORT_SHA} --force
           npm publish --tag next
