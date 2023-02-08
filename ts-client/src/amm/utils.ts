@@ -4,10 +4,18 @@ import {
   VaultState,
   getUnmintAmount,
 } from '@mercurial-finance/vault-sdk';
-import { BN, EventParser } from '@project-serum/anchor';
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AnchorProvider, BN, Program } from '@project-serum/anchor';
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  Token,
+  TOKEN_PROGRAM_ID,
+  AccountInfo as AccountInfoInt,
+  AccountLayout,
+  u64,
+} from '@solana/spl-token';
 import {
   AccountInfo,
+  Cluster,
   Connection,
   ParsedAccountData,
   PublicKey,
@@ -16,7 +24,14 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import invariant from 'invariant';
-import { CURVE_TYPE_ACCOUNTS, ERROR, VIRTUAL_PRICE_PRECISION, WRAPPED_SOL_MINT } from './constants';
+import {
+  CURVE_TYPE_ACCOUNTS,
+  ERROR,
+  VIRTUAL_PRICE_PRECISION,
+  WRAPPED_SOL_MINT,
+  PROGRAM_ID,
+  VAULT_PROGRAM_ID,
+} from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
   ApyState,
@@ -27,6 +42,16 @@ import {
   SwapResult,
   VirtualPrice,
 } from './types';
+import { Amm, IDL as AmmIdl } from './idl';
+import { Vault, IDL as VaultIdl } from './vault-idl';
+
+export const createProgram = (connection: Connection, cluster: Cluster) => {
+  const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
+  const ammProgram = new Program<Amm>(AmmIdl, PROGRAM_ID, provider);
+  const vaultProgram = new Program<Vault>(VaultIdl, VAULT_PROGRAM_ID, provider);
+
+  return { provider, ammProgram, vaultProgram };
+};
 
 /**
  * It takes an amount and a slippage rate, and returns the maximum amount that can be received with
@@ -51,6 +76,20 @@ export const getMaxAmountWithSlippage = (amount: BN, slippageRate: number) => {
 export const getMinAmountWithSlippage = (amount: BN, slippageRate: number) => {
   const slippage = ((100 - slippageRate) / 100) * 10000;
   return amount.mul(new BN(slippage)).div(new BN(10000));
+};
+
+export const getAssociatedTokenAccount = async (
+  tokenMint: PublicKey,
+  owner: PublicKey,
+  allowOwnerOffCurve: boolean = false,
+) => {
+  return await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    tokenMint,
+    owner,
+    allowOwnerOffCurve,
+  );
 };
 
 export const getOrCreateATAInstruction = async (
@@ -129,6 +168,44 @@ export const unwrapSOLInstruction = async (owner: PublicKey, allowOwnerOffCurve?
     return closedWrappedSolInstruction;
   }
   return null;
+};
+
+export const deserializeAccount = (data: Buffer | undefined): AccountInfoInt | undefined => {
+  if (data == undefined || data.length == 0) {
+    return undefined;
+  }
+
+  const accountInfo = AccountLayout.decode(data);
+  accountInfo.mint = new PublicKey(accountInfo.mint);
+  accountInfo.owner = new PublicKey(accountInfo.owner);
+  accountInfo.amount = u64.fromBuffer(accountInfo.amount);
+
+  if (accountInfo.delegateOption === 0) {
+    accountInfo.delegate = null;
+    accountInfo.delegatedAmount = new u64(0);
+  } else {
+    accountInfo.delegate = new PublicKey(accountInfo.delegate);
+    accountInfo.delegatedAmount = u64.fromBuffer(accountInfo.delegatedAmount);
+  }
+
+  accountInfo.isInitialized = accountInfo.state !== 0;
+  accountInfo.isFrozen = accountInfo.state === 2;
+
+  if (accountInfo.isNativeOption === 1) {
+    accountInfo.rentExemptReserve = u64.fromBuffer(accountInfo.isNative);
+    accountInfo.isNative = true;
+  } else {
+    accountInfo.rentExemptReserve = null;
+    accountInfo.isNative = false;
+  }
+
+  if (accountInfo.closeAuthorityOption === 0) {
+    accountInfo.closeAuthority = null;
+  } else {
+    accountInfo.closeAuthority = new PublicKey(accountInfo.closeAuthority);
+  }
+
+  return accountInfo;
 };
 
 export const getOnchainTime = async (connection: Connection) => {
@@ -226,7 +303,7 @@ export const computeActualDepositAmount = (
  * @returns an object of type PoolInformation.
  */
 export const calculatePoolInfo = (
-  currentTime: number,
+  currentTimestamp: BN,
   poolVaultALp: BN,
   poolVaultBLp: BN,
   vaultALpSupply: BN,
@@ -237,10 +314,8 @@ export const calculatePoolInfo = (
   vaultA: VaultState,
   vaultB: VaultState,
 ) => {
-  const currentTimestamp = new BN(currentTime);
-
-  const vaultAWithdrawableAmount = calculateWithdrawableAmount(currentTime, vaultA);
-  const vaultBWithdrawableAmount = calculateWithdrawableAmount(currentTime, vaultB);
+  const vaultAWithdrawableAmount = calculateWithdrawableAmount(currentTimestamp.toNumber(), vaultA);
+  const vaultBWithdrawableAmount = calculateWithdrawableAmount(currentTimestamp.toNumber(), vaultB);
 
   const tokenAAmount = getAmountByShare(poolVaultALp, vaultAWithdrawableAmount, vaultALpSupply);
   const tokenBAmount = getAmountByShare(poolVaultBLp, vaultBWithdrawableAmount, vaultBLpSupply);
@@ -384,8 +459,8 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
 
   let swapCurve: SwapCurve;
   if ('stable' in poolState.curveType) {
-    const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
-    swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, currentTime);
+    const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'] as any;
+    swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, new BN(currentTime));
   } else {
     swapCurve = new ConstantProductSwap();
   }
@@ -472,3 +547,22 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
     priceImpact,
   };
 };
+
+export function chunks<T>(array: T[], size: number): T[][] {
+  return Array.apply<number, T[], T[][]>(0, new Array(Math.ceil(array.length / size))).map((_, index) =>
+    array.slice(index * size, (index + 1) * size),
+  );
+}
+
+export async function chunkedGetMultipleAccountInfos(
+  connection: Connection,
+  pks: PublicKey[],
+  chunkSize: number = 100,
+) {
+  const accountInfoMap = new Map<string, AccountInfo<Buffer> | null>();
+  const accountInfos = (
+    await Promise.all(chunks(pks, chunkSize).map((chunk) => connection.getMultipleAccountsInfo(chunk)))
+  ).flat();
+
+  return accountInfos;
+}

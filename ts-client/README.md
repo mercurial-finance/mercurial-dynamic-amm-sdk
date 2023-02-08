@@ -28,7 +28,7 @@ npm i @mercurial-finance/mercurial-dynamic-amm-sdk @project-serum/anchor @solana
 2. Initialize AmmImpl instance
 
 ```ts
-import AmmImpl, { MAIN_POOL_USDT_SOL, MAIN_POOL_USDT_USDC } from '@mercurial-finance/mercurial-dynamic-amm-sdk';
+import AmmImpl, { MAINNET_POOL } from '@mercurial-finance/mercurial-dynamic-amm-sdk';
 import { PublicKey } from '@solana/web3.js';
 import { Wallet, AnchorProvider } from '@project-serum/anchor';
 
@@ -40,8 +40,8 @@ const provider = new AnchorProvider(mainnetConnection, mockWallet, {
 });
 // Alternatively, to use Solana Wallet Adapter
 
-const constantProductPool = await AmmImpl.create(connection, MAIN_POOL_USDT_SOL);
-const stablePool = await AmmImpl.create(connection, MAIN_POOL_USDT_USDC);
+const constantProductPool = await AmmImpl.create(connection, MAINNET_POOL.USDC_SOL);
+const stablePool = await AmmImpl.create(connection, MAINNET_POOL.USDT_USDC);
 ```
 
 3. To interact with the AmmImpl
