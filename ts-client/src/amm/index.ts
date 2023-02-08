@@ -61,15 +61,13 @@ const getAllPoolState = async (poolMints: Array<PublicKey>, program: AmmProgram)
   const poolLpMints = poolStates.map((poolState) => poolState.lpMint);
   const lpMintAccounts = await program.provider.connection.getMultipleAccountsInfo(poolLpMints);
 
-  return await Promise.all(
-    lpMintAccounts.map(async (lpMintAccount, idx) => {
-      invariant(lpMintAccount, ERROR.INVALID_ACCOUNT);
-      const poolState = poolStates[idx];
-      const lpSupply = new BN(u64.fromBuffer(MintLayout.decode(lpMintAccount.data).supply));
+  return poolStates.map((poolState, idx) => {
+    const lpMintAccount = lpMintAccounts[idx];
+    invariant(lpMintAccount, ERROR.INVALID_ACCOUNT);
+    const lpSupply = new BN(u64.fromBuffer(MintLayout.decode(lpMintAccount.data).supply));
 
-      return { ...poolState, lpSupply };
-    }),
-  );
+    return { ...poolState, lpSupply };
+  });
 };
 
 const getPoolState = async (poolMint: PublicKey, program: AmmProgram) => {
