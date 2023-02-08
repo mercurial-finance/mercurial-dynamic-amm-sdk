@@ -106,8 +106,10 @@ const getRemainingAccounts = (poolState: PoolState) => {
 };
 
 type DecoderType = { [x: string]: (accountData: Buffer) => BN | ApyState };
-const decodeAccountTypeMapper = (type: AccountType): ((accountData: Buffer) => BN | ApyState) => {
-  const poolCoder = new BorshCoder(AmmIdl as Idl);
+const decodeAccountTypeMapper = (
+  poolCoder: BorshCoder,
+  type: AccountType,
+): ((accountData: Buffer) => BN | ApyState) => {
   const decoder: DecoderType = {
     [AccountType.APY]: (accountData) => poolCoder.accounts.decode('apy', accountData) as ApyState,
     [AccountType.VAULT_A_RESERVE]: (accountData) => new BN(u64.fromBuffer(AccountLayout.decode(accountData).amount)),
@@ -138,16 +140,19 @@ const getAccountsBuffer = async (
     const accountInfo = accounts[index];
     accMap.set(account.pubkey.toBase58(), {
       type: account.type,
-      account: accountInfo,
+      account: accountInfo!,
     });
 
     return accMap;
-  }, new Map());
+  }, new Map<string, AccountTypeInfo>());
 };
 
-const deserializeAccountsBuffer = (accountInfoMap: Map<string, AccountTypeInfo>): Map<string, BN | ApyState> => {
+const deserializeAccountsBuffer = (
+  poolCoder: BorshCoder,
+  accountInfoMap: Map<string, AccountTypeInfo>,
+): Map<string, BN | ApyState> => {
   return Array.from(accountInfoMap).reduce((accValue, [publicKey, { type, account }]) => {
-    const decodedAccountInfo = decodeAccountTypeMapper(type);
+    const decodedAccountInfo = decodeAccountTypeMapper(poolCoder, type);
 
     accValue.set(publicKey, decodedAccountInfo(account!.data));
 
@@ -257,7 +262,9 @@ export default class AmmImpl implements AmmImplementation {
       ...flatAccountsToFetch,
       { pubkey: SYSVAR_CLOCK_PUBKEY, type: AccountType.SYSVAR_CLOCK },
     ]);
-    const accountsInfoMap = deserializeAccountsBuffer(accountsBufferMap);
+    const poolCoder = new BorshCoder(AmmIdl as Idl);
+    const accountsInfoMap = deserializeAccountsBuffer(poolCoder, accountsBufferMap);
+    const depegAccounts = await getDepegAccounts(ammProgram.provider.connection);
 
     const ammImpls = await Promise.all(
       accountsToFetch.map(async (accounts) => {
@@ -296,8 +303,6 @@ export default class AmmImpl implements AmmImplementation {
           vaultBReserve,
           poolLpSupply,
         };
-
-        const depegAccounts = await getDepegAccounts(ammProgram.provider.connection);
 
         const poolInfoData = poolInfoMap.get(poolLpMint.pubkey.toBase58());
 
@@ -411,7 +416,8 @@ export default class AmmImpl implements AmmImplementation {
       { pubkey: poolState.lpMint, type: AccountType.POOL_LP_MINT },
       { pubkey: SYSVAR_CLOCK_PUBKEY, type: AccountType.SYSVAR_CLOCK },
     ]);
-    const accountsInfoMap = deserializeAccountsBuffer(accountsBufferMap);
+    const poolCoder = new BorshCoder(AmmIdl as Idl);
+    const accountsInfoMap = deserializeAccountsBuffer(poolCoder, accountsBufferMap);
 
     const apy = accountsInfoMap.get(apyPda.toBase58()) as ApyState;
     const currentTime = accountsInfoMap.get(SYSVAR_CLOCK_PUBKEY.toBase58()) as BN;
@@ -518,7 +524,8 @@ export default class AmmImpl implements AmmImplementation {
       this.vaultB.refreshVaultState(),
     ]);
 
-    const accountsInfoMap = deserializeAccountsBuffer(this.accountsBufferMap);
+    const poolCoder = new BorshCoder(AmmIdl as Idl);
+    const accountsInfoMap = deserializeAccountsBuffer(poolCoder, this.accountsBufferMap);
 
     const apy = accountsInfoMap.get(this.apyPda.toBase58()) as ApyState;
     const currentTime = accountsInfoMap.get(SYSVAR_CLOCK_PUBKEY.toBase58()) as BN;
