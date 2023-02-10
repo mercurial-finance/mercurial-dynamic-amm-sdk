@@ -127,7 +127,7 @@ export const getOrCreateATAInstruction = async (
   }
 };
 
-export const wrapSOLInstruction = (from: PublicKey, to: PublicKey, amount: number): TransactionInstruction[] => {
+export const wrapSOLInstruction = (from: PublicKey, to: PublicKey, amount: bigint): TransactionInstruction[] => {
   return [
     SystemProgram.transfer({
       fromPubkey: from,

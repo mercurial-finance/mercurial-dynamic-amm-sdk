@@ -720,7 +720,9 @@ export default class AmmImpl implements AmmImplementation {
     createUserDestinationIx && preInstructions.push(createUserDestinationIx);
 
     if (sourceToken.equals(WRAPPED_SOL_MINT)) {
-      preInstructions = preInstructions.concat(wrapSOLInstruction(owner, userSourceToken, inAmountLamport.toNumber()));
+      preInstructions = preInstructions.concat(
+        wrapSOLInstruction(owner, userSourceToken, BigInt(inAmountLamport.toString())),
+      );
     }
 
     preInstructions.push(await this.getApySyncInstructions());
@@ -919,10 +921,14 @@ export default class AmmImpl implements AmmImplementation {
     createLpMintIx && preInstructions.push(createLpMintIx);
 
     if (WRAPPED_SOL_MINT.equals(new PublicKey(this.tokenA.address))) {
-      preInstructions = preInstructions.concat(wrapSOLInstruction(owner, userAToken, tokenAInAmount.toNumber()));
+      preInstructions = preInstructions.concat(
+        wrapSOLInstruction(owner, userAToken, BigInt(tokenAInAmount.toString())),
+      );
     }
     if (WRAPPED_SOL_MINT.equals(new PublicKey(this.tokenB.address))) {
-      preInstructions = preInstructions.concat(wrapSOLInstruction(owner, userBToken, tokenBInAmount.toNumber()));
+      preInstructions = preInstructions.concat(
+        wrapSOLInstruction(owner, userBToken, BigInt(tokenBInAmount.toString())),
+      );
     }
 
     preInstructions.push(await this.getApySyncInstructions());

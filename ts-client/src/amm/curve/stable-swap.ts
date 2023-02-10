@@ -302,7 +302,7 @@ class Helper {
         name: '',
         symbol: '',
       }),
-      amount,
+      amount.toString(),
     );
   }
   public static toReserve(amount: BN): IReserve {
