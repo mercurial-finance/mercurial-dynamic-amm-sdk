@@ -799,11 +799,13 @@ export default class AmmImpl implements AmmImplementation {
         this.poolInfo.tokenBAmount,
         this.accountsInfo.poolLpSupply,
       );
+      const bufferedPoolTokenAmountOut = getMinAmountWithSlippage(poolTokenAmountOut, UNLOCK_AMOUNT_BUFFER);
 
       // Calculate for stable pool balance deposit but used `addImbalanceLiquidity`
       if (this.isStablePool) {
         return {
-          poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippage),
+          poolTokenAmountOut: bufferedPoolTokenAmountOut,
+          minPoolTokenAmountOut: getMinAmountWithSlippage(bufferedPoolTokenAmountOut, slippage),
           tokenAInAmount: tokenBInAmount.mul(this.poolInfo.tokenAAmount).div(this.poolInfo.tokenBAmount),
           tokenBInAmount,
         };
@@ -822,7 +824,8 @@ export default class AmmImpl implements AmmImplementation {
       );
 
       return {
-        poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, UNLOCK_AMOUNT_BUFFER),
+        poolTokenAmountOut: bufferedPoolTokenAmountOut,
+        minPoolTokenAmountOut: getMinAmountWithSlippage(bufferedPoolTokenAmountOut, slippage),
         tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippage),
         tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippage),
       };
@@ -834,11 +837,13 @@ export default class AmmImpl implements AmmImplementation {
         this.poolInfo.tokenAAmount,
         this.accountsInfo.poolLpSupply,
       );
+      const bufferedPoolTokenAmountOut = getMinAmountWithSlippage(poolTokenAmountOut, UNLOCK_AMOUNT_BUFFER);
 
       // Calculate for stable pool balance deposit but used `addImbalanceLiquidity`
       if (this.isStablePool) {
         return {
-          poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippage),
+          poolTokenAmountOut: bufferedPoolTokenAmountOut,
+          minPoolTokenAmountOut: getMinAmountWithSlippage(bufferedPoolTokenAmountOut, slippage),
           tokenAInAmount,
           tokenBInAmount: tokenAInAmount.mul(this.poolInfo.tokenBAmount).div(this.poolInfo.tokenAAmount),
         };
@@ -857,7 +862,8 @@ export default class AmmImpl implements AmmImplementation {
       );
 
       return {
-        poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, UNLOCK_AMOUNT_BUFFER),
+        poolTokenAmountOut: bufferedPoolTokenAmountOut,
+        minPoolTokenAmountOut: getMinAmountWithSlippage(bufferedPoolTokenAmountOut, slippage),
         tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippage),
         tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippage),
       };
@@ -889,7 +895,8 @@ export default class AmmImpl implements AmmImplementation {
     );
 
     return {
-      poolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippage),
+      poolTokenAmountOut,
+      minPoolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippage),
       tokenAInAmount,
       tokenBInAmount,
     };
