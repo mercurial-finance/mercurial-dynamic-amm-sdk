@@ -799,12 +799,13 @@ export default class AmmImpl implements AmmImplementation {
         this.poolInfo.tokenBAmount,
         this.accountsInfo.poolLpSupply,
       );
+      const bufferedPoolTokenAmountOut = getMinAmountWithSlippage(poolTokenAmountOut, UNLOCK_AMOUNT_BUFFER);
 
       // Calculate for stable pool balance deposit but used `addImbalanceLiquidity`
       if (this.isStablePool) {
         return {
-          poolTokenAmountOut,
-          minPoolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippage),
+          poolTokenAmountOut: bufferedPoolTokenAmountOut,
+          minPoolTokenAmountOut: getMinAmountWithSlippage(bufferedPoolTokenAmountOut, slippage),
           tokenAInAmount: tokenBInAmount.mul(this.poolInfo.tokenAAmount).div(this.poolInfo.tokenBAmount),
           tokenBInAmount,
         };
@@ -822,7 +823,6 @@ export default class AmmImpl implements AmmImplementation {
         vaultBWithdrawableAmount,
       );
 
-      const bufferedPoolTokenAmountOut = getMinAmountWithSlippage(poolTokenAmountOut, UNLOCK_AMOUNT_BUFFER);
       return {
         poolTokenAmountOut: bufferedPoolTokenAmountOut,
         minPoolTokenAmountOut: getMinAmountWithSlippage(bufferedPoolTokenAmountOut, slippage),
@@ -837,12 +837,13 @@ export default class AmmImpl implements AmmImplementation {
         this.poolInfo.tokenAAmount,
         this.accountsInfo.poolLpSupply,
       );
+      const bufferedPoolTokenAmountOut = getMinAmountWithSlippage(poolTokenAmountOut, UNLOCK_AMOUNT_BUFFER);
 
       // Calculate for stable pool balance deposit but used `addImbalanceLiquidity`
       if (this.isStablePool) {
         return {
-          poolTokenAmountOut,
-          minPoolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippage),
+          poolTokenAmountOut: bufferedPoolTokenAmountOut,
+          minPoolTokenAmountOut: getMinAmountWithSlippage(bufferedPoolTokenAmountOut, slippage),
           tokenAInAmount,
           tokenBInAmount: tokenAInAmount.mul(this.poolInfo.tokenBAmount).div(this.poolInfo.tokenAAmount),
         };
@@ -860,10 +861,9 @@ export default class AmmImpl implements AmmImplementation {
         vaultBWithdrawableAmount,
       );
 
-      const poolTokenAMountOut = getMinAmountWithSlippage(poolTokenAmountOut, UNLOCK_AMOUNT_BUFFER);
       return {
-        poolTokenAmountOut,
-        minPoolTokenAmountOut: getMinAmountWithSlippage(poolTokenAMountOut, slippage),
+        poolTokenAmountOut: bufferedPoolTokenAmountOut,
+        minPoolTokenAmountOut: getMinAmountWithSlippage(bufferedPoolTokenAmountOut, slippage),
         tokenAInAmount: getMaxAmountWithSlippage(actualTokenAInAmount, slippage),
         tokenBInAmount: getMaxAmountWithSlippage(actualTokenBInAmount, slippage),
       };
