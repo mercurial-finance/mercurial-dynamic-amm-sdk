@@ -31,6 +31,7 @@ export type AmmImplementation = {
 
 export type DepositQuote = {
   poolTokenAmountOut: BN;
+  minPoolTokenAmountOut: BN;
   tokenAInAmount: BN;
   tokenBInAmount: BN;
 };
