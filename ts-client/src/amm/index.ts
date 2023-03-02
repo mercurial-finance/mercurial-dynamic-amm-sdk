@@ -71,7 +71,7 @@ const getAllPoolState = async (poolMints: Array<PublicKey>, program: AmmProgram)
 };
 
 const getPoolState = async (poolMint: PublicKey, program: AmmProgram) => {
-  const poolState = (await program.account.pool.fetchNullable(poolMint)) as PoolState;
+  const poolState = (await program.account.pool.fetchNullable(poolMint)) as any as PoolState;
   invariant(poolState, `Pool ${poolMint.toBase58()} not found`);
 
   const account = await program.provider.connection.getTokenSupply(poolState.lpMint);

@@ -1,13 +1,12 @@
 import { AccountInfo, PublicKey, Transaction } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { TypeDef } from '@project-serum/anchor/dist/cjs/program/namespace/types';
+import { IdlAccounts, IdlTypes } from '@project-serum/anchor';
 import BN from 'bn.js';
 import { Amm as AmmIdl } from '../idl';
-import { IdlTypes } from '@project-serum/anchor/dist/esm';
 import { VaultState } from '@mercurial-finance/vault-sdk';
 import Decimal from 'decimal.js';
 
-export type AmmImplementation = {
+export interface AmmImplementation {
   tokenA: TokenInfo;
   tokenB: TokenInfo;
   decimals: number;
@@ -27,7 +26,7 @@ export type AmmImplementation = {
     tokenAOutAmount: BN,
     tokenBOutAmount: BN,
   ) => Promise<Transaction>;
-};
+}
 
 export type DepositQuote = {
   poolTokenAmountOut: BN;
@@ -86,6 +85,8 @@ export enum AccountType {
   SYSVAR_CLOCK = 'sysClockVar',
 }
 
+export type CurveType = ConstantProductCurve | StableSwapCurve;
+
 export type StableSwapCurve = {
   stable: {
     amp: BN;
@@ -112,22 +113,17 @@ export type DepegLido = {
 
 export type DepegType = DepegNone | DepegMarinade | DepegLido;
 
-export type Depeg = {
-  baseVirtualPrice: BN;
-  baseCacheUpdated: BN;
-  depegType: DepegType;
-};
-
 export interface TokenMultiplier {
   tokenAMultiplier: BN;
   tokenBMultiplier: BN;
   precisionFactor: number;
 }
 
-// PoolState
-export type PoolState = TypeDef<AmmIdl['accounts']['0'], IdlTypes<AmmIdl>>;
-export type VirtualPrice = TypeDef<AmmIdl['types']['4'], IdlTypes<AmmIdl>>;
-export type ApyState = TypeDef<AmmIdl['accounts']['1'], IdlTypes<AmmIdl>>;
+export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType'> & { curveType: CurveType };
+export type Depeg = Omit<IdlTypes<AmmIdl>['Depeg'], 'depegType'> & { depegType: DepegType };
+export type VirtualPrice = IdlTypes<AmmIdl>['VirtualPrice'];
+export type SnapShot = IdlTypes<AmmIdl>['SnapShot'];
+export type ApyState = Omit<IdlAccounts<AmmIdl>['apy'], 'snapshot'> & { snapshot: SnapShot };
 
 export type PoolInformation = {
   firstTimestamp: BN;
