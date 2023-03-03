@@ -43,13 +43,6 @@ export type WithdrawQuote = {
   tokenBOutAmount: BN;
 };
 
-export interface PoolFees {
-  tradeFeeNumerator: BN;
-  tradeFeeDenominator: BN;
-  ownerTradeFeeNumerator: BN;
-  ownerTradeFeeDenominator: BN;
-}
-
 export interface SwapResult {
   amountOut: BN;
   priceImpact: Decimal;
@@ -119,8 +112,9 @@ export interface TokenMultiplier {
   precisionFactor: number;
 }
 
-export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType'> & { curveType: CurveType };
+export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType'> & { curveType: CurveType; fees: PoolFees };
 export type Depeg = Omit<IdlTypes<AmmIdl>['Depeg'], 'depegType'> & { depegType: DepegType };
+export type PoolFees = IdlTypes<AmmIdl>['PoolFees'];
 export type VirtualPrice = IdlTypes<AmmIdl>['VirtualPrice'];
 export type SnapShot = IdlTypes<AmmIdl>['SnapShot'];
 export type ApyState = Omit<IdlAccounts<AmmIdl>['apy'], 'snapshot'> & { snapshot: SnapShot };
