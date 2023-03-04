@@ -112,7 +112,10 @@ export interface TokenMultiplier {
   precisionFactor: number;
 }
 
-export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType'> & { curveType: CurveType; fees: PoolFees };
+export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType' | 'fees'> & {
+  curveType: CurveType;
+  fees: PoolFees;
+};
 export type Depeg = Omit<IdlTypes<AmmIdl>['Depeg'], 'depegType'> & { depegType: DepegType };
 export type PoolFees = IdlTypes<AmmIdl>['PoolFees'];
 export type VirtualPrice = IdlTypes<AmmIdl>['VirtualPrice'];
