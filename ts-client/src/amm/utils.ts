@@ -237,6 +237,25 @@ const getLastVirtualPrice = (apyState: ApyState): VirtualPrice | null => {
   return virtualPrice;
 };
 
+const getVirtualPriceClosestToYesterday = (currentTimestamp: BN, apyState: ApyState): VirtualPrice | null => {
+  const secondsPerDay = new BN(86400);
+  let secondsClosestTo24H = new BN(Number.MAX_SAFE_INTEGER);
+  let virtualPriceClosestTo24H: VirtualPrice | null = null;
+  // Find virtual price closest to 24H, but must > 24H
+  for (const virtualPrice of apyState.snapshot.virtualPrices as VirtualPrice[]) {
+    if (currentTimestamp.gt(virtualPrice.timestamp)) {
+      const diff = currentTimestamp.sub(virtualPrice.timestamp);
+      if (diff.gte(secondsPerDay)) {
+        const secondsTo24H = diff.sub(secondsPerDay);
+        if (secondsTo24H.lt(secondsClosestTo24H) && virtualPrice.price.gt(new BN(0))) {
+          virtualPriceClosestTo24H = virtualPrice;
+        }
+      }
+    }
+  }
+  return virtualPriceClosestTo24H;
+};
+
 // Typescript implementation of https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/src/state.rs#L101
 const getFirstVirtualPrice = (apyState: ApyState): VirtualPrice | null => {
   const { snapshot } = apyState;
@@ -335,7 +354,7 @@ export const calculatePoolInfo = (
     }
   }
 
-  const firstVirtualPrice = getFirstVirtualPrice(apyState);
+  const firstVirtualPrice = getVirtualPriceClosestToYesterday(currentTimestamp, apyState);
 
   if (firstVirtualPrice && latestVirtualPrice.gt(new BN(0))) {
     // Compute APY
