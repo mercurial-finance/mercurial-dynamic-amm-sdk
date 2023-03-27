@@ -21,7 +21,7 @@ default = []
 overflow-checks = true
 
 [dependencies]
-anchor-lang = "0.25.0"
-anchor-spl = "0.25.0"
+anchor-lang = "0.26.0"
+anchor-spl = "0.26.0"
 mercurial-vault = { version="0.4.4", features = ["cpi"] }
 
