@@ -1,13 +1,12 @@
 import { AccountInfo, PublicKey, Transaction } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { TypeDef } from '@project-serum/anchor/dist/cjs/program/namespace/types';
+import { IdlAccounts, IdlTypes } from '@project-serum/anchor';
 import BN from 'bn.js';
 import { Amm as AmmIdl } from '../idl';
-import { IdlTypes } from '@project-serum/anchor/dist/esm';
 import { VaultState } from '@mercurial-finance/vault-sdk';
 import Decimal from 'decimal.js';
 
-export type AmmImplementation = {
+export interface AmmImplementation {
   tokenA: TokenInfo;
   tokenB: TokenInfo;
   decimals: number;
@@ -27,10 +26,11 @@ export type AmmImplementation = {
     tokenAOutAmount: BN,
     tokenBOutAmount: BN,
   ) => Promise<Transaction>;
-};
+}
 
 export type DepositQuote = {
   poolTokenAmountOut: BN;
+  minPoolTokenAmountOut: BN;
   tokenAInAmount: BN;
   tokenBInAmount: BN;
 };
@@ -42,13 +42,6 @@ export type WithdrawQuote = {
   tokenAOutAmount: BN;
   tokenBOutAmount: BN;
 };
-
-export interface PoolFees {
-  tradeFeeNumerator: BN;
-  tradeFeeDenominator: BN;
-  ownerTradeFeeNumerator: BN;
-  ownerTradeFeeDenominator: BN;
-}
 
 export interface SwapResult {
   amountOut: BN;
@@ -72,6 +65,20 @@ export type AccountsToCache = {
   solidoBuffer: AccountInfo<Buffer> | null;
   clockAccountBuffer: AccountInfo<Buffer> | null;
 };
+
+export enum AccountType {
+  APY = 'apy',
+  VAULT_A_RESERVE = 'vaultAReserve',
+  VAULT_B_RESERVE = 'vaultBReserve',
+  VAULT_A_LP = 'vaultALp',
+  VAULT_B_LP = 'vaultBLp',
+  POOL_VAULT_A_LP = 'poolVaultALp',
+  POOL_VAULT_B_LP = 'poolVaultBLp',
+  POOL_LP_MINT = 'poolLpMint',
+  SYSVAR_CLOCK = 'sysClockVar',
+}
+
+export type CurveType = ConstantProductCurve | StableSwapCurve;
 
 export type StableSwapCurve = {
   stable: {
@@ -99,22 +106,21 @@ export type DepegLido = {
 
 export type DepegType = DepegNone | DepegMarinade | DepegLido;
 
-export type Depeg = {
-  baseVirtualPrice: BN;
-  baseCacheUpdated: BN;
-  depegType: DepegType;
-};
-
 export interface TokenMultiplier {
   tokenAMultiplier: BN;
   tokenBMultiplier: BN;
   precisionFactor: number;
 }
 
-// PoolState
-export type PoolState = TypeDef<AmmIdl['accounts']['0'], IdlTypes<AmmIdl>>;
-export type VirtualPrice = TypeDef<AmmIdl['types']['4'], IdlTypes<AmmIdl>>;
-export type ApyState = TypeDef<AmmIdl['accounts']['1'], IdlTypes<AmmIdl>>;
+export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType' | 'fees'> & {
+  curveType: CurveType;
+  fees: PoolFees;
+};
+export type Depeg = Omit<IdlTypes<AmmIdl>['Depeg'], 'depegType'> & { depegType: DepegType };
+export type PoolFees = IdlTypes<AmmIdl>['PoolFees'];
+export type VirtualPrice = IdlTypes<AmmIdl>['VirtualPrice'];
+export type SnapShot = IdlTypes<AmmIdl>['SnapShot'];
+export type ApyState = Omit<IdlAccounts<AmmIdl>['apy'], 'snapshot'> & { snapshot: SnapShot };
 
 export type PoolInformation = {
   firstTimestamp: BN;
@@ -135,7 +141,7 @@ export type AccountsInfo = {
   poolVaultALp: BN;
   poolVaultBLp: BN;
   poolLpSupply: BN;
-  currentTime: number;
+  currentTime: BN;
 };
 
 /** Utils */

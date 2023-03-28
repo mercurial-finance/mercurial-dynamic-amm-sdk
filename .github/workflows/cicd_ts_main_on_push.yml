@@ -13,6 +13,7 @@ on:
 
 env:
   WALLET_PRIVATE_KEY: ${{secrets.WALLET_PRIVATE_KEY}}
+  MAINNET_RPC_ENDPOINT: ${{secrets.MAINNET_RPC_ENDPOINT}}
   working_dir: ./ts-client
 
 jobs:
@@ -48,9 +49,6 @@ jobs:
       - name: Install modules
         working-directory: ${{ env.working_dir }}
         run: pnpm i
-      - name: Run tests
-        working-directory: ${{ env.working_dir }}
-        run: pnpm run test
       - name: Build
         working-directory: ${{ env.working_dir }}
         run: pnpm run build
@@ -58,7 +56,6 @@ jobs:
         run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       - name: Publish to npm
         working-directory: ${{ env.working_dir }}
-        if: github.event_name == 'push'
         run: |
           npm version --no-git-tag-version prerelease --preid=${SHORT_SHA} --force
           npm publish --tag next

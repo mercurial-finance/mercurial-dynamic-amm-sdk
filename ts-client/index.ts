@@ -1,6 +1,6 @@
 import AmmImpl from './src/amm';
 import { StableSwap, ConstantProductSwap } from './src/amm/curve';
-import { PROGRAM_ID, MAINNET_POOL, DEVNET_POOL } from './src/amm/constants';
+import { PROGRAM_ID, MAINNET_POOL, DEVNET_POOL, CURVE_TYPE_ACCOUNTS } from './src/amm/constants';
 import {
   getOnchainTime,
   calculateMaxSwapOutAmount,
@@ -26,6 +26,7 @@ export {
   PROGRAM_ID,
   MAINNET_POOL,
   DEVNET_POOL,
+  CURVE_TYPE_ACCOUNTS,
   // IDL
   AmmIdl,
   VaultIdl,
