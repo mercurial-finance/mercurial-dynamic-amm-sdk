@@ -122,6 +122,7 @@ export type PoolFees = IdlTypes<AmmIdl>['PoolFees'];
 export type PoolInformation = {
   tokenAAmount: BN;
   tokenBAmount: BN;
+  virtualPrice: BN;
 };
 
 export type AccountsInfo = {

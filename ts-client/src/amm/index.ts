@@ -17,7 +17,6 @@ import VaultImpl, {
   calculateWithdrawableAmount,
   getVaultPdas,
   ResultType,
-  IDL as VaultIDL,
   VaultIdl,
 } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
@@ -482,6 +481,8 @@ export default class AmmImpl implements AmmImplementation {
           poolVaultBLp,
           vaultALpSupply,
           vaultBLpSupply,
+          poolLpSupply,
+          swapCurve,
           vaultA.vaultState,
           vaultB.vaultState,
         );
@@ -615,6 +616,8 @@ export default class AmmImpl implements AmmImplementation {
       poolVaultBLp,
       vaultALpSupply,
       vaultBLpSupply,
+      poolLpSupply,
+      swapCurve,
       vaultA.vaultState,
       vaultB.vaultState,
     );
@@ -712,6 +715,8 @@ export default class AmmImpl implements AmmImplementation {
       poolVaultBLp,
       vaultALpSupply,
       vaultBLpSupply,
+      poolLpSupply,
+      this.swapCurve,
       this.vaultA.vaultState,
       this.vaultB.vaultState,
     );

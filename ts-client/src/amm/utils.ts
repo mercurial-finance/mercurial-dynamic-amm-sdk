@@ -26,7 +26,14 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import invariant from 'invariant';
-import { CURVE_TYPE_ACCOUNTS, ERROR, WRAPPED_SOL_MINT, PROGRAM_ID, VAULT_PROGRAM_ID } from './constants';
+import {
+  CURVE_TYPE_ACCOUNTS,
+  ERROR,
+  WRAPPED_SOL_MINT,
+  PROGRAM_ID,
+  VAULT_PROGRAM_ID,
+  VIRTUAL_PRICE_PRECISION,
+} from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
   ConstantProductCurve,
@@ -262,6 +269,8 @@ export const calculatePoolInfo = (
   poolVaultBLp: BN,
   vaultALpSupply: BN,
   vaultBLpSupply: BN,
+  poolLpSupply: BN,
+  swapCurve: SwapCurve,
   vaultA: VaultState,
   vaultB: VaultState,
 ) => {
@@ -271,9 +280,13 @@ export const calculatePoolInfo = (
   const tokenAAmount = getAmountByShare(poolVaultALp, vaultAWithdrawableAmount, vaultALpSupply);
   const tokenBAmount = getAmountByShare(poolVaultBLp, vaultBWithdrawableAmount, vaultBLpSupply);
 
+  const d = swapCurve.computeD(tokenAAmount, tokenBAmount);
+  const virtualPrice = d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
+
   const poolInformation: PoolInformation = {
     tokenAAmount,
     tokenBAmount,
+    virtualPrice,
   };
 
   return poolInformation;
