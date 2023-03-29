@@ -322,7 +322,7 @@ export default class AmmImpl implements AmmImplementation {
     const [payerPoolLp, createPayerPoolLpIx] = await getOrCreateATAInstruction(poolLpMint, payer, connection);
     createPayerPoolLpIx && preInstructions.push(createPayerPoolLpIx);
 
-    return await ammProgram.methods
+    const createPermissionlessPoolTx = await ammProgram.methods
       .initializePermissionlessPool(curveType, tokenAAmount, tokenBAmount)
       .accounts({
         pool: poolPubkey,
@@ -352,6 +352,11 @@ export default class AmmImpl implements AmmImplementation {
       })
       .preInstructions(preInstructions)
       .transaction();
+
+    return new Transaction({
+      feePayer: payer,
+      ...(await ammProgram.provider.connection.getLatestBlockhash('finalized')),
+    }).add(createPermissionlessPoolTx);
   }
 
   public static async createMultiple(
