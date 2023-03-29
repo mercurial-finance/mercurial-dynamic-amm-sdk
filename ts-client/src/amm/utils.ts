@@ -5,6 +5,7 @@ import {
   getUnmintAmount,
   IDL as VaultIDL,
   VaultIdl,
+  PROGRAM_ID as VAULT_PROGRAM_ID,
 } from '@mercurial-finance/vault-sdk';
 import { AnchorProvider, BN, Program } from '@project-serum/anchor';
 import {
@@ -26,14 +27,7 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import invariant from 'invariant';
-import {
-  CURVE_TYPE_ACCOUNTS,
-  ERROR,
-  WRAPPED_SOL_MINT,
-  PROGRAM_ID,
-  VAULT_PROGRAM_ID,
-  VIRTUAL_PRICE_PRECISION,
-} from './constants';
+import { CURVE_TYPE_ACCOUNTS, ERROR, WRAPPED_SOL_MINT, PROGRAM_ID, VIRTUAL_PRICE_PRECISION } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
   ConstantProductCurve,

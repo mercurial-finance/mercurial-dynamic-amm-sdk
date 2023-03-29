@@ -234,13 +234,18 @@ export default class AmmImpl implements AmmImplementation {
         }
       : { constantProduct: {} };
 
-    const [{ vaultPda: vaultPdaA }, { vaultPda: vaultPdaB }] = await Promise.all([
-      getVaultPdas(new PublicKey(tokenInfoA.address), new PublicKey(vaultProgram.programId)),
-      getVaultPdas(new PublicKey(tokenInfoB.address), new PublicKey(vaultProgram.programId)),
-    ]);
+    const tokenAMint = new PublicKey(tokenInfoA.address);
+    const tokenBMint = new PublicKey(tokenInfoB.address);
+    const [
+      { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aVaultLpMint },
+      { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bVaultLpMint },
+    ] = [
+      getVaultPdas(new PublicKey(tokenInfoA.address), vaultProgram.programId),
+      getVaultPdas(new PublicKey(tokenInfoB.address), vaultProgram.programId),
+    ];
     const [aVaultAccount, bVaultAccount] = await Promise.all([
-      vaultProgram.account.vault.fetchNullable(vaultPdaA),
-      vaultProgram.account.vault.fetchNullable(vaultPdaB),
+      vaultProgram.account.vault.fetchNullable(aVault),
+      vaultProgram.account.vault.fetchNullable(bVault),
     ]);
 
     let preInstructions: Array<TransactionInstruction> = [];
@@ -257,60 +262,29 @@ export default class AmmImpl implements AmmImplementation {
       createVaultBIx && preInstructions.push(createVaultBIx);
     }
 
-    const [[tokenAMint], [tokenBMint]] = [
-      PublicKey.findProgramAddressSync(
-        [Buffer.from(SEEDS.VAULT_PREFIX), new PublicKey(tokenInfoA.address).toBuffer(), VAULT_BASE_KEY.toBuffer()],
-        ammProgram.programId,
-      ),
-      PublicKey.findProgramAddressSync(
-        [Buffer.from(SEEDS.VAULT_PREFIX), new PublicKey(tokenInfoB.address).toBuffer(), VAULT_BASE_KEY.toBuffer()],
-        ammProgram.programId,
-      ),
-    ];
-
-    const [[aVaultLpMint], [bVaultLpMint]] = [
-      PublicKey.findProgramAddressSync(
-        [Buffer.from(SEEDS.TOKEN_VAULT_PREFIX), tokenAMint.toBuffer()],
-        ammProgram.programId,
-      ),
-      PublicKey.findProgramAddressSync(
-        [Buffer.from(SEEDS.TOKEN_VAULT_PREFIX), tokenBMint.toBuffer()],
-        ammProgram.programId,
-      ),
-    ];
-
-    const [[aTokenVault], [bTokenVault]] = [
-      PublicKey.findProgramAddressSync([Buffer.from(SEEDS.LP_MINT), tokenAMint.toBuffer()], ammProgram.programId),
-      PublicKey.findProgramAddressSync([Buffer.from(SEEDS.LP_MINT), tokenBMint.toBuffer()], ammProgram.programId),
-    ];
-
     const [poolPubkey] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from([encodeCurveType(curveType)]),
-        getFirstKey(tokenAMint, tokenBMint),
-        getSecondKey(tokenAMint, tokenBMint),
-      ],
+      [Buffer.from([encodeCurveType(curveType)]), getFirstKey(aVault, bVault), getSecondKey(aVault, bVault)],
       ammProgram.programId,
     );
 
-    const [[aVaultLpPda], [bVaultLpPda]] = await Promise.all([
-      PublicKey.findProgramAddress([vaultPdaA.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
-      PublicKey.findProgramAddress([vaultPdaB.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
-    ]);
+    const [[aVaultLpPda], [bVaultLpPda]] = [
+      PublicKey.findProgramAddressSync([aVault.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
+      PublicKey.findProgramAddressSync([bVault.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
+    ];
 
     const [[payerTokenA, createPayerTokenAIx], [payerTokenB, createPayerTokenBIx]] = await Promise.all([
-      getOrCreateATAInstruction(tokenAMint, payer, connection),
-      getOrCreateATAInstruction(tokenBMint, payer, connection),
+      getOrCreateATAInstruction(aVault, payer, connection),
+      getOrCreateATAInstruction(bVault, payer, connection),
     ]);
     createPayerTokenAIx && preInstructions.push(createPayerTokenAIx);
     createPayerTokenBIx && preInstructions.push(createPayerTokenBIx);
 
     const [adminTokenAFee] = PublicKey.findProgramAddressSync(
-      [Buffer.from(SEEDS.FEE), tokenAMint.toBuffer(), poolPubkey.toBuffer()],
+      [Buffer.from(SEEDS.FEE), aVault.toBuffer(), poolPubkey.toBuffer()],
       ammProgram.programId,
     );
     const [adminTokenBFee] = PublicKey.findProgramAddressSync(
-      [Buffer.from(SEEDS.FEE), tokenBMint.toBuffer(), poolPubkey.toBuffer()],
+      [Buffer.from(SEEDS.FEE), bVault.toBuffer(), poolPubkey.toBuffer()],
       ammProgram.programId,
     );
 
@@ -328,8 +302,8 @@ export default class AmmImpl implements AmmImplementation {
         pool: poolPubkey,
         tokenAMint,
         tokenBMint,
-        aVault: vaultPdaA,
-        bVault: vaultPdaB,
+        aVault,
+        bVault,
         aVaultLpMint,
         bVaultLpMint,
         aVaultLp: aVaultLpPda,

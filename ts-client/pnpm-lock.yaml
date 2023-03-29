@@ -2,8 +2,8 @@ lockfileVersion: '6.0'
 
 dependencies:
   '@mercurial-finance/vault-sdk':
-    specifier: 0.3.16-d8ec7dc6.0
-    version: 0.3.16-d8ec7dc6.0(@saberhq/solana-contrib@1.13.32)(@saberhq/token-utils@1.13.32)(react-native@0.71.4)
+    specifier: 0.3.16-2a118927.0
+    version: 0.3.16-2a118927.0(@saberhq/solana-contrib@1.13.32)(@saberhq/token-utils@1.13.32)(react-native@0.71.4)
   '@project-serum/anchor':
     specifier: 0.24.2
     version: 0.24.2(react-native@0.71.4)
@@ -2253,8 +2253,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@mercurial-finance/vault-sdk@0.3.16-d8ec7dc6.0(@saberhq/solana-contrib@1.13.32)(@saberhq/token-utils@1.13.32)(react-native@0.71.4):
-    resolution: {integrity: sha512-vLi0AyrKwPkP5kbcWXfx3ueZ03axgOzuDrA5Vr8ovzBTAytGtEUDZ3Pt0yYGZY+v9z5qhi7VfUh5M+wg7FN0fg==}
+  /@mercurial-finance/vault-sdk@0.3.16-2a118927.0(@saberhq/solana-contrib@1.13.32)(@saberhq/token-utils@1.13.32)(react-native@0.71.4):
+    resolution: {integrity: sha512-WmdXb1ZzGOktJAYp1GPBHmMu5Ex8Ethm1Cr9Ei7mdJIfooaCM3JTO32H8CbuBQoI60MIxANMr9Edja1xJmrEmg==}
     dependencies:
       '@blockworks-foundation/mango-client': 3.6.10(react-native@0.71.4)
       '@mercurial-finance/apricot-sdk': 0.17.6(react-native@0.71.4)
