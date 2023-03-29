@@ -236,26 +236,32 @@ export default class AmmImpl implements AmmImplementation {
     const tokenAMint = new PublicKey(tokenInfoA.address);
     const tokenBMint = new PublicKey(tokenInfoB.address);
     const [
-      { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aVaultLpMint },
-      { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bVaultLpMint },
+      { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aLpMintPda },
+      { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bLpMintPda },
     ] = [getVaultPdas(tokenAMint, vaultProgram.programId), getVaultPdas(tokenBMint, vaultProgram.programId)];
     const [aVaultAccount, bVaultAccount] = await Promise.all([
       vaultProgram.account.vault.fetchNullable(aVault),
       vaultProgram.account.vault.fetchNullable(bVault),
     ]);
 
+    let aVaultLpMint = aLpMintPda;
+    let bVaultLpMint = bLpMintPda;
     let preInstructions: Array<TransactionInstruction> = [];
     if (!aVaultAccount) {
       const createVaultAIx = await VaultImpl.createPermissionlessVault(connection, payer, tokenInfoA, {
         result: ResultType.INSTRUCTION,
       });
       createVaultAIx && preInstructions.push(createVaultAIx);
+    } else {
+      aVaultLpMint = aVaultAccount.lpMint; // Old vault doesn't have lp mint pda
     }
     if (!bVaultAccount) {
       const createVaultBIx = await VaultImpl.createPermissionlessVault(connection, payer, tokenInfoB, {
         result: ResultType.INSTRUCTION,
       });
       createVaultBIx && preInstructions.push(createVaultBIx);
+    } else {
+      bVaultLpMint = bVaultAccount.lpMint; // Old vault doesn't have lp mint pda
     }
 
     const [poolPubkey] = PublicKey.findProgramAddressSync(
