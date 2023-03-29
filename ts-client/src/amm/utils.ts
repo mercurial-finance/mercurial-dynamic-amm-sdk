@@ -281,7 +281,8 @@ export const calculatePoolInfo = (
   const tokenBAmount = getAmountByShare(poolVaultBLp, vaultBWithdrawableAmount, vaultBLpSupply);
 
   const d = swapCurve.computeD(tokenAAmount, tokenBAmount);
-  const virtualPrice = d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
+  const virtualPriceBigNum = d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
+  const virtualPrice = virtualPriceBigNum.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
 
   const poolInformation: PoolInformation = {
     tokenAAmount,
