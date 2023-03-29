@@ -274,8 +274,8 @@ export default class AmmImpl implements AmmImplementation {
     );
 
     const [[aVaultLp], [bVaultLp]] = [
-      PublicKey.findProgramAddressSync([tokenAMint.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
-      PublicKey.findProgramAddressSync([tokenBMint.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
+      PublicKey.findProgramAddressSync([aVault.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
+      PublicKey.findProgramAddressSync([bVault.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
     ];
 
     const [[payerTokenA, createPayerTokenAIx], [payerTokenB, createPayerTokenBIx]] = await Promise.all([
