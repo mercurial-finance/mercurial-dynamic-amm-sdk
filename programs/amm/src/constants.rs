@@ -3,13 +3,6 @@
 /// Minimum seconds between last AMP changes
 pub static MIN_CHANGE_AMP_DURATION: u64 = 600; // 10 minutes
 
-/// Store constants related to PDA seeds
-#[deprecated]
-pub mod seeds {
-    /// Prefix for apy PDA
-    pub static APY_PREFIX: &str = "apy";
-}
-
 /// Store constants related to fees
 pub mod fee {
     /// Trade fee numerator for constant product swap curve.
@@ -38,15 +31,7 @@ pub mod fee {
     pub static MAX_FEE_BPS: u64 = 1000; // 1%
 }
 
-/// Store constants related to virtual price snapshot
-#[deprecated]
-pub mod snapshot {
-    /// Seconds in 6 hours
-    pub static SIX_HOURS: i64 = 60 * 60 * 6;
-}
-
 /// Store constants related to virtual price
-#[deprecated]
 pub mod virtual_price {
     /// Decimal price of virtual price
     pub const DECIMAL: u8 = 8;
