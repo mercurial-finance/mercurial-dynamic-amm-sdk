@@ -99,8 +99,6 @@ export const CURVE_TYPE_ACCOUNTS = {
 export const SEEDS = Object.freeze({
   APY: 'apy',
   FEE: 'fee',
-  VAULT_PREFIX: 'vault',
-  TOKEN_VAULT_PREFIX: 'token_vault',
   LP_MINT: 'lp_mint',
 });
 

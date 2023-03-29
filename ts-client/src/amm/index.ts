@@ -38,7 +38,6 @@ import {
   UNLOCK_AMOUNT_BUFFER,
   PERMISSIONLESS_AMP,
   FEE_OWNER,
-  VAULT_BASE_KEY,
 } from './constants';
 import { StableSwap, SwapCurve, TradeDirection } from './curve';
 import { ConstantProductSwap } from './curve/constant-product';
@@ -58,7 +57,6 @@ import {
   deserializeAccount,
   chunkedGetMultipleAccountInfos,
   computeTokenMultiplier,
-  getOnchainTime,
   encodeCurveType,
   getFirstKey,
   getSecondKey,
@@ -222,6 +220,7 @@ export default class AmmImpl implements AmmImplementation {
     },
   ) {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
+    console.log('🚀 ~ file: index.ts:223 ~ AmmImpl ~ vaultProgram:', vaultProgram.programId.toBase58());
 
     const amp = new BN(PERMISSIONLESS_AMP);
     const curveType = isStable
