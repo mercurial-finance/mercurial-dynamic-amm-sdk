@@ -8,7 +8,7 @@ export const ERROR = {
   INVALID_ACCOUNT: 'Account not found',
 };
 
-export const PROGRAM_ID = 'Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB';
+export const PROGRAM_ID = 'ammbh4CQztZ6txJ8AaQgPsWjd6o7GhmvopS2JAo5bCB';
 
 export const DEVNET_COIN: Array<TokenInfo> = [
   {

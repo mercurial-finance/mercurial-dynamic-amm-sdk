@@ -10,6 +10,7 @@ import {
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
+  ComputeBudgetProgram,
 } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
@@ -262,7 +263,7 @@ export default class AmmImpl implements AmmImplementation {
       ammProgram.programId,
     );
 
-    const [[aVaultLpPda], [bVaultLpPda]] = [
+    const [[aVaultLp], [bVaultLp]] = [
       PublicKey.findProgramAddressSync([aVault.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
       PublicKey.findProgramAddressSync([bVault.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
     ];
@@ -274,22 +275,29 @@ export default class AmmImpl implements AmmImplementation {
     createPayerTokenAIx && preInstructions.push(createPayerTokenAIx);
     createPayerTokenBIx && preInstructions.push(createPayerTokenBIx);
 
-    const [adminTokenAFee] = PublicKey.findProgramAddressSync(
-      [Buffer.from(SEEDS.FEE), aVault.toBuffer(), poolPubkey.toBuffer()],
-      ammProgram.programId,
-    );
-    const [adminTokenBFee] = PublicKey.findProgramAddressSync(
-      [Buffer.from(SEEDS.FEE), bVault.toBuffer(), poolPubkey.toBuffer()],
-      ammProgram.programId,
-    );
+    const [[adminTokenAFee], [adminTokenBFee]] = [
+      PublicKey.findProgramAddressSync(
+        [Buffer.from(SEEDS.FEE), aVault.toBuffer(), poolPubkey.toBuffer()],
+        ammProgram.programId,
+      ),
+      PublicKey.findProgramAddressSync(
+        [Buffer.from(SEEDS.FEE), bVault.toBuffer(), poolPubkey.toBuffer()],
+        ammProgram.programId,
+      ),
+    ];
 
-    const [poolLpMint] = PublicKey.findProgramAddressSync(
+    const [lpMint] = PublicKey.findProgramAddressSync(
       [Buffer.from(SEEDS.LP_MINT), poolPubkey.toBuffer()],
       ammProgram.programId,
     );
 
-    const [payerPoolLp, createPayerPoolLpIx] = await getOrCreateATAInstruction(poolLpMint, payer, connection);
+    const [payerPoolLp, createPayerPoolLpIx] = await getOrCreateATAInstruction(lpMint, payer, connection);
     createPayerPoolLpIx && preInstructions.push(createPayerPoolLpIx);
+
+    const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_400_000,
+    });
+    preInstructions.push(setComputeUnitLimitIx);
 
     const createPermissionlessPoolTx = await ammProgram.methods
       .initializePermissionlessPool(curveType, tokenAAmount, tokenBAmount)
@@ -301,9 +309,9 @@ export default class AmmImpl implements AmmImplementation {
         bVault,
         aVaultLpMint,
         bVaultLpMint,
-        aVaultLp: aVaultLpPda,
-        bVaultLp: bVaultLpPda,
-        lpMint: poolLpMint,
+        aVaultLp,
+        bVaultLp,
+        lpMint,
         payerTokenA,
         payerTokenB,
         adminTokenAFee,
