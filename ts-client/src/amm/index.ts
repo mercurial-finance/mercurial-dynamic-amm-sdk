@@ -220,7 +220,6 @@ export default class AmmImpl implements AmmImplementation {
     },
   ) {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
-    console.log('🚀 ~ file: index.ts:223 ~ AmmImpl ~ vaultProgram:', vaultProgram.programId.toBase58());
 
     const amp = new BN(PERMISSIONLESS_AMP);
     const curveType = isStable
@@ -238,10 +237,7 @@ export default class AmmImpl implements AmmImplementation {
     const [
       { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aVaultLpMint },
       { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bVaultLpMint },
-    ] = [
-      getVaultPdas(new PublicKey(tokenInfoA.address), vaultProgram.programId),
-      getVaultPdas(new PublicKey(tokenInfoB.address), vaultProgram.programId),
-    ];
+    ] = [getVaultPdas(tokenAMint, vaultProgram.programId), getVaultPdas(tokenBMint, vaultProgram.programId)];
     const [aVaultAccount, bVaultAccount] = await Promise.all([
       vaultProgram.account.vault.fetchNullable(aVault),
       vaultProgram.account.vault.fetchNullable(bVault),
