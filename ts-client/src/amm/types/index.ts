@@ -118,22 +118,13 @@ export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType' | 'fees'> 
 };
 export type Depeg = Omit<IdlTypes<AmmIdl>['Depeg'], 'depegType'> & { depegType: DepegType };
 export type PoolFees = IdlTypes<AmmIdl>['PoolFees'];
-export type VirtualPrice = IdlTypes<AmmIdl>['VirtualPrice'];
-export type SnapShot = IdlTypes<AmmIdl>['SnapShot'];
-export type ApyState = Omit<IdlAccounts<AmmIdl>['apy'], 'snapshot'> & { snapshot: SnapShot };
 
 export type PoolInformation = {
-  firstTimestamp: BN;
-  currentTimestamp: BN;
-  firstVirtualPrice: number;
-  virtualPrice: number;
   tokenAAmount: BN;
   tokenBAmount: BN;
-  apy: number;
 };
 
 export type AccountsInfo = {
-  apy: ApyState;
   vaultAReserve: BN;
   vaultBReserve: BN;
   vaultALpSupply: BN;

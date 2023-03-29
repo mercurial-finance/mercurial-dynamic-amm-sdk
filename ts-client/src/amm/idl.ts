@@ -1,124 +1,161 @@
 export type Amm = {
-  version: '0.4.0';
+  version: '0.4.1';
   name: 'amm';
+  docs: ['Program for AMM'];
   instructions: [
     {
-      name: 'initialize';
+      name: 'initializePermissionedPool';
+      docs: ['Initialize a new permissioned pool.'];
       accounts: [
         {
           name: 'pool';
           isMut: true;
           isSigner: true;
+          docs: ['Pool account (arbitrary address)'];
         },
         {
           name: 'lpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of the pool'];
         },
         {
           name: 'tokenAMint';
           isMut: false;
           isSigner: false;
+          docs: ['Token A mint of the pool. Eg: USDT'];
         },
         {
           name: 'tokenBMint';
           isMut: false;
           isSigner: false;
+          docs: ['Token B mint of the pool. Eg: USDC'];
         },
         {
           name: 'aVault';
           isMut: true;
           isSigner: false;
+          docs: ['Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'bVault';
           isMut: true;
           isSigner: false;
+          docs: ['Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'aTokenVault';
           isMut: true;
           isSigner: false;
+          docs: ['Token vault account of vault A'];
         },
         {
           name: 'bTokenVault';
           isMut: true;
           isSigner: false;
+          docs: ['Token vault account of vault B'];
         },
         {
           name: 'aVaultLpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of vault A'];
         },
         {
           name: 'bVaultLpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of vault B'];
         },
         {
           name: 'aVaultLp';
           isMut: true;
           isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'bVaultLp';
           isMut: true;
           isSigner: false;
+          docs: ['LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault.'];
         },
         {
           name: 'adminTokenA';
           isMut: true;
           isSigner: false;
+          docs: ['Admin token account for pool token A mint. Used to bootstrap the pool with initial liquidity.'];
         },
         {
           name: 'adminTokenB';
           isMut: true;
           isSigner: false;
+          docs: ['Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity.'];
         },
         {
           name: 'adminPoolLp';
           isMut: true;
           isSigner: false;
+          docs: [
+            'Admin pool LP token account. Used to receive LP during first deposit (initialize pool)',
+            'Admin pool LP token account. Used to receive LP during first deposit (initialize pool)',
+          ];
         },
         {
           name: 'adminTokenAFee';
           isMut: true;
           isSigner: false;
+          docs: ['Admin fee token account for token A. Used to receive trading fee.'];
         },
         {
           name: 'adminTokenBFee';
           isMut: true;
           isSigner: false;
-        },
-        {
-          name: 'apy';
-          isMut: true;
-          isSigner: false;
+          docs: ['Admin fee token account for token B. Used to receive trading fee.'];
         },
         {
           name: 'admin';
           isMut: true;
           isSigner: true;
+          docs: [
+            'Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.',
+          ];
+        },
+        {
+          name: 'feeOwner';
+          isMut: false;
+          isSigner: false;
         },
         {
           name: 'rent';
           isMut: false;
           isSigner: false;
+          docs: ['Rent account.'];
         },
         {
           name: 'vaultProgram';
           isMut: false;
           isSigner: false;
+          docs: ['Vault program. The pool will deposit/withdraw liquidity from the vault.'];
         },
         {
           name: 'tokenProgram';
           isMut: false;
           isSigner: false;
+          docs: ['Token program.'];
+        },
+        {
+          name: 'associatedTokenProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Associated token program.'];
         },
         {
           name: 'systemProgram';
           isMut: false;
           isSigner: false;
+          docs: ['System program.'];
         },
       ];
       args: [
@@ -136,24 +173,191 @@ export type Amm = {
           name: 'tokenBAmount';
           type: 'u64';
         },
+      ];
+    },
+    {
+      name: 'initializePermissionlessPool';
+      docs: ['Initialize a new permissionless pool.'];
+      accounts: [
         {
-          name: 'invariantD';
+          name: 'pool';
+          isMut: true;
+          isSigner: false;
+          docs: ['Pool account (PDA address)'];
+        },
+        {
+          name: 'lpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of the pool'];
+        },
+        {
+          name: 'tokenAMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token A mint of the pool. Eg: USDT'];
+        },
+        {
+          name: 'tokenBMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token B mint of the pool. Eg: USDC'];
+        },
+        {
+          name: 'aVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.'];
+        },
+        {
+          name: 'bVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.'];
+        },
+        {
+          name: 'aTokenVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Token vault account of vault A'];
+        },
+        {
+          name: 'bTokenVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Token vault account of vault B'];
+        },
+        {
+          name: 'aVaultLpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of vault A'];
+        },
+        {
+          name: 'bVaultLpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of vault B'];
+        },
+        {
+          name: 'aVaultLp';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
+        },
+        {
+          name: 'bVaultLp';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault.'];
+        },
+        {
+          name: 'payerTokenA';
+          isMut: true;
+          isSigner: false;
+          docs: ['Payer token account for pool token A mint. Used to bootstrap the pool with initial liquidity.'];
+        },
+        {
+          name: 'payerTokenB';
+          isMut: true;
+          isSigner: false;
+          docs: ['Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity.'];
+        },
+        {
+          name: 'payerPoolLp';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'adminTokenAFee';
+          isMut: true;
+          isSigner: false;
+          docs: ['Admin fee token account for token A. Used to receive trading fee.'];
+        },
+        {
+          name: 'adminTokenBFee';
+          isMut: true;
+          isSigner: false;
+          docs: ['Admin fee token account for token B. Used to receive trading fee.'];
+        },
+        {
+          name: 'payer';
+          isMut: true;
+          isSigner: true;
+          docs: [
+            'Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.',
+          ];
+        },
+        {
+          name: 'feeOwner';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'rent';
+          isMut: false;
+          isSigner: false;
+          docs: ['Rent account.'];
+        },
+        {
+          name: 'vaultProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Vault program. The pool will deposit/withdraw liquidity from the vault.'];
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token program.'];
+        },
+        {
+          name: 'associatedTokenProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Associated token program.'];
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['System program.'];
+        },
+      ];
+      args: [
+        {
+          name: 'curveType';
+          type: {
+            defined: 'CurveType';
+          };
+        },
+        {
+          name: 'tokenAAmount';
+          type: 'u64';
+        },
+        {
+          name: 'tokenBAmount';
           type: 'u64';
         },
       ];
     },
     {
       name: 'enableOrDisablePool';
+      docs: ['Enable or disable a pool. A disabled pool allow only remove balanced liquidity operation.'];
       accounts: [
         {
           name: 'pool';
           isMut: true;
           isSigner: false;
+          docs: ['Pool account (PDA)'];
         },
         {
           name: 'admin';
           isMut: false;
           isSigner: true;
+          docs: ['Admin account. Must be owner of the pool.'];
         },
       ];
       args: [
@@ -165,81 +369,107 @@ export type Amm = {
     },
     {
       name: 'swap';
+      docs: [
+        'Swap token A to B, or vice versa. An amount of trading fee will be charged for liquidity provider, and the admin of the pool.',
+      ];
       accounts: [
         {
           name: 'pool';
           isMut: true;
           isSigner: false;
+          docs: ['Pool account (PDA)'];
         },
         {
           name: 'userSourceToken';
           isMut: true;
           isSigner: false;
+          docs: [
+            'User token account. Token from this account will be transfer into the vault by the pool in exchange for another token of the pool.',
+          ];
         },
         {
           name: 'userDestinationToken';
           isMut: true;
           isSigner: false;
+          docs: ['User token account. The exchanged token will be transfer into this account from the pool.'];
         },
         {
           name: 'aVault';
           isMut: true;
           isSigner: false;
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'bVault';
           isMut: true;
           isSigner: false;
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'aTokenVault';
           isMut: true;
           isSigner: false;
+          docs: ['Token vault account of vault A'];
         },
         {
           name: 'bTokenVault';
           isMut: true;
           isSigner: false;
+          docs: ['Token vault account of vault B'];
         },
         {
           name: 'aVaultLpMint';
           isMut: true;
           isSigner: false;
+          docs: ['Lp token mint of vault a'];
         },
         {
           name: 'bVaultLpMint';
           isMut: true;
           isSigner: false;
+          docs: ['Lp token mint of vault b'];
         },
         {
           name: 'aVaultLp';
           isMut: true;
           isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'bVaultLp';
           isMut: true;
           isSigner: false;
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'adminTokenFee';
           isMut: true;
           isSigner: false;
+          docs: [
+            "Admin fee token account. Used to receive trading fee. It's mint field must matched with user_source_token mint field.",
+          ];
         },
         {
           name: 'user';
           isMut: false;
           isSigner: true;
+          docs: ['User account. Must be owner of user_source_token.'];
         },
         {
           name: 'vaultProgram';
           isMut: false;
           isSigner: false;
+          docs: ['Vault program. the pool will deposit/withdraw liquidity from the vault.'];
         },
         {
           name: 'tokenProgram';
           isMut: false;
           isSigner: false;
+          docs: ['Token program.'];
         },
       ];
       args: [
@@ -255,81 +485,101 @@ export type Amm = {
     },
     {
       name: 'removeLiquiditySingleSide';
+      docs: ['Withdraw only single token from the pool. Only supported by pool with stable swap curve.'];
       accounts: [
         {
           name: 'pool';
           isMut: true;
           isSigner: false;
+          docs: ['Pool account (PDA)'];
         },
         {
           name: 'lpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of the pool'];
         },
         {
           name: 'userPoolLp';
           isMut: true;
           isSigner: false;
+          docs: ['User pool lp token account. LP will be burned from this account upon success liquidity removal.'];
         },
         {
           name: 'aVaultLp';
           isMut: true;
           isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'bVaultLp';
           isMut: true;
           isSigner: false;
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'aVault';
           isMut: true;
           isSigner: false;
+          docs: ['Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'bVault';
           isMut: true;
           isSigner: false;
+          docs: ['Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'aVaultLpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of vault A'];
         },
         {
           name: 'bVaultLpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of vault B'];
         },
         {
           name: 'aTokenVault';
           isMut: true;
           isSigner: false;
+          docs: ['Token vault account of vault A'];
         },
         {
           name: 'bTokenVault';
           isMut: true;
           isSigner: false;
+          docs: ['Token vault account of vault B'];
         },
         {
           name: 'userDestinationToken';
           isMut: true;
           isSigner: false;
+          docs: ['User token account to receive token upon success liquidity removal.'];
         },
         {
           name: 'user';
           isMut: false;
           isSigner: true;
+          docs: ['User account. Must be owner of the user_pool_lp account.'];
         },
         {
           name: 'vaultProgram';
           isMut: false;
           isSigner: false;
+          docs: ['Vault program. The pool will deposit/withdraw liquidity from the vault.'];
         },
         {
           name: 'tokenProgram';
           isMut: false;
           isSigner: false;
+          docs: ['Token program.'];
         },
       ];
       args: [
@@ -345,86 +595,111 @@ export type Amm = {
     },
     {
       name: 'addImbalanceLiquidity';
+      docs: ['Deposit tokens to the pool in an imbalance ratio. Only supported by pool with stable swap curve.'];
       accounts: [
         {
           name: 'pool';
           isMut: true;
           isSigner: false;
+          docs: ['Pool account (PDA)'];
         },
         {
           name: 'lpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of the pool'];
         },
         {
           name: 'userPoolLp';
           isMut: true;
           isSigner: false;
+          docs: ['user pool lp token account. lp will be burned from this account upon success liquidity removal.'];
         },
         {
           name: 'aVaultLp';
           isMut: true;
           isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'bVaultLp';
           isMut: true;
           isSigner: false;
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'aVault';
           isMut: true;
           isSigner: false;
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'bVault';
           isMut: true;
           isSigner: false;
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'aVaultLpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of vault a'];
         },
         {
           name: 'bVaultLpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of vault b'];
         },
         {
           name: 'aTokenVault';
           isMut: true;
           isSigner: false;
+          docs: ['Token vault account of vault A'];
         },
         {
           name: 'bTokenVault';
           isMut: true;
           isSigner: false;
+          docs: ['Token vault account of vault B'];
         },
         {
           name: 'userAToken';
           isMut: true;
           isSigner: false;
+          docs: [
+            'User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ];
         },
         {
           name: 'userBToken';
           isMut: true;
           isSigner: false;
+          docs: [
+            'User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ];
         },
         {
           name: 'user';
           isMut: false;
           isSigner: true;
+          docs: ['User account. Must be owner of user_a_token, and user_b_token.'];
         },
         {
           name: 'vaultProgram';
           isMut: false;
           isSigner: false;
+          docs: ['Vault program. the pool will deposit/withdraw liquidity from the vault.'];
         },
         {
           name: 'tokenProgram';
           isMut: false;
           isSigner: false;
+          docs: ['Token program.'];
         },
       ];
       args: [
@@ -444,86 +719,113 @@ export type Amm = {
     },
     {
       name: 'removeBalanceLiquidity';
+      docs: [
+        "Withdraw tokens from the pool in a balanced ratio. User will still able to withdraw from pool even the pool is disabled. This allow user to exit their liquidity when there's some unforeseen event happen.",
+      ];
       accounts: [
         {
           name: 'pool';
           isMut: true;
           isSigner: false;
+          docs: ['Pool account (PDA)'];
         },
         {
           name: 'lpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of the pool'];
         },
         {
           name: 'userPoolLp';
           isMut: true;
           isSigner: false;
+          docs: ['user pool lp token account. lp will be burned from this account upon success liquidity removal.'];
         },
         {
           name: 'aVaultLp';
           isMut: true;
           isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'bVaultLp';
           isMut: true;
           isSigner: false;
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'aVault';
           isMut: true;
           isSigner: false;
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'bVault';
           isMut: true;
           isSigner: false;
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'aVaultLpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of vault a'];
         },
         {
           name: 'bVaultLpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of vault b'];
         },
         {
           name: 'aTokenVault';
           isMut: true;
           isSigner: false;
+          docs: ['Token vault account of vault A'];
         },
         {
           name: 'bTokenVault';
           isMut: true;
           isSigner: false;
+          docs: ['Token vault account of vault B'];
         },
         {
           name: 'userAToken';
           isMut: true;
           isSigner: false;
+          docs: [
+            'User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ];
         },
         {
           name: 'userBToken';
           isMut: true;
           isSigner: false;
+          docs: [
+            'User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ];
         },
         {
           name: 'user';
           isMut: false;
           isSigner: true;
+          docs: ['User account. Must be owner of user_a_token, and user_b_token.'];
         },
         {
           name: 'vaultProgram';
           isMut: false;
           isSigner: false;
+          docs: ['Vault program. the pool will deposit/withdraw liquidity from the vault.'];
         },
         {
           name: 'tokenProgram';
           isMut: false;
           isSigner: false;
+          docs: ['Token program.'];
         },
       ];
       args: [
@@ -543,86 +845,111 @@ export type Amm = {
     },
     {
       name: 'addBalanceLiquidity';
+      docs: ['Deposit tokens to the pool in a balanced ratio.'];
       accounts: [
         {
           name: 'pool';
           isMut: true;
           isSigner: false;
+          docs: ['Pool account (PDA)'];
         },
         {
           name: 'lpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of the pool'];
         },
         {
           name: 'userPoolLp';
           isMut: true;
           isSigner: false;
+          docs: ['user pool lp token account. lp will be burned from this account upon success liquidity removal.'];
         },
         {
           name: 'aVaultLp';
           isMut: true;
           isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'bVaultLp';
           isMut: true;
           isSigner: false;
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'aVault';
           isMut: true;
           isSigner: false;
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'bVault';
           isMut: true;
           isSigner: false;
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'aVaultLpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of vault a'];
         },
         {
           name: 'bVaultLpMint';
           isMut: true;
           isSigner: false;
+          docs: ['LP token mint of vault b'];
         },
         {
           name: 'aTokenVault';
           isMut: true;
           isSigner: false;
+          docs: ['Token vault account of vault A'];
         },
         {
           name: 'bTokenVault';
           isMut: true;
           isSigner: false;
+          docs: ['Token vault account of vault B'];
         },
         {
           name: 'userAToken';
           isMut: true;
           isSigner: false;
+          docs: [
+            'User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ];
         },
         {
           name: 'userBToken';
           isMut: true;
           isSigner: false;
+          docs: [
+            'User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ];
         },
         {
           name: 'user';
           isMut: false;
           isSigner: true;
+          docs: ['User account. Must be owner of user_a_token, and user_b_token.'];
         },
         {
           name: 'vaultProgram';
           isMut: false;
           isSigner: false;
+          docs: ['Vault program. the pool will deposit/withdraw liquidity from the vault.'];
         },
         {
           name: 'tokenProgram';
           isMut: false;
           isSigner: false;
+          docs: ['Token program.'];
         },
       ];
       args: [
@@ -642,16 +969,19 @@ export type Amm = {
     },
     {
       name: 'setPoolFees';
+      docs: ['Update trading fee charged for liquidity provider, and admin.'];
       accounts: [
         {
           name: 'pool';
           isMut: true;
           isSigner: false;
+          docs: ['Pool account (PDA)'];
         },
         {
           name: 'admin';
           isMut: false;
           isSigner: true;
+          docs: ['Admin account. Must be owner of the pool.'];
         },
       ];
       args: [
@@ -665,16 +995,22 @@ export type Amm = {
     },
     {
       name: 'overrideCurveParam';
+      docs: [
+        'Update swap curve parameters. This function do not allow update of curve type. For example: stable swap curve to constant product curve. Only supported by pool with stable swap curve.',
+        'Only amp is allowed to be override. The other attributes of stable swap curve will be ignored.',
+      ];
       accounts: [
         {
           name: 'pool';
           isMut: true;
           isSigner: false;
+          docs: ['Pool account (PDA)'];
         },
         {
           name: 'admin';
           isMut: false;
           isSigner: true;
+          docs: ['Admin account. Must be owner of the pool.'];
         },
       ];
       args: [
@@ -688,242 +1024,341 @@ export type Amm = {
     },
     {
       name: 'transferAdmin';
+      docs: ['Transfer the admin of the pool to new admin.'];
       accounts: [
         {
           name: 'pool';
           isMut: true;
           isSigner: false;
+          docs: ['Pool account (PDA)'];
         },
         {
           name: 'admin';
           isMut: false;
           isSigner: true;
+          docs: ['Admin account. Must be owner of the pool.'];
         },
         {
           name: 'newAdmin';
           isMut: false;
           isSigner: true;
+          docs: ['New admin account.'];
         },
       ];
       args: [];
     },
     {
       name: 'setAdminFeeAccount';
+      docs: ['Update fee token account of the pool admin.'];
       accounts: [
         {
           name: 'pool';
           isMut: true;
           isSigner: false;
+          docs: ['Pool account (PDA)'];
         },
         {
           name: 'newAdminTokenAFee';
           isMut: true;
           isSigner: false;
+          docs: ['New admin fee token account for pool token A. Used to receive trading fee.'];
         },
         {
           name: 'newAdminTokenBFee';
           isMut: true;
           isSigner: false;
+          docs: ['New admin fee token account for pool token B. Used to receive trading fee.'];
         },
         {
           name: 'admin';
           isMut: false;
           isSigner: true;
-        },
-      ];
-      args: [];
-    },
-    {
-      name: 'syncApy';
-      accounts: [
-        {
-          name: 'pool';
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: 'lpMint';
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: 'aVaultLp';
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: 'bVaultLp';
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: 'aVault';
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: 'bVault';
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: 'aVaultLpMint';
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: 'bVaultLpMint';
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: 'apy';
-          isMut: true;
-          isSigner: false;
+          docs: ['Admin account. Must be owner of the pool.'];
         },
       ];
       args: [];
     },
     {
       name: 'getPoolInfo';
+      docs: ['Get the general information of the pool.'];
       accounts: [
         {
           name: 'pool';
           isMut: false;
           isSigner: false;
+          docs: ['Pool account (PDA)'];
         },
         {
           name: 'lpMint';
           isMut: false;
           isSigner: false;
+          docs: ['LP token mint of the pool'];
         },
         {
           name: 'aVaultLp';
           isMut: false;
           isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'bVaultLp';
           isMut: false;
           isSigner: false;
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
         },
         {
           name: 'aVault';
           isMut: false;
           isSigner: false;
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'bVault';
           isMut: false;
           isSigner: false;
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'];
         },
         {
           name: 'aVaultLpMint';
           isMut: false;
           isSigner: false;
+          docs: ['LP token mint of vault a'];
         },
         {
           name: 'bVaultLpMint';
           isMut: false;
           isSigner: false;
-        },
-        {
-          name: 'apy';
-          isMut: false;
-          isSigner: false;
+          docs: ['LP token mint of vault b'];
         },
       ];
       args: [];
+    },
+    {
+      name: 'bootstrapLiquidity';
+      docs: ['Bootstrap the pool when liquidity is depleted.'];
+      accounts: [
+        {
+          name: 'pool';
+          isMut: true;
+          isSigner: false;
+          docs: ['Pool account (PDA)'];
+        },
+        {
+          name: 'lpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of the pool'];
+        },
+        {
+          name: 'userPoolLp';
+          isMut: true;
+          isSigner: false;
+          docs: ['user pool lp token account. lp will be burned from this account upon success liquidity removal.'];
+        },
+        {
+          name: 'aVaultLp';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
+        },
+        {
+          name: 'bVaultLp';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
+        },
+        {
+          name: 'aVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'];
+        },
+        {
+          name: 'bVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'];
+        },
+        {
+          name: 'aVaultLpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of vault a'];
+        },
+        {
+          name: 'bVaultLpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of vault b'];
+        },
+        {
+          name: 'aTokenVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Token vault account of vault A'];
+        },
+        {
+          name: 'bTokenVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Token vault account of vault B'];
+        },
+        {
+          name: 'userAToken';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ];
+        },
+        {
+          name: 'userBToken';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ];
+        },
+        {
+          name: 'user';
+          isMut: false;
+          isSigner: true;
+          docs: ['User account. Must be owner of user_a_token, and user_b_token.'];
+        },
+        {
+          name: 'vaultProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Vault program. the pool will deposit/withdraw liquidity from the vault.'];
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token program.'];
+        },
+      ];
+      args: [
+        {
+          name: 'tokenAAmount';
+          type: 'u64';
+        },
+        {
+          name: 'tokenBAmount';
+          type: 'u64';
+        },
+      ];
     },
   ];
   accounts: [
     {
       name: 'pool';
+      docs: ['State of pool account'];
       type: {
         kind: 'struct';
         fields: [
           {
             name: 'lpMint';
+            docs: ['LP token mint of the pool'];
             type: 'publicKey';
           },
           {
             name: 'tokenAMint';
+            docs: ['Token A mint of the pool. Eg: USDT'];
             type: 'publicKey';
           },
           {
             name: 'tokenBMint';
+            docs: ['Token B mint of the pool. Eg: USDC'];
             type: 'publicKey';
           },
           {
             name: 'aVault';
+            docs: [
+              'Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.',
+            ];
             type: 'publicKey';
           },
           {
             name: 'bVault';
+            docs: [
+              'Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.',
+            ];
             type: 'publicKey';
           },
           {
             name: 'aVaultLp';
+            docs: [
+              'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+            ];
             type: 'publicKey';
           },
           {
             name: 'bVaultLp';
+            docs: [
+              'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+            ];
             type: 'publicKey';
           },
           {
             name: 'aVaultLpBump';
+            docs: ['"A" vault lp bump. Used to create signer seeds.'];
             type: 'u8';
           },
           {
             name: 'enabled';
+            docs: ['Flag to determine whether the pool is enabled, or disabled.'];
             type: 'bool';
           },
           {
             name: 'adminTokenAFee';
+            docs: ['Admin fee token account for token A. Used to receive trading fee.'];
             type: 'publicKey';
           },
           {
             name: 'adminTokenBFee';
+            docs: ['Admin fee token account for token B. Used to receive trading fee.'];
             type: 'publicKey';
           },
           {
             name: 'admin';
+            docs: ['Owner of the pool.'];
             type: 'publicKey';
           },
           {
             name: 'fees';
+            docs: ['Store the fee charges setting.'];
             type: {
               defined: 'PoolFees';
             };
           },
           {
+            name: 'poolType';
+            docs: ['Pool type'];
+            type: {
+              defined: 'PoolType';
+            };
+          },
+          {
             name: 'padding';
+            docs: ['Padding for future pool field'];
             type: {
               defined: 'Padding';
             };
           },
           {
             name: 'curveType';
+            docs: ['The type of the swap curve supported by the pool.'];
             type: {
               defined: 'CurveType';
-            };
-          },
-        ];
-      };
-    },
-    {
-      name: 'apy';
-      type: {
-        kind: 'struct';
-        fields: [
-          {
-            name: 'pool';
-            type: 'publicKey';
-          },
-          {
-            name: 'snapshot';
-            type: {
-              defined: 'SnapShot';
             };
           },
         ];
@@ -933,19 +1368,25 @@ export type Amm = {
   types: [
     {
       name: 'TokenMultiplier';
+      docs: ['Multiplier for the pool token. Used to normalized token with different decimal into the same precision.'];
       type: {
         kind: 'struct';
         fields: [
           {
             name: 'tokenAMultiplier';
+            docs: ['Multiplier for token A of the pool.'];
             type: 'u64';
           },
           {
             name: 'tokenBMultiplier';
+            docs: ['Multiplier for token B of the pool.'];
             type: 'u64';
           },
           {
             name: 'precisionFactor';
+            docs: [
+              'Record the highest token decimal in the pool. For example, Token A is 6 decimal, token B is 9 decimal. This will save value of 9.',
+            ];
             type: 'u8';
           },
         ];
@@ -953,23 +1394,37 @@ export type Amm = {
     },
     {
       name: 'PoolFees';
+      docs: ['Information regarding fee charges'];
       type: {
         kind: 'struct';
         fields: [
           {
             name: 'tradeFeeNumerator';
+            docs: [
+              'Trade fees are extra token amounts that are held inside the token',
+              'accounts during a trade, making the value of liquidity tokens rise.',
+              'Trade fee numerator',
+            ];
             type: 'u64';
           },
           {
             name: 'tradeFeeDenominator';
+            docs: ['Trade fee denominator'];
             type: 'u64';
           },
           {
             name: 'ownerTradeFeeNumerator';
+            docs: [
+              'Owner trading fees are extra token amounts that are held inside the token',
+              'accounts during a trade, with the equivalent in pool tokens minted to',
+              'the owner of the program.',
+              'Owner trade fee numerator',
+            ];
             type: 'u64';
           },
           {
             name: 'ownerTradeFeeDenominator';
+            docs: ['Owner trade fee denominator'];
             type: 'u64';
           },
         ];
@@ -977,19 +1432,23 @@ export type Amm = {
     },
     {
       name: 'Depeg';
+      docs: ['Contains information for depeg pool'];
       type: {
         kind: 'struct';
         fields: [
           {
             name: 'baseVirtualPrice';
+            docs: ['The virtual price of staking / interest bearing token'];
             type: 'u64';
           },
           {
             name: 'baseCacheUpdated';
+            docs: ['The virtual price of staking / interest bearing token'];
             type: 'u64';
           },
           {
             name: 'depegType';
+            docs: ['Type of the depeg pool'];
             type: {
               defined: 'DepegType';
             };
@@ -999,52 +1458,22 @@ export type Amm = {
     },
     {
       name: 'Padding';
+      docs: ['Padding for future pool fields'];
       type: {
         kind: 'struct';
         fields: [
           {
-            name: 'padding';
+            name: 'padding0';
+            docs: ['Padding 0'];
             type: {
-              array: ['u128', 32];
+              array: ['u8', 15];
             };
           },
-        ];
-      };
-    },
-    {
-      name: 'VirtualPrice';
-      type: {
-        kind: 'struct';
-        fields: [
           {
-            name: 'price';
-            type: 'u64';
-          },
-          {
-            name: 'timestamp';
-            type: 'i64';
-          },
-        ];
-      };
-    },
-    {
-      name: 'SnapShot';
-      type: {
-        kind: 'struct';
-        fields: [
-          {
-            name: 'pointer';
-            type: 'u64';
-          },
-          {
-            name: 'virtualPrices';
+            name: 'padding';
+            docs: ['Padding 1'];
             type: {
-              array: [
-                {
-                  defined: 'VirtualPrice';
-                },
-                28,
-              ];
+              array: ['u128', 31];
             };
           },
         ];
@@ -1052,6 +1481,7 @@ export type Amm = {
     },
     {
       name: 'RoundDirection';
+      docs: ['Rounding direction'];
       type: {
         kind: 'enum';
         variants: [
@@ -1066,6 +1496,7 @@ export type Amm = {
     },
     {
       name: 'TradeDirection';
+      docs: ['Trade (swap) direction'];
       type: {
         kind: 'enum';
         variants: [
@@ -1080,6 +1511,7 @@ export type Amm = {
     },
     {
       name: 'NewCurveType';
+      docs: ['Type of the swap curve'];
       type: {
         kind: 'enum';
         variants: [
@@ -1091,19 +1523,33 @@ export type Amm = {
             fields: [
               {
                 name: 'amp';
+                docs: ['Amplification coefficient'];
                 type: 'u64';
               },
               {
                 name: 'token_multiplier';
+                docs: [
+                  'Multiplier for the pool token. Used to normalized token with different decimal into the same precision.',
+                ];
                 type: {
                   defined: 'TokenMultiplier';
                 };
               },
               {
                 name: 'depeg';
+                docs: [
+                  'Depeg pool information. Contains functions to allow token amount to be repeg using stake / interest bearing token virtual price',
+                ];
                 type: {
                   defined: 'Depeg';
                 };
+              },
+              {
+                name: 'last_amp_updated_timestamp';
+                docs: [
+                  'The last amp updated timestamp. Used to prevent update_curve_info called infinitely many times within a short period',
+                ];
+                type: 'u64';
               },
             ];
           },
@@ -1125,6 +1571,7 @@ export type Amm = {
     },
     {
       name: 'CurveType';
+      docs: ['Type of the swap curve'];
       type: {
         kind: 'enum';
         variants: [
@@ -1136,19 +1583,33 @@ export type Amm = {
             fields: [
               {
                 name: 'amp';
+                docs: ['Amplification coefficient'];
                 type: 'u64';
               },
               {
                 name: 'token_multiplier';
+                docs: [
+                  'Multiplier for the pool token. Used to normalized token with different decimal into the same precision.',
+                ];
                 type: {
                   defined: 'TokenMultiplier';
                 };
               },
               {
                 name: 'depeg';
+                docs: [
+                  'Depeg pool information. Contains functions to allow token amount to be repeg using stake / interest bearing token virtual price',
+                ];
                 type: {
                   defined: 'Depeg';
                 };
+              },
+              {
+                name: 'last_amp_updated_timestamp';
+                docs: [
+                  'The last amp updated timestamp. Used to prevent update_curve_info called infinitely many times within a short period',
+                ];
+                type: 'u64';
               },
             ];
           },
@@ -1157,6 +1618,7 @@ export type Amm = {
     },
     {
       name: 'DepegType';
+      docs: ['Type of depeg pool'];
       type: {
         kind: 'enum';
         variants: [
@@ -1168,6 +1630,21 @@ export type Amm = {
           },
           {
             name: 'Lido';
+          },
+        ];
+      };
+    },
+    {
+      name: 'PoolType';
+      docs: ['Pool type'];
+      type: {
+        kind: 'enum';
+        variants: [
+          {
+            name: 'Permissioned';
+          },
+          {
+            name: 'Permissionless';
           },
         ];
       };
@@ -1237,6 +1714,11 @@ export type Amm = {
           type: 'u64';
           index: false;
         },
+        {
+          name: 'hostFee';
+          type: 'u64';
+          index: false;
+        },
       ];
     },
     {
@@ -1283,23 +1765,8 @@ export type Amm = {
           index: false;
         },
         {
-          name: 'firstVirtualPrice';
-          type: 'f64';
-          index: false;
-        },
-        {
-          name: 'firstTimestamp';
-          type: 'u64';
-          index: false;
-        },
-        {
           name: 'currentTimestamp';
           type: 'u64';
-          index: false;
-        },
-        {
-          name: 'apy';
-          type: 'f64';
           index: false;
         },
       ];
@@ -1340,6 +1807,21 @@ export type Amm = {
         {
           name: 'newAdminTokenBFee';
           type: 'publicKey';
+          index: false;
+        },
+      ];
+    },
+    {
+      name: 'OverrideCurveParam';
+      fields: [
+        {
+          name: 'newAmp';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'updatedTimestamp';
+          type: 'u64';
           index: false;
         },
       ];
@@ -1511,130 +1993,212 @@ export type Amm = {
       name: 'InvalidDepegInformation';
       msg: 'Invalid depeg information';
     },
+    {
+      code: 6033;
+      name: 'UpdateTimeConstraint';
+      msg: 'Update time constraint violated';
+    },
+    {
+      code: 6034;
+      name: 'ExceedMaxFeeBps';
+      msg: 'Exceeded max fee bps';
+    },
+    {
+      code: 6035;
+      name: 'OwnerFeeOverHalfOfTradeFee';
+      msg: 'Owner fee exceed half of trade fee';
+    },
+    {
+      code: 6036;
+      name: 'InvalidAdmin';
+      msg: 'Invalid admin';
+    },
+    {
+      code: 6037;
+      name: 'PoolIsNotPermissioned';
+      msg: 'Pool is not permissioned';
+    },
+    {
+      code: 6038;
+      name: 'InvalidDepositAmount';
+      msg: 'Invalid deposit amount';
+    },
+    {
+      code: 6039;
+      name: 'InvalidFeeOwner';
+      msg: 'Invalid fee owner';
+    },
+    {
+      code: 6040;
+      name: 'NonDepletedPool';
+      msg: 'Pool is not depleted';
+    },
+    {
+      code: 6041;
+      name: 'AmountNotPeg';
+      msg: 'Token amount is not 1:1';
+    },
   ];
 };
 
 export const IDL: Amm = {
-  version: '0.4.0',
+  version: '0.4.1',
   name: 'amm',
+  docs: ['Program for AMM'],
   instructions: [
     {
-      name: 'initialize',
+      name: 'initializePermissionedPool',
+      docs: ['Initialize a new permissioned pool.'],
       accounts: [
         {
           name: 'pool',
           isMut: true,
           isSigner: true,
+          docs: ['Pool account (arbitrary address)'],
         },
         {
           name: 'lpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of the pool'],
         },
         {
           name: 'tokenAMint',
           isMut: false,
           isSigner: false,
+          docs: ['Token A mint of the pool. Eg: USDT'],
         },
         {
           name: 'tokenBMint',
           isMut: false,
           isSigner: false,
+          docs: ['Token B mint of the pool. Eg: USDC'],
         },
         {
           name: 'aVault',
           isMut: true,
           isSigner: false,
+          docs: ['Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'bVault',
           isMut: true,
           isSigner: false,
+          docs: ['Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'aTokenVault',
           isMut: true,
           isSigner: false,
+          docs: ['Token vault account of vault A'],
         },
         {
           name: 'bTokenVault',
           isMut: true,
           isSigner: false,
+          docs: ['Token vault account of vault B'],
         },
         {
           name: 'aVaultLpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of vault A'],
         },
         {
           name: 'bVaultLpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of vault B'],
         },
         {
           name: 'aVaultLp',
           isMut: true,
           isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'bVaultLp',
           isMut: true,
           isSigner: false,
+          docs: ['LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault.'],
         },
         {
           name: 'adminTokenA',
           isMut: true,
           isSigner: false,
+          docs: ['Admin token account for pool token A mint. Used to bootstrap the pool with initial liquidity.'],
         },
         {
           name: 'adminTokenB',
           isMut: true,
           isSigner: false,
+          docs: ['Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity.'],
         },
         {
           name: 'adminPoolLp',
           isMut: true,
           isSigner: false,
+          docs: [
+            'Admin pool LP token account. Used to receive LP during first deposit (initialize pool)',
+            'Admin pool LP token account. Used to receive LP during first deposit (initialize pool)',
+          ],
         },
         {
           name: 'adminTokenAFee',
           isMut: true,
           isSigner: false,
+          docs: ['Admin fee token account for token A. Used to receive trading fee.'],
         },
         {
           name: 'adminTokenBFee',
           isMut: true,
           isSigner: false,
-        },
-        {
-          name: 'apy',
-          isMut: true,
-          isSigner: false,
+          docs: ['Admin fee token account for token B. Used to receive trading fee.'],
         },
         {
           name: 'admin',
           isMut: true,
           isSigner: true,
+          docs: [
+            'Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.',
+          ],
+        },
+        {
+          name: 'feeOwner',
+          isMut: false,
+          isSigner: false,
         },
         {
           name: 'rent',
           isMut: false,
           isSigner: false,
+          docs: ['Rent account.'],
         },
         {
           name: 'vaultProgram',
           isMut: false,
           isSigner: false,
+          docs: ['Vault program. The pool will deposit/withdraw liquidity from the vault.'],
         },
         {
           name: 'tokenProgram',
           isMut: false,
           isSigner: false,
+          docs: ['Token program.'],
+        },
+        {
+          name: 'associatedTokenProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Associated token program.'],
         },
         {
           name: 'systemProgram',
           isMut: false,
           isSigner: false,
+          docs: ['System program.'],
         },
       ],
       args: [
@@ -1652,24 +2216,191 @@ export const IDL: Amm = {
           name: 'tokenBAmount',
           type: 'u64',
         },
+      ],
+    },
+    {
+      name: 'initializePermissionlessPool',
+      docs: ['Initialize a new permissionless pool.'],
+      accounts: [
         {
-          name: 'invariantD',
+          name: 'pool',
+          isMut: true,
+          isSigner: false,
+          docs: ['Pool account (PDA address)'],
+        },
+        {
+          name: 'lpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of the pool'],
+        },
+        {
+          name: 'tokenAMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token A mint of the pool. Eg: USDT'],
+        },
+        {
+          name: 'tokenBMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token B mint of the pool. Eg: USDC'],
+        },
+        {
+          name: 'aVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.'],
+        },
+        {
+          name: 'bVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.'],
+        },
+        {
+          name: 'aTokenVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Token vault account of vault A'],
+        },
+        {
+          name: 'bTokenVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Token vault account of vault B'],
+        },
+        {
+          name: 'aVaultLpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of vault A'],
+        },
+        {
+          name: 'bVaultLpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of vault B'],
+        },
+        {
+          name: 'aVaultLp',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
+        },
+        {
+          name: 'bVaultLp',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault.'],
+        },
+        {
+          name: 'payerTokenA',
+          isMut: true,
+          isSigner: false,
+          docs: ['Payer token account for pool token A mint. Used to bootstrap the pool with initial liquidity.'],
+        },
+        {
+          name: 'payerTokenB',
+          isMut: true,
+          isSigner: false,
+          docs: ['Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity.'],
+        },
+        {
+          name: 'payerPoolLp',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'adminTokenAFee',
+          isMut: true,
+          isSigner: false,
+          docs: ['Admin fee token account for token A. Used to receive trading fee.'],
+        },
+        {
+          name: 'adminTokenBFee',
+          isMut: true,
+          isSigner: false,
+          docs: ['Admin fee token account for token B. Used to receive trading fee.'],
+        },
+        {
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
+          docs: [
+            'Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.',
+          ],
+        },
+        {
+          name: 'feeOwner',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'rent',
+          isMut: false,
+          isSigner: false,
+          docs: ['Rent account.'],
+        },
+        {
+          name: 'vaultProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Vault program. The pool will deposit/withdraw liquidity from the vault.'],
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token program.'],
+        },
+        {
+          name: 'associatedTokenProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Associated token program.'],
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['System program.'],
+        },
+      ],
+      args: [
+        {
+          name: 'curveType',
+          type: {
+            defined: 'CurveType',
+          },
+        },
+        {
+          name: 'tokenAAmount',
+          type: 'u64',
+        },
+        {
+          name: 'tokenBAmount',
           type: 'u64',
         },
       ],
     },
     {
       name: 'enableOrDisablePool',
+      docs: ['Enable or disable a pool. A disabled pool allow only remove balanced liquidity operation.'],
       accounts: [
         {
           name: 'pool',
           isMut: true,
           isSigner: false,
+          docs: ['Pool account (PDA)'],
         },
         {
           name: 'admin',
           isMut: false,
           isSigner: true,
+          docs: ['Admin account. Must be owner of the pool.'],
         },
       ],
       args: [
@@ -1681,81 +2412,107 @@ export const IDL: Amm = {
     },
     {
       name: 'swap',
+      docs: [
+        'Swap token A to B, or vice versa. An amount of trading fee will be charged for liquidity provider, and the admin of the pool.',
+      ],
       accounts: [
         {
           name: 'pool',
           isMut: true,
           isSigner: false,
+          docs: ['Pool account (PDA)'],
         },
         {
           name: 'userSourceToken',
           isMut: true,
           isSigner: false,
+          docs: [
+            'User token account. Token from this account will be transfer into the vault by the pool in exchange for another token of the pool.',
+          ],
         },
         {
           name: 'userDestinationToken',
           isMut: true,
           isSigner: false,
+          docs: ['User token account. The exchanged token will be transfer into this account from the pool.'],
         },
         {
           name: 'aVault',
           isMut: true,
           isSigner: false,
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'bVault',
           isMut: true,
           isSigner: false,
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'aTokenVault',
           isMut: true,
           isSigner: false,
+          docs: ['Token vault account of vault A'],
         },
         {
           name: 'bTokenVault',
           isMut: true,
           isSigner: false,
+          docs: ['Token vault account of vault B'],
         },
         {
           name: 'aVaultLpMint',
           isMut: true,
           isSigner: false,
+          docs: ['Lp token mint of vault a'],
         },
         {
           name: 'bVaultLpMint',
           isMut: true,
           isSigner: false,
+          docs: ['Lp token mint of vault b'],
         },
         {
           name: 'aVaultLp',
           isMut: true,
           isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'bVaultLp',
           isMut: true,
           isSigner: false,
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'adminTokenFee',
           isMut: true,
           isSigner: false,
+          docs: [
+            "Admin fee token account. Used to receive trading fee. It's mint field must matched with user_source_token mint field.",
+          ],
         },
         {
           name: 'user',
           isMut: false,
           isSigner: true,
+          docs: ['User account. Must be owner of user_source_token.'],
         },
         {
           name: 'vaultProgram',
           isMut: false,
           isSigner: false,
+          docs: ['Vault program. the pool will deposit/withdraw liquidity from the vault.'],
         },
         {
           name: 'tokenProgram',
           isMut: false,
           isSigner: false,
+          docs: ['Token program.'],
         },
       ],
       args: [
@@ -1771,81 +2528,101 @@ export const IDL: Amm = {
     },
     {
       name: 'removeLiquiditySingleSide',
+      docs: ['Withdraw only single token from the pool. Only supported by pool with stable swap curve.'],
       accounts: [
         {
           name: 'pool',
           isMut: true,
           isSigner: false,
+          docs: ['Pool account (PDA)'],
         },
         {
           name: 'lpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of the pool'],
         },
         {
           name: 'userPoolLp',
           isMut: true,
           isSigner: false,
+          docs: ['User pool lp token account. LP will be burned from this account upon success liquidity removal.'],
         },
         {
           name: 'aVaultLp',
           isMut: true,
           isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'bVaultLp',
           isMut: true,
           isSigner: false,
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'aVault',
           isMut: true,
           isSigner: false,
+          docs: ['Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'bVault',
           isMut: true,
           isSigner: false,
+          docs: ['Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'aVaultLpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of vault A'],
         },
         {
           name: 'bVaultLpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of vault B'],
         },
         {
           name: 'aTokenVault',
           isMut: true,
           isSigner: false,
+          docs: ['Token vault account of vault A'],
         },
         {
           name: 'bTokenVault',
           isMut: true,
           isSigner: false,
+          docs: ['Token vault account of vault B'],
         },
         {
           name: 'userDestinationToken',
           isMut: true,
           isSigner: false,
+          docs: ['User token account to receive token upon success liquidity removal.'],
         },
         {
           name: 'user',
           isMut: false,
           isSigner: true,
+          docs: ['User account. Must be owner of the user_pool_lp account.'],
         },
         {
           name: 'vaultProgram',
           isMut: false,
           isSigner: false,
+          docs: ['Vault program. The pool will deposit/withdraw liquidity from the vault.'],
         },
         {
           name: 'tokenProgram',
           isMut: false,
           isSigner: false,
+          docs: ['Token program.'],
         },
       ],
       args: [
@@ -1861,86 +2638,111 @@ export const IDL: Amm = {
     },
     {
       name: 'addImbalanceLiquidity',
+      docs: ['Deposit tokens to the pool in an imbalance ratio. Only supported by pool with stable swap curve.'],
       accounts: [
         {
           name: 'pool',
           isMut: true,
           isSigner: false,
+          docs: ['Pool account (PDA)'],
         },
         {
           name: 'lpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of the pool'],
         },
         {
           name: 'userPoolLp',
           isMut: true,
           isSigner: false,
+          docs: ['user pool lp token account. lp will be burned from this account upon success liquidity removal.'],
         },
         {
           name: 'aVaultLp',
           isMut: true,
           isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'bVaultLp',
           isMut: true,
           isSigner: false,
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'aVault',
           isMut: true,
           isSigner: false,
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'bVault',
           isMut: true,
           isSigner: false,
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'aVaultLpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of vault a'],
         },
         {
           name: 'bVaultLpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of vault b'],
         },
         {
           name: 'aTokenVault',
           isMut: true,
           isSigner: false,
+          docs: ['Token vault account of vault A'],
         },
         {
           name: 'bTokenVault',
           isMut: true,
           isSigner: false,
+          docs: ['Token vault account of vault B'],
         },
         {
           name: 'userAToken',
           isMut: true,
           isSigner: false,
+          docs: [
+            'User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ],
         },
         {
           name: 'userBToken',
           isMut: true,
           isSigner: false,
+          docs: [
+            'User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ],
         },
         {
           name: 'user',
           isMut: false,
           isSigner: true,
+          docs: ['User account. Must be owner of user_a_token, and user_b_token.'],
         },
         {
           name: 'vaultProgram',
           isMut: false,
           isSigner: false,
+          docs: ['Vault program. the pool will deposit/withdraw liquidity from the vault.'],
         },
         {
           name: 'tokenProgram',
           isMut: false,
           isSigner: false,
+          docs: ['Token program.'],
         },
       ],
       args: [
@@ -1960,86 +2762,113 @@ export const IDL: Amm = {
     },
     {
       name: 'removeBalanceLiquidity',
+      docs: [
+        "Withdraw tokens from the pool in a balanced ratio. User will still able to withdraw from pool even the pool is disabled. This allow user to exit their liquidity when there's some unforeseen event happen.",
+      ],
       accounts: [
         {
           name: 'pool',
           isMut: true,
           isSigner: false,
+          docs: ['Pool account (PDA)'],
         },
         {
           name: 'lpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of the pool'],
         },
         {
           name: 'userPoolLp',
           isMut: true,
           isSigner: false,
+          docs: ['user pool lp token account. lp will be burned from this account upon success liquidity removal.'],
         },
         {
           name: 'aVaultLp',
           isMut: true,
           isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'bVaultLp',
           isMut: true,
           isSigner: false,
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'aVault',
           isMut: true,
           isSigner: false,
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'bVault',
           isMut: true,
           isSigner: false,
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'aVaultLpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of vault a'],
         },
         {
           name: 'bVaultLpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of vault b'],
         },
         {
           name: 'aTokenVault',
           isMut: true,
           isSigner: false,
+          docs: ['Token vault account of vault A'],
         },
         {
           name: 'bTokenVault',
           isMut: true,
           isSigner: false,
+          docs: ['Token vault account of vault B'],
         },
         {
           name: 'userAToken',
           isMut: true,
           isSigner: false,
+          docs: [
+            'User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ],
         },
         {
           name: 'userBToken',
           isMut: true,
           isSigner: false,
+          docs: [
+            'User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ],
         },
         {
           name: 'user',
           isMut: false,
           isSigner: true,
+          docs: ['User account. Must be owner of user_a_token, and user_b_token.'],
         },
         {
           name: 'vaultProgram',
           isMut: false,
           isSigner: false,
+          docs: ['Vault program. the pool will deposit/withdraw liquidity from the vault.'],
         },
         {
           name: 'tokenProgram',
           isMut: false,
           isSigner: false,
+          docs: ['Token program.'],
         },
       ],
       args: [
@@ -2059,86 +2888,111 @@ export const IDL: Amm = {
     },
     {
       name: 'addBalanceLiquidity',
+      docs: ['Deposit tokens to the pool in a balanced ratio.'],
       accounts: [
         {
           name: 'pool',
           isMut: true,
           isSigner: false,
+          docs: ['Pool account (PDA)'],
         },
         {
           name: 'lpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of the pool'],
         },
         {
           name: 'userPoolLp',
           isMut: true,
           isSigner: false,
+          docs: ['user pool lp token account. lp will be burned from this account upon success liquidity removal.'],
         },
         {
           name: 'aVaultLp',
           isMut: true,
           isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'bVaultLp',
           isMut: true,
           isSigner: false,
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'aVault',
           isMut: true,
           isSigner: false,
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'bVault',
           isMut: true,
           isSigner: false,
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'aVaultLpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of vault a'],
         },
         {
           name: 'bVaultLpMint',
           isMut: true,
           isSigner: false,
+          docs: ['LP token mint of vault b'],
         },
         {
           name: 'aTokenVault',
           isMut: true,
           isSigner: false,
+          docs: ['Token vault account of vault A'],
         },
         {
           name: 'bTokenVault',
           isMut: true,
           isSigner: false,
+          docs: ['Token vault account of vault B'],
         },
         {
           name: 'userAToken',
           isMut: true,
           isSigner: false,
+          docs: [
+            'User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ],
         },
         {
           name: 'userBToken',
           isMut: true,
           isSigner: false,
+          docs: [
+            'User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ],
         },
         {
           name: 'user',
           isMut: false,
           isSigner: true,
+          docs: ['User account. Must be owner of user_a_token, and user_b_token.'],
         },
         {
           name: 'vaultProgram',
           isMut: false,
           isSigner: false,
+          docs: ['Vault program. the pool will deposit/withdraw liquidity from the vault.'],
         },
         {
           name: 'tokenProgram',
           isMut: false,
           isSigner: false,
+          docs: ['Token program.'],
         },
       ],
       args: [
@@ -2158,16 +3012,19 @@ export const IDL: Amm = {
     },
     {
       name: 'setPoolFees',
+      docs: ['Update trading fee charged for liquidity provider, and admin.'],
       accounts: [
         {
           name: 'pool',
           isMut: true,
           isSigner: false,
+          docs: ['Pool account (PDA)'],
         },
         {
           name: 'admin',
           isMut: false,
           isSigner: true,
+          docs: ['Admin account. Must be owner of the pool.'],
         },
       ],
       args: [
@@ -2181,16 +3038,22 @@ export const IDL: Amm = {
     },
     {
       name: 'overrideCurveParam',
+      docs: [
+        'Update swap curve parameters. This function do not allow update of curve type. For example: stable swap curve to constant product curve. Only supported by pool with stable swap curve.',
+        'Only amp is allowed to be override. The other attributes of stable swap curve will be ignored.',
+      ],
       accounts: [
         {
           name: 'pool',
           isMut: true,
           isSigner: false,
+          docs: ['Pool account (PDA)'],
         },
         {
           name: 'admin',
           isMut: false,
           isSigner: true,
+          docs: ['Admin account. Must be owner of the pool.'],
         },
       ],
       args: [
@@ -2204,242 +3067,341 @@ export const IDL: Amm = {
     },
     {
       name: 'transferAdmin',
+      docs: ['Transfer the admin of the pool to new admin.'],
       accounts: [
         {
           name: 'pool',
           isMut: true,
           isSigner: false,
+          docs: ['Pool account (PDA)'],
         },
         {
           name: 'admin',
           isMut: false,
           isSigner: true,
+          docs: ['Admin account. Must be owner of the pool.'],
         },
         {
           name: 'newAdmin',
           isMut: false,
           isSigner: true,
+          docs: ['New admin account.'],
         },
       ],
       args: [],
     },
     {
       name: 'setAdminFeeAccount',
+      docs: ['Update fee token account of the pool admin.'],
       accounts: [
         {
           name: 'pool',
           isMut: true,
           isSigner: false,
+          docs: ['Pool account (PDA)'],
         },
         {
           name: 'newAdminTokenAFee',
           isMut: true,
           isSigner: false,
+          docs: ['New admin fee token account for pool token A. Used to receive trading fee.'],
         },
         {
           name: 'newAdminTokenBFee',
           isMut: true,
           isSigner: false,
+          docs: ['New admin fee token account for pool token B. Used to receive trading fee.'],
         },
         {
           name: 'admin',
           isMut: false,
           isSigner: true,
-        },
-      ],
-      args: [],
-    },
-    {
-      name: 'syncApy',
-      accounts: [
-        {
-          name: 'pool',
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: 'lpMint',
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: 'aVaultLp',
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: 'bVaultLp',
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: 'aVault',
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: 'bVault',
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: 'aVaultLpMint',
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: 'bVaultLpMint',
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: 'apy',
-          isMut: true,
-          isSigner: false,
+          docs: ['Admin account. Must be owner of the pool.'],
         },
       ],
       args: [],
     },
     {
       name: 'getPoolInfo',
+      docs: ['Get the general information of the pool.'],
       accounts: [
         {
           name: 'pool',
           isMut: false,
           isSigner: false,
+          docs: ['Pool account (PDA)'],
         },
         {
           name: 'lpMint',
           isMut: false,
           isSigner: false,
+          docs: ['LP token mint of the pool'],
         },
         {
           name: 'aVaultLp',
           isMut: false,
           isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'bVaultLp',
           isMut: false,
           isSigner: false,
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
         },
         {
           name: 'aVault',
           isMut: false,
           isSigner: false,
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'bVault',
           isMut: false,
           isSigner: false,
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'],
         },
         {
           name: 'aVaultLpMint',
           isMut: false,
           isSigner: false,
+          docs: ['LP token mint of vault a'],
         },
         {
           name: 'bVaultLpMint',
           isMut: false,
           isSigner: false,
-        },
-        {
-          name: 'apy',
-          isMut: false,
-          isSigner: false,
+          docs: ['LP token mint of vault b'],
         },
       ],
       args: [],
+    },
+    {
+      name: 'bootstrapLiquidity',
+      docs: ['Bootstrap the pool when liquidity is depleted.'],
+      accounts: [
+        {
+          name: 'pool',
+          isMut: true,
+          isSigner: false,
+          docs: ['Pool account (PDA)'],
+        },
+        {
+          name: 'lpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of the pool'],
+        },
+        {
+          name: 'userPoolLp',
+          isMut: true,
+          isSigner: false,
+          docs: ['user pool lp token account. lp will be burned from this account upon success liquidity removal.'],
+        },
+        {
+          name: 'aVaultLp',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
+        },
+        {
+          name: 'bVaultLp',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
+        },
+        {
+          name: 'aVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'],
+        },
+        {
+          name: 'bVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'],
+        },
+        {
+          name: 'aVaultLpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of vault a'],
+        },
+        {
+          name: 'bVaultLpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of vault b'],
+        },
+        {
+          name: 'aTokenVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Token vault account of vault A'],
+        },
+        {
+          name: 'bTokenVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Token vault account of vault B'],
+        },
+        {
+          name: 'userAToken',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ],
+        },
+        {
+          name: 'userBToken',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ],
+        },
+        {
+          name: 'user',
+          isMut: false,
+          isSigner: true,
+          docs: ['User account. Must be owner of user_a_token, and user_b_token.'],
+        },
+        {
+          name: 'vaultProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Vault program. the pool will deposit/withdraw liquidity from the vault.'],
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token program.'],
+        },
+      ],
+      args: [
+        {
+          name: 'tokenAAmount',
+          type: 'u64',
+        },
+        {
+          name: 'tokenBAmount',
+          type: 'u64',
+        },
+      ],
     },
   ],
   accounts: [
     {
       name: 'pool',
+      docs: ['State of pool account'],
       type: {
         kind: 'struct',
         fields: [
           {
             name: 'lpMint',
+            docs: ['LP token mint of the pool'],
             type: 'publicKey',
           },
           {
             name: 'tokenAMint',
+            docs: ['Token A mint of the pool. Eg: USDT'],
             type: 'publicKey',
           },
           {
             name: 'tokenBMint',
+            docs: ['Token B mint of the pool. Eg: USDC'],
             type: 'publicKey',
           },
           {
             name: 'aVault',
+            docs: [
+              'Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.',
+            ],
             type: 'publicKey',
           },
           {
             name: 'bVault',
+            docs: [
+              'Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.',
+            ],
             type: 'publicKey',
           },
           {
             name: 'aVaultLp',
+            docs: [
+              'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+            ],
             type: 'publicKey',
           },
           {
             name: 'bVaultLp',
+            docs: [
+              'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+            ],
             type: 'publicKey',
           },
           {
             name: 'aVaultLpBump',
+            docs: ['"A" vault lp bump. Used to create signer seeds.'],
             type: 'u8',
           },
           {
             name: 'enabled',
+            docs: ['Flag to determine whether the pool is enabled, or disabled.'],
             type: 'bool',
           },
           {
             name: 'adminTokenAFee',
+            docs: ['Admin fee token account for token A. Used to receive trading fee.'],
             type: 'publicKey',
           },
           {
             name: 'adminTokenBFee',
+            docs: ['Admin fee token account for token B. Used to receive trading fee.'],
             type: 'publicKey',
           },
           {
             name: 'admin',
+            docs: ['Owner of the pool.'],
             type: 'publicKey',
           },
           {
             name: 'fees',
+            docs: ['Store the fee charges setting.'],
             type: {
               defined: 'PoolFees',
             },
           },
           {
+            name: 'poolType',
+            docs: ['Pool type'],
+            type: {
+              defined: 'PoolType',
+            },
+          },
+          {
             name: 'padding',
+            docs: ['Padding for future pool field'],
             type: {
               defined: 'Padding',
             },
           },
           {
             name: 'curveType',
+            docs: ['The type of the swap curve supported by the pool.'],
             type: {
               defined: 'CurveType',
-            },
-          },
-        ],
-      },
-    },
-    {
-      name: 'apy',
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'pool',
-            type: 'publicKey',
-          },
-          {
-            name: 'snapshot',
-            type: {
-              defined: 'SnapShot',
             },
           },
         ],
@@ -2449,19 +3411,25 @@ export const IDL: Amm = {
   types: [
     {
       name: 'TokenMultiplier',
+      docs: ['Multiplier for the pool token. Used to normalized token with different decimal into the same precision.'],
       type: {
         kind: 'struct',
         fields: [
           {
             name: 'tokenAMultiplier',
+            docs: ['Multiplier for token A of the pool.'],
             type: 'u64',
           },
           {
             name: 'tokenBMultiplier',
+            docs: ['Multiplier for token B of the pool.'],
             type: 'u64',
           },
           {
             name: 'precisionFactor',
+            docs: [
+              'Record the highest token decimal in the pool. For example, Token A is 6 decimal, token B is 9 decimal. This will save value of 9.',
+            ],
             type: 'u8',
           },
         ],
@@ -2469,23 +3437,37 @@ export const IDL: Amm = {
     },
     {
       name: 'PoolFees',
+      docs: ['Information regarding fee charges'],
       type: {
         kind: 'struct',
         fields: [
           {
             name: 'tradeFeeNumerator',
+            docs: [
+              'Trade fees are extra token amounts that are held inside the token',
+              'accounts during a trade, making the value of liquidity tokens rise.',
+              'Trade fee numerator',
+            ],
             type: 'u64',
           },
           {
             name: 'tradeFeeDenominator',
+            docs: ['Trade fee denominator'],
             type: 'u64',
           },
           {
             name: 'ownerTradeFeeNumerator',
+            docs: [
+              'Owner trading fees are extra token amounts that are held inside the token',
+              'accounts during a trade, with the equivalent in pool tokens minted to',
+              'the owner of the program.',
+              'Owner trade fee numerator',
+            ],
             type: 'u64',
           },
           {
             name: 'ownerTradeFeeDenominator',
+            docs: ['Owner trade fee denominator'],
             type: 'u64',
           },
         ],
@@ -2493,19 +3475,23 @@ export const IDL: Amm = {
     },
     {
       name: 'Depeg',
+      docs: ['Contains information for depeg pool'],
       type: {
         kind: 'struct',
         fields: [
           {
             name: 'baseVirtualPrice',
+            docs: ['The virtual price of staking / interest bearing token'],
             type: 'u64',
           },
           {
             name: 'baseCacheUpdated',
+            docs: ['The virtual price of staking / interest bearing token'],
             type: 'u64',
           },
           {
             name: 'depegType',
+            docs: ['Type of the depeg pool'],
             type: {
               defined: 'DepegType',
             },
@@ -2515,52 +3501,22 @@ export const IDL: Amm = {
     },
     {
       name: 'Padding',
+      docs: ['Padding for future pool fields'],
       type: {
         kind: 'struct',
         fields: [
           {
-            name: 'padding',
+            name: 'padding0',
+            docs: ['Padding 0'],
             type: {
-              array: ['u128', 32],
+              array: ['u8', 15],
             },
           },
-        ],
-      },
-    },
-    {
-      name: 'VirtualPrice',
-      type: {
-        kind: 'struct',
-        fields: [
           {
-            name: 'price',
-            type: 'u64',
-          },
-          {
-            name: 'timestamp',
-            type: 'i64',
-          },
-        ],
-      },
-    },
-    {
-      name: 'SnapShot',
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'pointer',
-            type: 'u64',
-          },
-          {
-            name: 'virtualPrices',
+            name: 'padding',
+            docs: ['Padding 1'],
             type: {
-              array: [
-                {
-                  defined: 'VirtualPrice',
-                },
-                28,
-              ],
+              array: ['u128', 31],
             },
           },
         ],
@@ -2568,6 +3524,7 @@ export const IDL: Amm = {
     },
     {
       name: 'RoundDirection',
+      docs: ['Rounding direction'],
       type: {
         kind: 'enum',
         variants: [
@@ -2582,6 +3539,7 @@ export const IDL: Amm = {
     },
     {
       name: 'TradeDirection',
+      docs: ['Trade (swap) direction'],
       type: {
         kind: 'enum',
         variants: [
@@ -2596,6 +3554,7 @@ export const IDL: Amm = {
     },
     {
       name: 'NewCurveType',
+      docs: ['Type of the swap curve'],
       type: {
         kind: 'enum',
         variants: [
@@ -2607,19 +3566,33 @@ export const IDL: Amm = {
             fields: [
               {
                 name: 'amp',
+                docs: ['Amplification coefficient'],
                 type: 'u64',
               },
               {
                 name: 'token_multiplier',
+                docs: [
+                  'Multiplier for the pool token. Used to normalized token with different decimal into the same precision.',
+                ],
                 type: {
                   defined: 'TokenMultiplier',
                 },
               },
               {
                 name: 'depeg',
+                docs: [
+                  'Depeg pool information. Contains functions to allow token amount to be repeg using stake / interest bearing token virtual price',
+                ],
                 type: {
                   defined: 'Depeg',
                 },
+              },
+              {
+                name: 'last_amp_updated_timestamp',
+                docs: [
+                  'The last amp updated timestamp. Used to prevent update_curve_info called infinitely many times within a short period',
+                ],
+                type: 'u64',
               },
             ],
           },
@@ -2641,6 +3614,7 @@ export const IDL: Amm = {
     },
     {
       name: 'CurveType',
+      docs: ['Type of the swap curve'],
       type: {
         kind: 'enum',
         variants: [
@@ -2652,19 +3626,33 @@ export const IDL: Amm = {
             fields: [
               {
                 name: 'amp',
+                docs: ['Amplification coefficient'],
                 type: 'u64',
               },
               {
                 name: 'token_multiplier',
+                docs: [
+                  'Multiplier for the pool token. Used to normalized token with different decimal into the same precision.',
+                ],
                 type: {
                   defined: 'TokenMultiplier',
                 },
               },
               {
                 name: 'depeg',
+                docs: [
+                  'Depeg pool information. Contains functions to allow token amount to be repeg using stake / interest bearing token virtual price',
+                ],
                 type: {
                   defined: 'Depeg',
                 },
+              },
+              {
+                name: 'last_amp_updated_timestamp',
+                docs: [
+                  'The last amp updated timestamp. Used to prevent update_curve_info called infinitely many times within a short period',
+                ],
+                type: 'u64',
               },
             ],
           },
@@ -2673,6 +3661,7 @@ export const IDL: Amm = {
     },
     {
       name: 'DepegType',
+      docs: ['Type of depeg pool'],
       type: {
         kind: 'enum',
         variants: [
@@ -2684,6 +3673,21 @@ export const IDL: Amm = {
           },
           {
             name: 'Lido',
+          },
+        ],
+      },
+    },
+    {
+      name: 'PoolType',
+      docs: ['Pool type'],
+      type: {
+        kind: 'enum',
+        variants: [
+          {
+            name: 'Permissioned',
+          },
+          {
+            name: 'Permissionless',
           },
         ],
       },
@@ -2753,6 +3757,11 @@ export const IDL: Amm = {
           type: 'u64',
           index: false,
         },
+        {
+          name: 'hostFee',
+          type: 'u64',
+          index: false,
+        },
       ],
     },
     {
@@ -2799,23 +3808,8 @@ export const IDL: Amm = {
           index: false,
         },
         {
-          name: 'firstVirtualPrice',
-          type: 'f64',
-          index: false,
-        },
-        {
-          name: 'firstTimestamp',
-          type: 'u64',
-          index: false,
-        },
-        {
           name: 'currentTimestamp',
           type: 'u64',
-          index: false,
-        },
-        {
-          name: 'apy',
-          type: 'f64',
           index: false,
         },
       ],
@@ -2856,6 +3850,21 @@ export const IDL: Amm = {
         {
           name: 'newAdminTokenBFee',
           type: 'publicKey',
+          index: false,
+        },
+      ],
+    },
+    {
+      name: 'OverrideCurveParam',
+      fields: [
+        {
+          name: 'newAmp',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'updatedTimestamp',
+          type: 'u64',
           index: false,
         },
       ],
@@ -3026,6 +4035,51 @@ export const IDL: Amm = {
       code: 6032,
       name: 'InvalidDepegInformation',
       msg: 'Invalid depeg information',
+    },
+    {
+      code: 6033,
+      name: 'UpdateTimeConstraint',
+      msg: 'Update time constraint violated',
+    },
+    {
+      code: 6034,
+      name: 'ExceedMaxFeeBps',
+      msg: 'Exceeded max fee bps',
+    },
+    {
+      code: 6035,
+      name: 'OwnerFeeOverHalfOfTradeFee',
+      msg: 'Owner fee exceed half of trade fee',
+    },
+    {
+      code: 6036,
+      name: 'InvalidAdmin',
+      msg: 'Invalid admin',
+    },
+    {
+      code: 6037,
+      name: 'PoolIsNotPermissioned',
+      msg: 'Pool is not permissioned',
+    },
+    {
+      code: 6038,
+      name: 'InvalidDepositAmount',
+      msg: 'Invalid deposit amount',
+    },
+    {
+      code: 6039,
+      name: 'InvalidFeeOwner',
+      msg: 'Invalid fee owner',
+    },
+    {
+      code: 6040,
+      name: 'NonDepletedPool',
+      msg: 'Pool is not depleted',
+    },
+    {
+      code: 6041,
+      name: 'AmountNotPeg',
+      msg: 'Token amount is not 1:1',
     },
   ],
 };

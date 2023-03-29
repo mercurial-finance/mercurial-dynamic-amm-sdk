@@ -24,24 +24,20 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import invariant from 'invariant';
-import {
-  CURVE_TYPE_ACCOUNTS,
-  ERROR,
-  VIRTUAL_PRICE_PRECISION,
-  WRAPPED_SOL_MINT,
-  PROGRAM_ID,
-  VAULT_PROGRAM_ID,
-} from './constants';
+import { CURVE_TYPE_ACCOUNTS, ERROR, WRAPPED_SOL_MINT, PROGRAM_ID, VAULT_PROGRAM_ID } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
-  ApyState,
+  ConstantProductCurve,
+  DepegLido,
+  DepegMarinade,
+  DepegNone,
   ParsedClockState,
   PoolInformation,
   PoolState,
+  StableSwapCurve,
   SwapQuoteParam,
   SwapResult,
   TokenMultiplier,
-  VirtualPrice,
 } from './types';
 import { Amm, IDL as AmmIdl } from './idl';
 import { Vault, IDL as VaultIdl } from './vault-idl';
@@ -218,68 +214,6 @@ export const getOnchainTime = async (connection: Connection) => {
   return currentTime;
 };
 
-// Typescript implementation of https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/src/state.rs#L87
-const getLastVirtualPrice = (apyState: ApyState): VirtualPrice | null => {
-  const { snapshot } = apyState;
-  const virtualPrices = snapshot.virtualPrices as VirtualPrice[];
-
-  let prev = ((_) => {
-    if (snapshot.pointer.eq(new BN(0))) {
-      return virtualPrices.length - 1;
-    } else {
-      return snapshot.pointer.toNumber() - 1;
-    }
-  })();
-
-  const virtualPrice = virtualPrices[prev];
-  if (virtualPrice.price.eq(new BN(0))) {
-    return null;
-  }
-  return virtualPrice;
-};
-
-const getVirtualPriceClosestToYesterday = (currentTimestamp: BN, apyState: ApyState): VirtualPrice | null => {
-  const secondsPerDay = new BN(86400);
-  let secondsClosestTo24H = new BN(Number.MAX_SAFE_INTEGER);
-  let virtualPriceClosestTo24H: VirtualPrice | null = null;
-  // Find virtual price closest to 24H, but must > 24H
-  for (const virtualPrice of apyState.snapshot.virtualPrices as VirtualPrice[]) {
-    if (currentTimestamp.gt(virtualPrice.timestamp)) {
-      const diff = currentTimestamp.sub(virtualPrice.timestamp);
-      if (diff.gte(secondsPerDay)) {
-        const secondsTo24H = diff.sub(secondsPerDay);
-        if (secondsTo24H.lt(secondsClosestTo24H) && virtualPrice.price.gt(new BN(0))) {
-          virtualPriceClosestTo24H = virtualPrice;
-        }
-      }
-    }
-  }
-  return virtualPriceClosestTo24H;
-};
-
-// Typescript implementation of https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/src/state.rs#L101
-const getFirstVirtualPrice = (apyState: ApyState): VirtualPrice | null => {
-  const { snapshot } = apyState;
-  let initial = snapshot.pointer.toNumber();
-  let current = initial;
-
-  const virtualPrices = snapshot.virtualPrices as VirtualPrice[];
-
-  while ((current + 1) % virtualPrices.length != initial) {
-    if (virtualPrices[current].price.eq(new BN(0))) {
-      current = (current + 1) % virtualPrices.length;
-    } else {
-      break;
-    }
-  }
-
-  let virtualPrice = virtualPrices[current];
-  if (virtualPrice.price.eq(new BN(0))) {
-    return null;
-  }
-  return virtualPrice;
-};
-
 /**
  * Compute "actual" amount deposited to vault (precision loss)
  * @param depositAmount
@@ -316,7 +250,6 @@ export const computeActualDepositAmount = (
  * @param {BN} vaultALpSupply - The total amount of Vault A LP tokens in the pool.
  * @param {BN} vaultBLpSupply - The total amount of Vault B LP token in the pool.
  * @param {BN} poolLpSupply - The total amount of LP tokens in the pool.
- * @param {ApyState} apyState - ApyState
  * @param {SwapCurve} swapCurve - SwapCurve - the swap curve used to calculate the virtual price
  * @param {VaultState} vaultA - VaultState of vault A
  * @param {VaultState} vaultB - VaultState of Vault B
@@ -328,9 +261,6 @@ export const calculatePoolInfo = (
   poolVaultBLp: BN,
   vaultALpSupply: BN,
   vaultBLpSupply: BN,
-  poolLpSupply: BN,
-  apyState: ApyState,
-  swapCurve: SwapCurve,
   vaultA: VaultState,
   vaultB: VaultState,
 ) => {
@@ -340,46 +270,9 @@ export const calculatePoolInfo = (
   const tokenAAmount = getAmountByShare(poolVaultALp, vaultAWithdrawableAmount, vaultALpSupply);
   const tokenBAmount = getAmountByShare(poolVaultBLp, vaultBWithdrawableAmount, vaultBLpSupply);
 
-  let firstTimestamp = new BN(0);
-  let apy,
-    virtualPriceNumber,
-    firstVirtualPriceNumber = 0;
-
-  const d = swapCurve.computeD(tokenAAmount, tokenBAmount);
-  let latestVirtualPrice = d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
-
-  if (latestVirtualPrice.eq(new BN(0))) {
-    const lastVirtualPrice = getLastVirtualPrice(apyState);
-    if (lastVirtualPrice) {
-      latestVirtualPrice = lastVirtualPrice.price;
-    }
-  }
-
-  const firstVirtualPrice = getVirtualPriceClosestToYesterday(currentTimestamp, apyState);
-
-  if (firstVirtualPrice && latestVirtualPrice.gt(new BN(0))) {
-    // Compute APY
-    const second = latestVirtualPrice.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
-    const first = firstVirtualPrice.price.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
-    const timeElapsed = currentTimestamp.sub(firstVirtualPrice.timestamp).toNumber();
-    const rate = second / first;
-    const frequency = (365 * 24 * 3600) / timeElapsed;
-    const compoundRate = rate ** frequency;
-    apy = (compoundRate - 1) * 100;
-
-    virtualPriceNumber = second;
-    firstVirtualPriceNumber = first;
-    firstTimestamp = firstVirtualPrice.timestamp;
-  }
-
   const poolInformation: PoolInformation = {
     tokenAAmount,
     tokenBAmount,
-    currentTimestamp,
-    apy,
-    firstTimestamp,
-    firstVirtualPrice: firstVirtualPriceNumber,
-    virtualPrice: virtualPriceNumber,
   };
 
   return poolInformation;
@@ -606,3 +499,51 @@ export async function chunkedGetMultipleAccountInfos(
 
   return accountInfos;
 }
+
+export function encodeCurveType(curve: StableSwapCurve | ConstantProductCurve) {
+  if (curve['constantProduct']) {
+    return 0;
+  } else if (curve['stable']) {
+    return 1;
+  } else {
+    throw new Error('Unknown curve type');
+  }
+}
+
+export function getSecondKey(key1: PublicKey, key2: PublicKey) {
+  const buf1 = key1.toBuffer();
+  const buf2 = key2.toBuffer();
+  // Buf1 > buf2
+  if (Buffer.compare(buf1, buf2) == 1) {
+    return buf2;
+  }
+  return buf1;
+}
+
+export function getFirstKey(key1: PublicKey, key2: PublicKey) {
+  const buf1 = key1.toBuffer();
+  const buf2 = key2.toBuffer();
+  // Buf1 > buf2
+  if (Buffer.compare(buf1, buf2) == 1) {
+    return buf1;
+  }
+  return buf2;
+}
+
+export const DepegType = {
+  none: (): DepegNone => {
+    return {
+      none: {},
+    };
+  },
+  marinade: (): DepegMarinade => {
+    return {
+      marinade: {},
+    };
+  },
+  lido: (): DepegLido => {
+    return {
+      lido: {},
+    };
+  },
+};
