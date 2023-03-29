@@ -295,8 +295,7 @@ export default class AmmImpl implements AmmImplementation {
       ammProgram.programId,
     );
 
-    const [payerPoolLp, createPayerPoolLpIx] = await getOrCreateATAInstruction(lpMint, payer, connection);
-    createPayerPoolLpIx && preInstructions.push(createPayerPoolLpIx);
+    const payerPoolLp = await getAssociatedTokenAccount(lpMint, payer);
 
     const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
       units: 1_400_000,
