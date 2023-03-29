@@ -1,3 +1,4 @@
+import { VaultIdl as Vault, IDL as VaultIdl } from '@mercurial-finance/vault-sdk';
 import AmmImpl from './src/amm';
 import { StableSwap, ConstantProductSwap } from './src/amm/curve';
 import { PROGRAM_ID, MAINNET_POOL, DEVNET_POOL, CURVE_TYPE_ACCOUNTS } from './src/amm/constants';
@@ -9,7 +10,6 @@ import {
   getDepegAccounts,
 } from './src/amm/utils';
 import { Amm, IDL as AmmIdl } from './src/amm/idl';
-import { Vault, IDL as VaultIdl } from './src/amm/vault-idl';
 
 export default AmmImpl;
 export {

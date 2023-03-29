@@ -1,4 +1,4 @@
-import { Program, BN, BorshCoder, Idl, AnchorProvider } from '@project-serum/anchor';
+import { Program, BN } from '@project-serum/anchor';
 import {
   PublicKey,
   Connection,
@@ -30,15 +30,13 @@ import {
   PoolState,
   WithdrawQuote,
 } from './types';
-import { Amm as AmmIdl, IDL as AmmIDL } from './idl';
+import { Amm as AmmIdl } from './idl';
 import {
   ERROR,
   CURVE_TYPE_ACCOUNTS,
   SEEDS,
   WRAPPED_SOL_MINT,
   UNLOCK_AMOUNT_BUFFER,
-  PROGRAM_ID,
-  VAULT_PROGRAM_ID,
   PERMISSIONLESS_AMP,
   FEE_OWNER,
   VAULT_BASE_KEY,
