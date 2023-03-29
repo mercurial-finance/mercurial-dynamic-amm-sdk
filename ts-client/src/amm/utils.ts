@@ -3,6 +3,8 @@ import {
   calculateWithdrawableAmount,
   VaultState,
   getUnmintAmount,
+  IDL as VaultIDL,
+  VaultIdl,
 } from '@mercurial-finance/vault-sdk';
 import { AnchorProvider, BN, Program } from '@project-serum/anchor';
 import {
@@ -39,13 +41,12 @@ import {
   SwapResult,
   TokenMultiplier,
 } from './types';
-import { Amm, IDL as AmmIdl } from './idl';
-import { Vault, IDL as VaultIdl } from './vault-idl';
+import { Amm as AmmIdl, IDL as AmmIDL } from './idl';
 
-export const createProgram = (connection: Connection, cluster: Cluster) => {
+export const createProgram = (connection: Connection, programId?: string) => {
   const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
-  const ammProgram = new Program<Amm>(AmmIdl, PROGRAM_ID, provider);
-  const vaultProgram = new Program<Vault>(VaultIdl, VAULT_PROGRAM_ID, provider);
+  const ammProgram = new Program<AmmIdl>(AmmIDL, programId ?? PROGRAM_ID, provider);
+  const vaultProgram = new Program<VaultIdl>(VaultIDL, VAULT_PROGRAM_ID, provider);
 
   return { provider, ammProgram, vaultProgram };
 };

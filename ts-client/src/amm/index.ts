@@ -8,25 +8,17 @@ import {
   AccountInfo,
   ParsedAccountData,
   SYSVAR_CLOCK_PUBKEY,
-  Keypair,
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
 } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
-import {
-  AccountLayout,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  MintLayout,
-  Token,
-  TOKEN_PROGRAM_ID,
-  u64,
-} from '@solana/spl-token';
-import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import VaultImpl, {
   calculateWithdrawableAmount,
-  getAmountByShare,
-  getUnmintAmount,
   getVaultPdas,
+  ResultType,
+  IDL as VaultIDL,
+  VaultIdl,
 } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
 import {
@@ -38,8 +30,7 @@ import {
   PoolState,
   WithdrawQuote,
 } from './types';
-import { Amm, IDL as AmmIdl } from './idl';
-import { Vault } from './vault-idl';
+import { Amm as AmmIdl, IDL as AmmIDL } from './idl';
 import {
   ERROR,
   CURVE_TYPE_ACCOUNTS,
@@ -48,9 +39,9 @@ import {
   UNLOCK_AMOUNT_BUFFER,
   PROGRAM_ID,
   VAULT_PROGRAM_ID,
-  INTEREST_BEARING_TOKENS,
   PERMISSIONLESS_AMP,
   FEE_OWNER,
+  VAULT_BASE_KEY,
 } from './constants';
 import { StableSwap, SwapCurve, TradeDirection } from './curve';
 import { ConstantProductSwap } from './curve/constant-product';
@@ -76,10 +67,9 @@ import {
   getSecondKey,
   DepegType,
 } from './utils';
-import { VaultIdl } from '../..';
 
-type AmmProgram = Program<Amm>;
-type VaultProgram = Program<Vault>;
+type AmmProgram = Program<AmmIdl>;
+type VaultProgram = Program<VaultIdl>;
 
 type Opt = {
   allowOwnerOffCurve?: boolean;
@@ -234,15 +224,7 @@ export default class AmmImpl implements AmmImplementation {
       programId: string;
     },
   ) {
-    const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
-    const programId = opt?.programId ?? PROGRAM_ID;
-    const ammProgram = new Program<Amm>(AmmIdl, programId, provider);
-    const vaultProgram = new Program<Vault>(VaultIdl, VAULT_PROGRAM_ID, provider);
-
-    invariant(
-      !Object.values(INTEREST_BEARING_TOKENS).includes(tokenInfoA.address as any),
-      'Token A cannot be interest bearing tokens',
-    );
+    const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
 
     const amp = new BN(PERMISSIONLESS_AMP);
     const curveType = isStable
@@ -264,14 +246,52 @@ export default class AmmImpl implements AmmImplementation {
       vaultProgram.account.vault.fetchNullable(vaultPdaB),
     ]);
 
-    invariant(aVaultAccount, 'Vault A Account is not found');
-    invariant(bVaultAccount, 'Vault B Account is not found');
+    let preInstructions: Array<TransactionInstruction> = [];
+    if (!aVaultAccount) {
+      const createVaultAIx = await VaultImpl.createPermissionlessVault(connection, payer, tokenInfoA, {
+        result: ResultType.INSTRUCTION,
+      });
+      createVaultAIx && preInstructions.push(createVaultAIx);
+    }
+    if (!bVaultAccount) {
+      const createVaultBIx = await VaultImpl.createPermissionlessVault(connection, payer, tokenInfoB, {
+        result: ResultType.INSTRUCTION,
+      });
+      createVaultBIx && preInstructions.push(createVaultBIx);
+    }
+
+    const [[tokenAMint], [tokenBMint]] = [
+      PublicKey.findProgramAddressSync(
+        [Buffer.from(SEEDS.VAULT_PREFIX), new PublicKey(tokenInfoA.address).toBuffer(), VAULT_BASE_KEY.toBuffer()],
+        ammProgram.programId,
+      ),
+      PublicKey.findProgramAddressSync(
+        [Buffer.from(SEEDS.VAULT_PREFIX), new PublicKey(tokenInfoB.address).toBuffer(), VAULT_BASE_KEY.toBuffer()],
+        ammProgram.programId,
+      ),
+    ];
+
+    const [[aVaultLpMint], [bVaultLpMint]] = [
+      PublicKey.findProgramAddressSync(
+        [Buffer.from(SEEDS.TOKEN_VAULT_PREFIX), tokenAMint.toBuffer()],
+        ammProgram.programId,
+      ),
+      PublicKey.findProgramAddressSync(
+        [Buffer.from(SEEDS.TOKEN_VAULT_PREFIX), tokenBMint.toBuffer()],
+        ammProgram.programId,
+      ),
+    ];
+
+    const [[aTokenVault], [bTokenVault]] = [
+      PublicKey.findProgramAddressSync([Buffer.from(SEEDS.LP_MINT), tokenAMint.toBuffer()], ammProgram.programId),
+      PublicKey.findProgramAddressSync([Buffer.from(SEEDS.LP_MINT), tokenBMint.toBuffer()], ammProgram.programId),
+    ];
 
     const [poolPubkey] = PublicKey.findProgramAddressSync(
       [
         Buffer.from([encodeCurveType(curveType)]),
-        getFirstKey(aVaultAccount.tokenMint, bVaultAccount.tokenMint),
-        getSecondKey(aVaultAccount.tokenMint, bVaultAccount.tokenMint),
+        getFirstKey(tokenAMint, tokenBMint),
+        getSecondKey(tokenAMint, tokenBMint),
       ],
       ammProgram.programId,
     );
@@ -281,20 +301,19 @@ export default class AmmImpl implements AmmImplementation {
       PublicKey.findProgramAddress([vaultPdaB.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
     ]);
 
-    let preInstructions: Array<TransactionInstruction> = [];
     const [[payerTokenA, createPayerTokenAIx], [payerTokenB, createPayerTokenBIx]] = await Promise.all([
-      getOrCreateATAInstruction(aVaultAccount.tokenMint, payer, connection),
-      getOrCreateATAInstruction(bVaultAccount.tokenMint, payer, connection),
+      getOrCreateATAInstruction(tokenAMint, payer, connection),
+      getOrCreateATAInstruction(tokenBMint, payer, connection),
     ]);
     createPayerTokenAIx && preInstructions.push(createPayerTokenAIx);
     createPayerTokenBIx && preInstructions.push(createPayerTokenBIx);
 
     const [adminTokenAFee] = PublicKey.findProgramAddressSync(
-      [Buffer.from(SEEDS.FEE), aVaultAccount.tokenMint.toBuffer(), poolPubkey.toBuffer()],
+      [Buffer.from(SEEDS.FEE), tokenAMint.toBuffer(), poolPubkey.toBuffer()],
       ammProgram.programId,
     );
     const [adminTokenBFee] = PublicKey.findProgramAddressSync(
-      [Buffer.from(SEEDS.FEE), bVaultAccount.tokenMint.toBuffer(), poolPubkey.toBuffer()],
+      [Buffer.from(SEEDS.FEE), tokenBMint.toBuffer(), poolPubkey.toBuffer()],
       ammProgram.programId,
     );
 
@@ -310,12 +329,12 @@ export default class AmmImpl implements AmmImplementation {
       .initializePermissionlessPool(curveType, tokenAAmount, tokenBAmount)
       .accounts({
         pool: poolPubkey,
-        tokenAMint: aVaultAccount.tokenMint,
-        tokenBMint: bVaultAccount.tokenMint,
+        tokenAMint,
+        tokenBMint,
         aVault: vaultPdaA,
         bVault: vaultPdaB,
-        aVaultLpMint: aVaultAccount.lpMint,
-        bVaultLpMint: bVaultAccount.lpMint,
+        aVaultLpMint,
+        bVaultLpMint,
         aVaultLp: aVaultLpPda,
         bVaultLp: bVaultLpPda,
         lpMint: poolLpMint,
@@ -324,8 +343,8 @@ export default class AmmImpl implements AmmImplementation {
         adminTokenAFee,
         adminTokenBFee,
         payerPoolLp,
-        aTokenVault: aVaultAccount.tokenVault,
-        bTokenVault: bVaultAccount.tokenVault,
+        aTokenVault,
+        bTokenVault,
         feeOwner: FEE_OWNER,
         payer,
         rent: SYSVAR_RENT_PUBKEY,
@@ -347,7 +366,7 @@ export default class AmmImpl implements AmmImplementation {
     },
   ): Promise<AmmImpl[]> {
     const cluster = opt?.cluster ?? 'mainnet-beta';
-    const { provider, vaultProgram, ammProgram } = createProgram(connection, cluster);
+    const { vaultProgram, ammProgram } = createProgram(connection);
     const poolInfoMap = new Map<
       string,
       {
@@ -524,7 +543,7 @@ export default class AmmImpl implements AmmImplementation {
     },
   ): Promise<AmmImpl> {
     const cluster = opt?.cluster ?? 'mainnet-beta';
-    const { provider, vaultProgram, ammProgram } = createProgram(connection, cluster);
+    const { provider, vaultProgram, ammProgram } = createProgram(connection);
 
     const poolState = await getPoolState(pool, ammProgram);
 
