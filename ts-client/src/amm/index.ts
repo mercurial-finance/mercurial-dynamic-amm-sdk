@@ -309,23 +309,11 @@ export default class AmmImpl implements AmmImplementation {
     preInstructions.push(setComputeUnitLimitIx);
 
     if (tokenInfoA.address === WRAPPED_SOL_MINT.toBase58()) {
-      const [userToken, createUserTokenIx] = await getOrCreateATAInstruction(
-        new PublicKey(tokenInfoA.address),
-        payer,
-        connection,
-      );
-      createUserTokenIx && preInstructions.push(createUserTokenIx);
-      preInstructions = preInstructions.concat(wrapSOLInstruction(payer, userToken, BigInt(tokenAAmount.toString())));
+      preInstructions = preInstructions.concat(wrapSOLInstruction(payer, payerTokenA, BigInt(tokenAAmount.toString())));
     }
 
     if (tokenInfoB.address === WRAPPED_SOL_MINT.toBase58()) {
-      const [userToken, createUserTokenIx] = await getOrCreateATAInstruction(
-        new PublicKey(tokenInfoB.address),
-        payer,
-        connection,
-      );
-      createUserTokenIx && preInstructions.push(createUserTokenIx);
-      preInstructions = preInstructions.concat(wrapSOLInstruction(payer, userToken, BigInt(tokenBAmount.toString())));
+      preInstructions = preInstructions.concat(wrapSOLInstruction(payer, payerTokenB, BigInt(tokenBAmount.toString())));
     }
 
     const createPermissionlessPoolTx = await ammProgram.methods
