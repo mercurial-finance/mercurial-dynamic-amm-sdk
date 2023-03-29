@@ -137,6 +137,39 @@ pub enum PoolError {
     #[msg("Invalid depeg information")]
     InvalidDepegInformation,
 
+    /// Update time violated the cooldown interval
     #[msg("Update time constraint violated")]
     UpdateTimeConstraint,
+
+    /// Pool fee exceed allowed max fee bps
+    #[msg("Exceeded max fee bps")]
+    ExceedMaxFeeBps,
+
+    /// Owner fee exceed half of trade fee
+    #[msg("Owner fee exceed half of trade fee")]
+    OwnerFeeOverHalfOfTradeFee,
+
+    /// Invalid admin
+    #[msg("Invalid admin")]
+    InvalidAdmin,
+
+    /// Pool is not permissioned
+    #[msg("Pool is not permissioned")]
+    PoolIsNotPermissioned,
+
+    /// Invalid deposit amount
+    #[msg("Invalid deposit amount")]
+    InvalidDepositAmount,
+
+    /// Invalid fee owner
+    #[msg("Invalid fee owner")]
+    InvalidFeeOwner,
+
+    /// Pool is not depleted
+    #[msg("Pool is not depleted")]
+    NonDepletedPool,
+
+    /// Amount is not peg
+    #[msg("Token amount is not 1:1")]
+    AmountNotPeg,
 }

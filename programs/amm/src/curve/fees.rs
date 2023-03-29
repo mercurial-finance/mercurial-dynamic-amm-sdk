@@ -1,6 +1,6 @@
 //! Fees module includes information about fee charges
 use crate::constants;
-use crate::constants::fee::DEFAULT_FEE_DENOMINATOR;
+use crate::constants::fee::FEE_DENOMINATOR;
 use crate::error::PoolError;
 use anchor_lang::prelude::*;
 use std::convert::TryFrom;
@@ -34,8 +34,8 @@ impl PoolFees {
 impl Default for PoolFees {
     fn default() -> Self {
         PoolFees {
-            trade_fee_denominator: DEFAULT_FEE_DENOMINATOR,
-            owner_trade_fee_denominator: DEFAULT_FEE_DENOMINATOR,
+            trade_fee_denominator: FEE_DENOMINATOR,
+            owner_trade_fee_denominator: FEE_DENOMINATOR,
             trade_fee_numerator: 0,
             owner_trade_fee_numerator: 0,
         }
@@ -76,7 +76,7 @@ impl PoolFees {
         calculate_fee(
             trading_tokens,
             u128::try_from(constants::fee::HOST_TRADE_FEE_NUMERATOR).ok()?,
-            u128::try_from(constants::fee::DEFAULT_FEE_DENOMINATOR).ok()?,
+            u128::try_from(constants::fee::FEE_DENOMINATOR).ok()?,
         )
     }
 

@@ -1,7 +1,11 @@
-use anchor_lang::prelude::Result;
+use anchor_lang::prelude::{Pubkey, Result};
 use mercurial_vault::state::Vault;
 
-use crate::error::PoolError;
+use crate::{
+    context::{get_curve_type, get_first_key, get_second_key},
+    curve::curve_type::CurveType,
+    error::PoolError,
+};
 
 pub struct VaultInfo {
     /// Amount of vault lp hold by the pool
@@ -27,4 +31,34 @@ pub fn compute_pool_tokens(
         .get_amount_by_share(current_time, vault_b.lp_amount, vault_b.lp_supply)
         .ok_or(PoolError::MathOverflow)?;
     Ok((token_a_amount, token_b_amount))
+}
+
+pub fn derive_admin_token_fee(token_mint: Pubkey, pool: Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &["fee".as_ref(), token_mint.as_ref(), pool.as_ref()],
+        &crate::ID,
+    )
+}
+
+pub fn derive_vault_lp(vault: Pubkey, pool: Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(&[vault.as_ref(), pool.as_ref()], &crate::ID)
+}
+
+pub fn derive_lp_mint(pool: Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(&["lp_mint".as_ref(), pool.as_ref()], &crate::ID)
+}
+
+pub fn derive_permissionless_pool(
+    curve_type: CurveType,
+    token_a_mint: Pubkey,
+    token_b_mint: Pubkey,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[
+            &get_curve_type(curve_type).to_le_bytes(),
+            get_first_key(token_a_mint, token_b_mint).as_ref(),
+            get_second_key(token_a_mint, token_b_mint).as_ref(),
+        ],
+        &crate::ID,
+    )
 }
