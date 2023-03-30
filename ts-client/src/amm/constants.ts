@@ -114,6 +114,6 @@ export const UNLOCK_AMOUNT_BUFFER = 0.998;
 
 export const VIRTUAL_PRICE_PRECISION = new BN(100_000_000);
 
-export const PERMISSIONLESS_AMP = 100;
+export const PERMISSIONLESS_AMP = new BN(100);
 
 export const FEE_OWNER = new PublicKey('6WaLrrRfReGKBYUSkmx2K6AuT21ida4j8at2SUiZdXu8');

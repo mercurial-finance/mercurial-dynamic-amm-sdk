@@ -27,7 +27,14 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import invariant from 'invariant';
-import { CURVE_TYPE_ACCOUNTS, ERROR, WRAPPED_SOL_MINT, PROGRAM_ID, VIRTUAL_PRICE_PRECISION } from './constants';
+import {
+  CURVE_TYPE_ACCOUNTS,
+  ERROR,
+  WRAPPED_SOL_MINT,
+  PROGRAM_ID,
+  VIRTUAL_PRICE_PRECISION,
+  PERMISSIONLESS_AMP,
+} from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
   ConstantProductCurve,
@@ -43,6 +50,7 @@ import {
   TokenMultiplier,
 } from './types';
 import { Amm as AmmIdl, IDL as AmmIDL } from './idl';
+import { TokenInfo } from '@solana/spl-token-registry';
 
 export const createProgram = (connection: Connection, programId?: string) => {
   const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
@@ -490,6 +498,59 @@ export const computeTokenMultiplier = (decimalA: number, decimalB: number): Toke
   };
 };
 
+/**
+ * It fetches the pool account from the AMM program, and returns the mint addresses for the two tokens
+ * @param {Connection} connection - Connection - The connection to the Solana cluster
+ * @param {string} poolAddress - The address of the pool account.
+ * @returns The tokenAMint and tokenBMint addresses for the pool.
+ */
+export async function getTokensMintFromPoolAddress(connection: Connection, poolAddress: string) {
+  const { ammProgram } = createProgram(connection);
+
+  const poolAccount = await ammProgram.account.pool.fetchNullable(new PublicKey(poolAddress));
+
+  if (!poolAccount) return;
+
+  return {
+    tokenAMint: poolAccount.tokenAMint,
+    tokenBMint: poolAccount.tokenBMint,
+  };
+}
+
+/**
+ * It checks if a pool exists by checking if the pool account exists
+ * @param {Connection} connection - Connection - the connection to the Solana cluster
+ * @param {TokenInfo} tokenInfoA - TokenInfo
+ * @param {TokenInfo} tokenInfoB - TokenInfo
+ * @param {boolean} isStable - boolean - whether the pool is stable or not
+ * @returns A boolean value.
+ */
+export async function isPoolExists(
+  connection: Connection,
+  tokenInfoA: TokenInfo,
+  tokenInfoB: TokenInfo,
+  isStable: boolean,
+) {
+  const { ammProgram } = createProgram(connection);
+
+  const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
+
+  const tokenAMint = new PublicKey(tokenInfoA.address);
+  const tokenBMint = new PublicKey(tokenInfoB.address);
+  const [poolPubkey] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from([encodeCurveType(curveType)]),
+      getFirstKey(tokenAMint, tokenBMint),
+      getSecondKey(tokenAMint, tokenBMint),
+    ],
+    ammProgram.programId,
+  );
+
+  const poolAccount = ammProgram.account.pool.fetchNullable(poolPubkey);
+
+  return !!poolAccount;
+}
+
 export function chunks<T>(array: T[], size: number): T[][] {
   return Array.apply<number, T[], T[][]>(0, new Array(Math.ceil(array.length / size))).map((_, index) =>
     array.slice(index * size, (index + 1) * size),
@@ -556,3 +617,15 @@ export const DepegType = {
     };
   },
 };
+
+export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, isStable: boolean) {
+  return isStable
+    ? {
+        stable: {
+          amp: PERMISSIONLESS_AMP,
+          tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
+          depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType: DepegType.none() },
+        },
+      }
+    : { constantProduct: {} };
+}

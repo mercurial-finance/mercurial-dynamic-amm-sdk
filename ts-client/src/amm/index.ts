@@ -62,6 +62,7 @@ import {
   getFirstKey,
   getSecondKey,
   DepegType,
+  generateCurveType,
 } from './utils';
 
 type AmmProgram = Program<AmmIdl>;
@@ -222,16 +223,7 @@ export default class AmmImpl implements AmmImplementation {
   ) {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
 
-    const amp = new BN(PERMISSIONLESS_AMP);
-    const curveType = isStable
-      ? {
-          stable: {
-            amp,
-            tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
-            depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType: DepegType.none() },
-          },
-        }
-      : { constantProduct: {} };
+    const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
 
     const tokenAMint = new PublicKey(tokenInfoA.address);
     const tokenBMint = new PublicKey(tokenInfoB.address);
@@ -247,6 +239,11 @@ export default class AmmImpl implements AmmImplementation {
     let aVaultLpMint = aLpMintPda;
     let bVaultLpMint = bLpMintPda;
     let preInstructions: Array<TransactionInstruction> = [];
+    const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_400_000,
+    });
+    preInstructions.push(setComputeUnitLimitIx);
+
     if (!aVaultAccount) {
       const createVaultAIx = await VaultImpl.createPermissionlessVault(connection, payer, tokenInfoA, {
         result: ResultType.INSTRUCTION,
@@ -302,11 +299,6 @@ export default class AmmImpl implements AmmImplementation {
     );
 
     const payerPoolLp = await getAssociatedTokenAccount(lpMint, payer);
-
-    const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
-      units: 1_400_000,
-    });
-    preInstructions.push(setComputeUnitLimitIx);
 
     if (tokenInfoA.address === WRAPPED_SOL_MINT.toBase58()) {
       preInstructions = preInstructions.concat(wrapSOLInstruction(payer, payerTokenA, BigInt(tokenAAmount.toString())));
