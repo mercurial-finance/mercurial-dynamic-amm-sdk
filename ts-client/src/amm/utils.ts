@@ -525,12 +525,12 @@ export async function getTokensMintFromPoolAddress(connection: Connection, poolA
  * @param {boolean} isStable - boolean - whether the pool is stable or not
  * @returns A boolean value.
  */
-export async function getPoolInfo(
+export async function checkPoolExists(
   connection: Connection,
   tokenInfoA: TokenInfo,
   tokenInfoB: TokenInfo,
   isStable: boolean,
-) {
+): Promise<PublicKey | undefined> {
   const { ammProgram } = createProgram(connection);
 
   const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
@@ -550,10 +550,7 @@ export async function getPoolInfo(
 
   if (!poolAccount) return;
 
-  return {
-    poolPubkey,
-    ...poolAccount,
-  };
+  return poolPubkey;
 }
 
 export function chunks<T>(array: T[], size: number): T[][] {
