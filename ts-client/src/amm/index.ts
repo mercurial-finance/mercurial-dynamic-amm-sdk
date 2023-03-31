@@ -1311,6 +1311,8 @@ export default class AmmImpl implements AmmImplementation {
   }
 
   private getAmountByShare(amount: BN, tokenAmount: BN, lpSupply: BN, roundUp?: boolean): BN {
+    if (lpSupply.isZero()) return new BN(0);
+
     return roundUp ? amount.mul(tokenAmount).divRound(lpSupply) : amount.mul(tokenAmount).div(lpSupply);
   }
 }
