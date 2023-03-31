@@ -8,7 +8,7 @@ import {
   calculateSwapQuote,
   calculatePoolInfo,
   getDepegAccounts,
-  isPoolExists,
+  getPoolInfo,
   getTokensMintFromPoolAddress,
 } from './src/amm/utils';
 import { Amm, IDL as AmmIdl } from './src/amm/idl';
@@ -24,7 +24,7 @@ export {
   calculateMaxSwapOutAmount,
   calculateSwapQuote,
   calculatePoolInfo,
-  isPoolExists,
+  getPoolInfo,
   getTokensMintFromPoolAddress,
   // Constant
   PROGRAM_ID,

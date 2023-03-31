@@ -525,7 +525,7 @@ export async function getTokensMintFromPoolAddress(connection: Connection, poolA
  * @param {boolean} isStable - boolean - whether the pool is stable or not
  * @returns A boolean value.
  */
-export async function isPoolExists(
+export async function getPoolInfo(
   connection: Connection,
   tokenInfoA: TokenInfo,
   tokenInfoB: TokenInfo,
@@ -546,9 +546,14 @@ export async function isPoolExists(
     ammProgram.programId,
   );
 
-  const poolAccount = ammProgram.account.pool.fetchNullable(poolPubkey);
+  const poolAccount = await ammProgram.account.pool.fetchNullable(poolPubkey);
 
-  return !!poolAccount;
+  if (!poolAccount) return;
+
+  return {
+    poolPubkey,
+    ...poolAccount,
+  };
 }
 
 export function chunks<T>(array: T[], size: number): T[][] {
