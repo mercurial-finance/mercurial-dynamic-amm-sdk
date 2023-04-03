@@ -330,10 +330,11 @@ export default class AmmImpl implements AmmImplementation {
     opt?: {
       allowOwnerOffCurve?: boolean;
       cluster?: Cluster;
+      programId?: string;
     },
   ): Promise<AmmImpl[]> {
     const cluster = opt?.cluster ?? 'mainnet-beta';
-    const { vaultProgram, ammProgram } = createProgram(connection);
+    const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
     const poolInfoMap = new Map<
       string,
       {
@@ -506,13 +507,14 @@ export default class AmmImpl implements AmmImplementation {
     tokenInfoA: TokenInfo,
     tokenInfoB: TokenInfo,
     opt?: {
+      programId?: string;
       vaultSeedBaseKey?: PublicKey;
       allowOwnerOffCurve?: boolean;
       cluster?: Cluster;
     },
   ): Promise<AmmImpl> {
     const cluster = opt?.cluster ?? 'mainnet-beta';
-    const { provider, vaultProgram, ammProgram } = createProgram(connection);
+    const { provider, vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
 
     const poolState = await getPoolState(pool, ammProgram);
 

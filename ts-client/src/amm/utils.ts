@@ -37,7 +37,6 @@ import {
 } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
-  AmmProgram,
   ConstantProductCurve,
   DepegLido,
   DepegMarinade,
@@ -505,8 +504,14 @@ export const computeTokenMultiplier = (decimalA: number, decimalB: number): Toke
  * @param {string} poolAddress - The address of the pool account.
  * @returns The tokenAMint and tokenBMint addresses for the pool.
  */
-export async function getTokensMintFromPoolAddress(connection: Connection, poolAddress: string) {
-  const { ammProgram } = createProgram(connection);
+export async function getTokensMintFromPoolAddress(
+  connection: Connection,
+  poolAddress: string,
+  opt?: {
+    programId?: string;
+  },
+) {
+  const { ammProgram } = createProgram(connection, opt?.programId);
 
   const poolAccount = await ammProgram.account.pool.fetchNullable(new PublicKey(poolAddress));
 
@@ -523,6 +528,9 @@ export function derivePoolAddress(
   tokenInfoA: TokenInfo,
   tokenInfoB: TokenInfo,
   isStable: boolean,
+  opt?: {
+    programId?: string;
+  },
 ) {
   const { ammProgram } = createProgram(connection);
   const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
@@ -554,8 +562,11 @@ export async function checkPoolExists(
   tokenInfoA: TokenInfo,
   tokenInfoB: TokenInfo,
   isStable: boolean,
+  opt?: {
+    programId: string;
+  },
 ): Promise<PublicKey | undefined> {
-  const { ammProgram } = createProgram(connection);
+  const { ammProgram } = createProgram(connection, opt?.programId);
 
   const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
 
