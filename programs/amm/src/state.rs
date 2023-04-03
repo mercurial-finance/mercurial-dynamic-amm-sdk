@@ -5,90 +5,31 @@ use crate::curve::fees::PoolFees;
 use anchor_lang::prelude::*;
 use std::fmt::Debug;
 
-// Maximum of virtual price snapshot stored for APY calculation
-const MAX_SNAPSHOT: usize = 28;
-
 #[derive(AnchorSerialize, AnchorDeserialize, Default, Debug, Clone, Copy)]
 /// Padding for future pool fields
 pub struct Padding {
-    /// Padding byte
-    pub padding: [u128; 32], // 512
+    /// Padding 0
+    pub padding_0: [u8; 15], // 15
+    /// Padding 1
+    pub padding: [u128; 31], // 496
 }
 
 impl Padding {
-    /// Return space for rental
-    pub fn space() -> usize {
-        512
-    }
+    /// Space for rental
+    pub const SPACE: usize = 511;
 }
 
-#[derive(AnchorDeserialize, AnchorSerialize, Debug, Default, Clone, Copy)]
-/// Virtual price snapshot
-pub struct VirtualPrice {
-    /// Virtual price itself
-    pub price: u64, // 8
-    /// The unix timestamp when the snapshot was taken
-    pub timestamp: i64, // 8
+/// Pool type
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq)]
+pub enum PoolType {
+    /// Permissioned
+    Permissioned,
+    /// Permissionless
+    Permissionless,
 }
-
-#[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone)]
-/// Store virtual price snapshots. One snapshot will be stored per time window (6 hour). Support up to maximum 1 week (7 days)
-pub struct SnapShot {
-    /// Keep track of next empty slot for virtual price insertion
-    pub pointer: u64, // 8
-    /// Virtual price snapshots
-    pub virtual_prices: [VirtualPrice; MAX_SNAPSHOT], // 16 * 28 = 448
-}
-
-impl Default for SnapShot {
+impl Default for PoolType {
     fn default() -> Self {
-        SnapShot {
-            pointer: 0,
-            virtual_prices: [VirtualPrice::default(); MAX_SNAPSHOT],
-        }
-    }
-}
-
-impl SnapShot {
-    /// Return space for rental
-    pub fn space() -> usize {
-        8 + 448
-    }
-
-    /// Return the latest virtual price from snapshot history.
-    pub fn last(&self) -> Option<VirtualPrice> {
-        let prev = if self.pointer == 0 {
-            MAX_SNAPSHOT - 1
-        } else {
-            (self.pointer - 1) as usize
-        };
-        let virtual_price = self.virtual_prices[prev];
-        if virtual_price.price == 0 {
-            return None;
-        }
-        Some(virtual_price)
-    }
-
-    /// Return the oldest virtual price from snapshot history
-    pub fn first(&self) -> Option<VirtualPrice> {
-        let initial = self.pointer as usize;
-        let mut current = initial;
-
-        // While the next element is not starting index
-        while (current + 1) % MAX_SNAPSHOT != initial {
-            if self.virtual_prices[current].price == 0 {
-                current = (current + 1) % MAX_SNAPSHOT;
-            } else {
-                // Earliest snapshot found
-                break;
-            }
-        }
-
-        let virtual_price = self.virtual_prices[current];
-        if virtual_price.price == 0 {
-            return None;
-        }
-        Some(virtual_price)
+        PoolType::Permissioned
     }
 }
 
@@ -122,32 +63,11 @@ pub struct Pool {
     pub admin: Pubkey, //32
     /// Store the fee charges setting.
     pub fees: PoolFees, //48
+    /// Pool type
+    pub pool_type: PoolType,
     /// Padding for future pool field
     pub padding: Padding, // 512 Refer: curve_type.rs for the test
     /// The type of the swap curve supported by the pool.
     // Leaving curve_type as last field give us the flexibility to add specific curve information / new curve type
     pub curve_type: CurveType, //9
-}
-
-impl Pool {
-    /// Return space for rental
-    pub fn space() -> usize {
-        322 + PoolFees::space() + Padding::space() + CurveType::space()
-    }
-}
-#[account]
-#[derive(Default, Debug)]
-/// An PDA. Store virtual prices of the pool. Used for APY calculation.
-pub struct Apy {
-    /// Pool address of the APY
-    pub pool: Pubkey, // 32
-    /// Virtual price snapshots. One snapshot will be stored per time window (6 hour). Support up to maximum 1 week (7 days)
-    pub snapshot: SnapShot, // 456
-}
-
-impl Apy {
-    /// Return space for rental
-    pub fn space() -> usize {
-        8 + 32 + SnapShot::space()
-    }
 }

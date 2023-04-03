@@ -9,10 +9,16 @@ pub mod vault_utils;
 
 use crate::context::*;
 use anchor_lang::prelude::*;
+use curve::curve_type::CurveType;
 
+#[cfg(feature = "staging")]
+declare_id!("ammbh4CQztZ6txJ8AaQgPsWjd6o7GhmvopS2JAo5bCB");
+
+#[cfg(not(feature = "staging"))]
 declare_id!("Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB");
 
 #[program]
+#[allow(unused_variables)]
 pub mod amm {
 
     use super::*;
@@ -64,13 +70,18 @@ pub mod amm {
         Ok(())
     }
 
-    /// Synchronize APY of the pool. This function snapshot the virtual price of the pool upon invoke. The historical virtual price will be used to calculate the pool APY. APY can be retrieved by simulating get_pool_info function.
-    pub fn sync_apy(ctx: Context<SyncApy>) -> Result<()> {
+    /// Get the general information of the pool by using simulate.
+    pub fn get_pool_info(ctx: Context<GetPoolInfo>) -> Result<()> {
         Ok(())
     }
 
-    /// Get the general information of the pool by using simulate.
-    pub fn get_pool_info(ctx: Context<GetPoolInfo>) -> Result<()> {
+    /// initialize_permissionless_pool
+    pub fn initialize_permissionless_pool(
+        ctx: Context<InitializePermissionlessPool>,
+        curve_type: CurveType,
+        token_a_amount: u64,
+        token_b_amount: u64,
+    ) -> Result<()> {
         Ok(())
     }
 }

@@ -1,8 +1,7 @@
 //! Curve type
 use anchor_lang::prelude::*;
 
-// full bytes size reserved for curve data, which includes the buffer
-const PADDING_SIZE: usize = 512;
+pub const PERMISSIONLESS_AMP: u64 = 100;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default, Copy, Eq, PartialEq)]
 /// Multiplier for the pool token. Used to normalized token with different decimal into the same precision.
@@ -13,13 +12,6 @@ pub struct TokenMultiplier {
     pub token_b_multiplier: u64, // 8
     /// Record the highest token decimal in the pool. For example, Token A is 6 decimal, token B is 9 decimal. This will save value of 9.
     pub precision_factor: u8, // 1
-}
-
-impl TokenMultiplier {
-    /// Return space for rental
-    pub const fn space() -> usize {
-        17
-    }
 }
 
 /// Type of depeg pool
@@ -39,13 +31,6 @@ impl Default for DepegType {
     }
 }
 
-impl DepegType {
-    /// Return space for rental
-    pub fn space() -> usize {
-        1
-    }
-}
-
 /// Contains information for depeg pool
 #[derive(Clone, Copy, Debug, Default, AnchorSerialize, AnchorDeserialize)]
 pub struct Depeg {
@@ -55,13 +40,6 @@ pub struct Depeg {
     pub base_cache_updated: u64,
     /// Type of the depeg pool
     pub depeg_type: DepegType,
-}
-
-impl Depeg {
-    /// Return space for rental
-    pub fn space() -> usize {
-        16 + DepegType::space()
-    }
 }
 
 #[derive(Clone, Copy, Debug, AnchorDeserialize, AnchorSerialize)]
@@ -85,7 +63,7 @@ pub enum CurveType {
 impl Default for CurveType {
     fn default() -> Self {
         Self::Stable {
-            amp: 60,
+            amp: PERMISSIONLESS_AMP,
             token_multiplier: TokenMultiplier::default(),
             depeg: Depeg::default(),
             last_amp_updated_timestamp: 0,
@@ -94,11 +72,6 @@ impl Default for CurveType {
 }
 
 impl CurveType {
-    /// Get space for rental
-    pub fn space() -> usize {
-        1 + PADDING_SIZE
-    }
-
     /// Determine whether the curve type is the same regardless of the curve parameters.
     pub fn is_same_type(&self, other: &CurveType) -> bool {
         matches!(
