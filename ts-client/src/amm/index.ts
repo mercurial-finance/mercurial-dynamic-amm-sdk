@@ -203,8 +203,8 @@ export default class AmmImpl implements AmmImplementation {
     tokenBAmount: BN,
     isStable: boolean,
     opt?: {
-      cluster: Cluster;
-      programId: string;
+      cluster?: Cluster;
+      programId?: string;
     },
   ) {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
