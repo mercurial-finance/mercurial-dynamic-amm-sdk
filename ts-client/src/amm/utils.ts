@@ -519,11 +519,12 @@ export async function getTokensMintFromPoolAddress(connection: Connection, poolA
 }
 
 export function derivePoolAddress(
+  connection: Connection,
   tokenInfoA: TokenInfo,
   tokenInfoB: TokenInfo,
   isStable: boolean,
-  program: AmmProgram,
 ) {
+  const { ammProgram } = createProgram(connection);
   const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
   const tokenAMint = new PublicKey(tokenInfoA.address);
   const tokenBMint = new PublicKey(tokenInfoB.address);
@@ -534,7 +535,7 @@ export function derivePoolAddress(
       getFirstKey(tokenAMint, tokenBMint),
       getSecondKey(tokenAMint, tokenBMint),
     ],
-    program.programId,
+    ammProgram.programId,
   );
 
   return poolPubkey;

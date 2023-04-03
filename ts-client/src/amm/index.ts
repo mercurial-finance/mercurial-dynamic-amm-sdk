@@ -246,7 +246,7 @@ export default class AmmImpl implements AmmImplementation {
       bVaultLpMint = bVaultAccount.lpMint; // Old vault doesn't have lp mint pda
     }
 
-    const poolPubkey = derivePoolAddress(tokenInfoA, tokenInfoB, isStable, ammProgram);
+    const poolPubkey = derivePoolAddress(connection, tokenInfoA, tokenInfoB, isStable);
 
     const [[aVaultLp], [bVaultLp]] = [
       PublicKey.findProgramAddressSync([aVault.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
