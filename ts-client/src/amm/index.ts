@@ -881,16 +881,11 @@ export default class AmmImpl implements AmmImplementation {
    */
   public getDepositQuote(tokenAInAmount: BN, tokenBInAmount: BN, balance: boolean, slippage: number): DepositQuote {
     invariant(
-      !(
-        !this.isStablePool &&
-        !tokenAInAmount.isZero() &&
-        !tokenBInAmount.isZero() &&
-        !this.accountsInfo.poolLpSupply.isZero()
-      ),
+      !this.isStablePool && !tokenAInAmount.isZero() && !tokenBInAmount.isZero(),
       'Constant product only supports balanced deposit',
     );
     invariant(
-      !(!tokenAInAmount.isZero() && !tokenBInAmount.isZero() && (balance || !this.accountsInfo.poolLpSupply.isZero())),
+      (!tokenAInAmount.isZero() && !tokenBInAmount.isZero()) || balance,
       'Deposit balance is not possible when both token in amount is non-zero',
     );
 
