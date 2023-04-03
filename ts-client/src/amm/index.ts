@@ -890,7 +890,7 @@ export default class AmmImpl implements AmmImplementation {
     );
 
     if (this.accountsInfo.poolLpSupply.isZero()) {
-      const poolTokenAmountOut = this.swapCurve.computeD(this.poolInfo.tokenAAmount, this.poolInfo.tokenBAmount);
+      const poolTokenAmountOut = this.swapCurve.computeD(tokenAInAmount, tokenBInAmount);
       return {
         poolTokenAmountOut,
         minPoolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippage),
