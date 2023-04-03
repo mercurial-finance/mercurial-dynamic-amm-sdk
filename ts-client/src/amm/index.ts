@@ -14,32 +14,21 @@ import {
 } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
-import VaultImpl, {
-  calculateWithdrawableAmount,
-  getVaultPdas,
-  ResultType,
-  VaultIdl,
-} from '@mercurial-finance/vault-sdk';
+import VaultImpl, { calculateWithdrawableAmount, getVaultPdas, ResultType } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
 import {
   AccountType,
   AccountsInfo,
   AmmImplementation,
+  AmmProgram,
   DepositQuote,
   PoolInformation,
   PoolState,
+  VaultProgram,
   WithdrawQuote,
 } from './types';
 import { Amm as AmmIdl } from './idl';
-import {
-  ERROR,
-  CURVE_TYPE_ACCOUNTS,
-  SEEDS,
-  WRAPPED_SOL_MINT,
-  UNLOCK_AMOUNT_BUFFER,
-  PERMISSIONLESS_AMP,
-  FEE_OWNER,
-} from './constants';
+import { ERROR, CURVE_TYPE_ACCOUNTS, SEEDS, WRAPPED_SOL_MINT, UNLOCK_AMOUNT_BUFFER, FEE_OWNER } from './constants';
 import { StableSwap, SwapCurve, TradeDirection } from './curve';
 import { ConstantProductSwap } from './curve/constant-product';
 import {
@@ -57,16 +46,12 @@ import {
   getAssociatedTokenAccount,
   deserializeAccount,
   chunkedGetMultipleAccountInfos,
-  computeTokenMultiplier,
   encodeCurveType,
   getFirstKey,
   getSecondKey,
-  DepegType,
   generateCurveType,
+  derivePoolAddress,
 } from './utils';
-
-type AmmProgram = Program<AmmIdl>;
-type VaultProgram = Program<VaultIdl>;
 
 type Opt = {
   allowOwnerOffCurve?: boolean;
@@ -261,14 +246,7 @@ export default class AmmImpl implements AmmImplementation {
       bVaultLpMint = bVaultAccount.lpMint; // Old vault doesn't have lp mint pda
     }
 
-    const [poolPubkey] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from([encodeCurveType(curveType)]),
-        getFirstKey(tokenAMint, tokenBMint),
-        getSecondKey(tokenAMint, tokenBMint),
-      ],
-      ammProgram.programId,
-    );
+    const poolPubkey = derivePoolAddress(tokenInfoA, tokenInfoB, isStable, ammProgram);
 
     const [[aVaultLp], [bVaultLp]] = [
       PublicKey.findProgramAddressSync([aVault.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
@@ -1043,7 +1021,7 @@ export default class AmmImpl implements AmmImplementation {
     tokenBInAmount: BN,
     poolTokenAmount: BN,
   ): Promise<Transaction> {
-    const { tokenAMint, tokenBMint, lpMint } = this.poolState;
+    const { tokenAMint, tokenBMint, lpMint, lpSupply } = this.poolState;
 
     const [[userAToken, createTokenAIx], [userBToken, createTokenBIx], [userPoolLp, createLpMintIx]] =
       await this.createATAPreInstructions(owner, [tokenAMint, tokenBMint, lpMint]);
@@ -1070,11 +1048,15 @@ export default class AmmImpl implements AmmImplementation {
       closeWrappedSOLIx && postInstructions.push(closeWrappedSOLIx);
     }
 
-    const programMethod = this.isStablePool
-      ? this.program.methods.addImbalanceLiquidity
-      : this.program.methods.addBalanceLiquidity;
+    const programMethod = () => {
+      if (lpSupply.isZero()) return this.program.methods.bootstrapLiquidity(tokenAInAmount, tokenBInAmount);
+      if (this.isStablePool)
+        return this.program.methods.addImbalanceLiquidity(poolTokenAmount, tokenAInAmount, tokenBInAmount);
 
-    const depositTx = await programMethod(poolTokenAmount, tokenAInAmount, tokenBInAmount)
+      return this.program.methods.addBalanceLiquidity(poolTokenAmount, tokenAInAmount, tokenBInAmount);
+    };
+
+    const depositTx = await programMethod()
       .accounts({
         aTokenVault: this.vaultA.vaultState.tokenVault,
         bTokenVault: this.vaultB.vaultState.tokenVault,

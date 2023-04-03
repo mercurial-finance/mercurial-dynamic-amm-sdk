@@ -1,10 +1,13 @@
 import { AccountInfo, PublicKey, Transaction } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { IdlAccounts, IdlTypes } from '@project-serum/anchor';
+import { IdlAccounts, IdlTypes, Program } from '@project-serum/anchor';
 import BN from 'bn.js';
 import { Amm as AmmIdl } from '../idl';
-import { VaultState } from '@mercurial-finance/vault-sdk';
+import { VaultState, VaultIdl } from '@mercurial-finance/vault-sdk';
 import Decimal from 'decimal.js';
+
+export type AmmProgram = Program<AmmIdl>;
+export type VaultProgram = Program<VaultIdl>;
 
 export interface AmmImplementation {
   tokenA: TokenInfo;

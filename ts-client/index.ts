@@ -10,6 +10,7 @@ import {
   getDepegAccounts,
   checkPoolExists,
   getTokensMintFromPoolAddress,
+  derivePoolAddress,
 } from './src/amm/utils';
 import { Amm, IDL as AmmIdl } from './src/amm/idl';
 
@@ -26,6 +27,7 @@ export {
   calculatePoolInfo,
   checkPoolExists,
   getTokensMintFromPoolAddress,
+  derivePoolAddress,
   // Constant
   PROGRAM_ID,
   MAINNET_POOL,

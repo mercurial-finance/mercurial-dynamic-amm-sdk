@@ -37,6 +37,7 @@ import {
 } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
+  AmmProgram,
   ConstantProductCurve,
   DepegLido,
   DepegMarinade,
@@ -515,6 +516,28 @@ export async function getTokensMintFromPoolAddress(connection: Connection, poolA
     tokenAMint: poolAccount.tokenAMint,
     tokenBMint: poolAccount.tokenBMint,
   };
+}
+
+export function derivePoolAddress(
+  tokenInfoA: TokenInfo,
+  tokenInfoB: TokenInfo,
+  isStable: boolean,
+  program: AmmProgram,
+) {
+  const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
+  const tokenAMint = new PublicKey(tokenInfoA.address);
+  const tokenBMint = new PublicKey(tokenInfoB.address);
+
+  const [poolPubkey] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from([encodeCurveType(curveType)]),
+      getFirstKey(tokenAMint, tokenBMint),
+      getSecondKey(tokenAMint, tokenBMint),
+    ],
+    program.programId,
+  );
+
+  return poolPubkey;
 }
 
 /**
