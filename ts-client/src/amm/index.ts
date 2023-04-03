@@ -52,6 +52,7 @@ import {
   generateCurveType,
   derivePoolAddress,
 } from './utils';
+import sqrt from 'bn-sqrt';
 
 type Opt = {
   allowOwnerOffCurve?: boolean;
@@ -887,6 +888,16 @@ export default class AmmImpl implements AmmImplementation {
       !(!tokenAInAmount.isZero() && !tokenBInAmount.isZero() && balance),
       'Deposit balance is not possible when both token in amount is non-zero',
     );
+
+    if (this.accountsInfo.poolLpSupply.isZero()) {
+      const poolTokenAmountOut = this.swapCurve.computeD(this.poolInfo.tokenAAmount, this.poolInfo.tokenBAmount);
+      return {
+        poolTokenAmountOut,
+        minPoolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippage),
+        tokenAInAmount: tokenAInAmount,
+        tokenBInAmount: tokenBInAmount,
+      };
+    }
 
     const vaultAWithdrawableAmount = calculateWithdrawableAmount(
       this.accountsInfo.currentTime.toNumber(),
