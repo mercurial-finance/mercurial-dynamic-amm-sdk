@@ -532,7 +532,7 @@ export function derivePoolAddress(
     programId?: string;
   },
 ) {
-  const { ammProgram } = createProgram(connection);
+  const { ammProgram } = createProgram(connection, opt?.programId);
   const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
   const tokenAMint = new PublicKey(tokenInfoA.address);
   const tokenBMint = new PublicKey(tokenInfoB.address);
