@@ -32,6 +32,7 @@ export interface AmmImplementation {
 }
 
 export type SwapQuote = {
+  swapInAmount: BN;
   swapOutAmount: BN;
   minSwapOutAmount: BN;
   fee: BN;
