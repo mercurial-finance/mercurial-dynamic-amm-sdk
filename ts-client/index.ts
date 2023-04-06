@@ -42,6 +42,7 @@ export type {
   AmmImplementation,
   DepositQuote,
   WithdrawQuote,
+  SwapQuote,
   PoolState,
   PoolInformation,
   ParsedClockState,
