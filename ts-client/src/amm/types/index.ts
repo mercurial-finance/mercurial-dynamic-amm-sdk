@@ -18,7 +18,7 @@ export interface AmmImplementation {
   getPoolTokenMint: () => PublicKey;
   getUserBalance: (owner: PublicKey) => Promise<BN>;
   getLpSupply: () => Promise<BN>;
-  getSwapQuote: (inTokenMint: PublicKey, inAmountLamport: BN, slippage: number) => BN;
+  getSwapQuote: (inTokenMint: PublicKey, inAmountLamport: BN, slippage: number) => SwapQuote;
   swap: (owner: PublicKey, inTokenMint: PublicKey, inAmountLamport: BN, outAmountLamport: BN) => Promise<Transaction>;
   getDepositQuote: (tokenAInAmount: BN, tokenBInAmount: BN, isImbalance: boolean, slippage: number) => DepositQuote;
   deposit: (owner: PublicKey, tokenAInAmount: BN, tokenBInAmount: BN, poolTokenAmount: BN) => Promise<Transaction>;
@@ -30,6 +30,13 @@ export interface AmmImplementation {
     tokenBOutAmount: BN,
   ) => Promise<Transaction>;
 }
+
+export type SwapQuote = {
+  swapOutAmount: BN;
+  minSwapOutAmount: BN;
+  fee: BN;
+  priceImpact: Decimal;
+};
 
 export type DepositQuote = {
   poolTokenAmountOut: BN;

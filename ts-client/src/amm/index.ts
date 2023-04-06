@@ -743,7 +743,11 @@ export default class AmmImpl implements AmmImplementation {
    * @returns The amount of the destination token that will be received after the swap.
    */
   public getSwapQuote(inTokenMint: PublicKey, inAmountLamport: BN, slippage: number) {
-    const { amountOut: swapQuote } = calculateSwapQuote(inTokenMint, inAmountLamport, {
+    const {
+      amountOut: swapQuote,
+      fee,
+      priceImpact,
+    } = calculateSwapQuote(inTokenMint, inAmountLamport, {
       currentTime: this.accountsInfo.currentTime.toNumber(),
       poolState: this.poolState,
       depegAccounts: this.depegAccounts,
@@ -757,7 +761,12 @@ export default class AmmImpl implements AmmImplementation {
       vaultBReserve: this.accountsInfo.vaultBReserve,
     });
 
-    return getMinAmountWithSlippage(swapQuote, slippage);
+    return {
+      swapOutAmount: swapQuote,
+      minSwapOutAmount: getMinAmountWithSlippage(swapQuote, slippage),
+      fee,
+      priceImpact,
+    };
   }
 
   /**
