@@ -341,24 +341,28 @@ export const calculatePoolInfo = (
 
   let firstTimestamp = new BN(0);
   let apy,
-    virtualPriceNumber,
+    virtualPriceNumber = 0,
     firstVirtualPriceNumber = 0;
 
   const d = swapCurve.computeD(tokenAAmount, tokenBAmount);
-  let latestVirtualPrice = d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
 
-  if (latestVirtualPrice.eq(new BN(0))) {
+  let latestVirtualPrice = new BN(0);
+  if (poolLpSupply.eq(new BN(0))) {
     const lastVirtualPrice = getLastVirtualPrice(apyState);
     if (lastVirtualPrice) {
       latestVirtualPrice = lastVirtualPrice.price;
     }
+  } else {
+    latestVirtualPrice = d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
   }
+
+  virtualPriceNumber = latestVirtualPrice.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
 
   const firstVirtualPrice = getVirtualPriceClosestToYesterday(currentTimestamp, apyState);
 
-  if (firstVirtualPrice && latestVirtualPrice.gt(new BN(0))) {
+  if (firstVirtualPrice && virtualPriceNumber > 0) {
     // Compute APY
-    const second = latestVirtualPrice.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
+    const second = virtualPriceNumber;
     const first = firstVirtualPrice.price.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
     const timeElapsed = currentTimestamp.sub(firstVirtualPrice.timestamp).toNumber();
     const rate = second / first;
@@ -366,7 +370,6 @@ export const calculatePoolInfo = (
     const compoundRate = rate ** frequency;
     apy = (compoundRate - 1) * 100;
 
-    virtualPriceNumber = second;
     firstVirtualPriceNumber = first;
     firstTimestamp = firstVirtualPrice.timestamp;
   }
