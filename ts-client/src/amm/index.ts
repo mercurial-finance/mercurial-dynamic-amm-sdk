@@ -14,7 +14,7 @@ import {
 } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
-import VaultImpl, { calculateWithdrawableAmount, getVaultPdas, ResultType } from '@mercurial-finance/vault-sdk';
+import VaultImpl, { calculateWithdrawableAmount, getVaultPdas } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
 import {
   AccountType,
@@ -232,17 +232,13 @@ export default class AmmImpl implements AmmImplementation {
     preInstructions.push(setComputeUnitLimitIx);
 
     if (!aVaultAccount) {
-      const createVaultAIx = await VaultImpl.createPermissionlessVault(connection, payer, tokenInfoA, {
-        result: ResultType.INSTRUCTION,
-      });
+      const createVaultAIx = await VaultImpl.createPermissionlessVaultInstruction(connection, payer, tokenInfoA);
       createVaultAIx && preInstructions.push(createVaultAIx);
     } else {
       aVaultLpMint = aVaultAccount.lpMint; // Old vault doesn't have lp mint pda
     }
     if (!bVaultAccount) {
-      const createVaultBIx = await VaultImpl.createPermissionlessVault(connection, payer, tokenInfoB, {
-        result: ResultType.INSTRUCTION,
-      });
+      const createVaultBIx = await VaultImpl.createPermissionlessVaultInstruction(connection, payer, tokenInfoB);
       createVaultBIx && preInstructions.push(createVaultBIx);
     } else {
       bVaultLpMint = bVaultAccount.lpMint; // Old vault doesn't have lp mint pda
