@@ -1,6 +1,6 @@
 [package]
 name = "mercurial-amm"
-version = "0.1.5"
+version = "0.2.0"
 description = "Created with Anchor"
 edition = "2021"
 license = "MIT"
@@ -16,6 +16,7 @@ no-idl = []
 no-log-ix-name = []
 cpi = ["no-entrypoint"]
 default = []
+staging = []
 
 [profile.release]
 overflow-checks = true

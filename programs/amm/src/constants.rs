@@ -1,45 +1,34 @@
 //! Constants module includes constants value of the program
 
-/// Store constants related to PDA seeds
-pub mod seeds {
-    /// Prefix for apy PDA
-    pub static APY_PREFIX: &str = "apy";
-}
+/// Minimum seconds between last AMP changes
+pub static MIN_CHANGE_AMP_DURATION: u64 = 600; // 10 minutes
 
 /// Store constants related to fees
 pub mod fee {
     /// Trade fee numerator for constant product swap curve.
     // 25bps, https://docs.uniswap.org/protocol/V2/concepts/advanced-topics/fees
-    pub static CONSTANT_PRODUCT_TRADE_FEE_NUMERATOR: u64 = 25;
+    pub static CONSTANT_PRODUCT_TRADE_FEE_NUMERATOR: u64 = 250;
 
     /// Trade fee numerator for stable swap curve.
-    // 2bps, https://curve.fi/rootfaq
-    pub static STABLE_SWAP_TRADE_FEE_NUMERATOR: u64 = 2;
-    /// Trade fee denominator for all curve
-    pub static TRADE_FEE_DENOMINATOR: u64 = 10000;
+    // 1bps, https://curve.fi/rootfaq
+    pub static STABLE_SWAP_TRADE_FEE_NUMERATOR: u64 = 10;
 
     /// Admin trade fee numerator for constant product swap curve.
     // 5bps, https://docs.uniswap.org/protocol/V2/concepts/advanced-topics/fees
-    pub static CONSTANT_PRODUCT_ADMIN_TRADE_FEE_NUMERATOR: u64 = 5;
+    pub static CONSTANT_PRODUCT_ADMIN_TRADE_FEE_NUMERATOR: u64 = 50;
 
     /// Admin trade fee numerator for stable swap curve.
     // 2bps, https://curve.fi/rootfaq
-    pub static STABLE_SWAP_ADMIN_TRADE_FEE_NUMERATOR: u64 = 2;
+    pub static STABLE_SWAP_ADMIN_TRADE_FEE_NUMERATOR: u64 = 5;
 
     /// Host trade fee numerator
     // 20% of admin trade fee
-    pub static HOST_TRADE_FEE_NUMERATOR: u64 = 2000;
+    pub static HOST_TRADE_FEE_NUMERATOR: u64 = 20000;
 
-    /// Admin trade fee denominator
-    pub static ADMIN_TRADE_FEE_DENOMINATOR: u64 = 10000;
-    /// Default trade fee denominator
-    pub static DEFAULT_FEE_DENOMINATOR: u64 = 10000;
-}
-
-/// Store constants related to virtual price snapshot
-pub mod snapshot {
-    /// Seconds in 6 hours
-    pub static SIX_HOURS: i64 = 60 * 60 * 6;
+    /// Default fee denominator
+    pub static FEE_DENOMINATOR: u64 = 100000;
+    /// Max fee BPS
+    pub static MAX_FEE_BPS: u64 = 1000; // 1%
 }
 
 /// Store constants related to virtual price
@@ -57,7 +46,7 @@ pub mod stable_curve {
     /// Maximum supported amplification coefficient
     pub const MAX_AMP: u64 = 10_000;
     /// Maximum ramping of amplification coefficient
-    pub const MAX_A_CHANGE: u64 = 10;
+    pub const MAX_A_CHANGE: u64 = MAX_AMP;
 }
 
 /// Store constants related to depeg pool
