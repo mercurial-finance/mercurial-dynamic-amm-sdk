@@ -897,7 +897,7 @@ export default class AmmImpl implements AmmImplementation {
       'Constant product only supports balanced deposit',
     );
     invariant(
-      (!tokenAInAmount.isZero() && !tokenBInAmount.isZero()) || balance,
+      !(!tokenAInAmount.isZero() && !tokenBInAmount.isZero() && balance),
       'Deposit balance is not possible when both token in amount is non-zero',
     );
 
