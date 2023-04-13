@@ -151,7 +151,8 @@ export class StableSwap implements SwapCurve {
     );
     const newSwapDestinationAmount = computeY(JSBI.BigInt(this.amp), newSwapSourceAmount, invariantD);
 
-    let outAmount = upscaledSwapDestinationAmount.sub(new BN(newSwapDestinationAmount.toString()));
+    let outAmount = upscaledSwapDestinationAmount.sub(new BN(newSwapDestinationAmount.toString())).sub(new BN(1));
+
     let outAmountWithoutSlippage = this.computeOutAmountWithoutSlippage(
       upscaledSourceAmount,
       upscaledSwapSourceAmount,
