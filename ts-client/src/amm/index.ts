@@ -160,13 +160,6 @@ const deserializeAccountsBuffer = (accountInfoMap: Map<string, AccountTypeInfo>)
   }, new Map());
 };
 
-const computeFeeFraction = (feePct: number): { numerator: BN; denominator: BN } => {
-  return {
-    numerator: new BN(feePct * 1_000),
-    denominator: new BN(100_000),
-  };
-};
-
 export default class AmmImpl implements AmmImplementation {
   private opt: Opt = {
     cluster: 'mainnet-beta',
@@ -905,7 +898,7 @@ export default class AmmImpl implements AmmImplementation {
       const poolTokenAmountOut = this.swapCurve.computeD(tokenAInAmount, tokenBInAmount);
       return {
         poolTokenAmountOut,
-        minPoolTokenAmountOut: getMinAmountWithSlippage(poolTokenAmountOut, slippage),
+        minPoolTokenAmountOut: poolTokenAmountOut,
         tokenAInAmount: tokenAInAmount,
         tokenBInAmount: tokenBInAmount,
       };
