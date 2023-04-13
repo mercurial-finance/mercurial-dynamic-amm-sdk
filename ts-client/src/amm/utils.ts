@@ -3,6 +3,9 @@ import {
   calculateWithdrawableAmount,
   VaultState,
   getUnmintAmount,
+  IDL as VaultIDL,
+  VaultIdl,
+  PROGRAM_ID as VAULT_PROGRAM_ID,
 } from '@mercurial-finance/vault-sdk';
 import { AnchorProvider, BN, Program } from '@project-serum/anchor';
 import {
@@ -27,28 +30,32 @@ import invariant from 'invariant';
 import {
   CURVE_TYPE_ACCOUNTS,
   ERROR,
-  VIRTUAL_PRICE_PRECISION,
   WRAPPED_SOL_MINT,
   PROGRAM_ID,
-  VAULT_PROGRAM_ID,
+  VIRTUAL_PRICE_PRECISION,
+  PERMISSIONLESS_AMP,
 } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
-  ApyState,
+  ConstantProductCurve,
+  DepegLido,
+  DepegMarinade,
+  DepegNone,
   ParsedClockState,
   PoolInformation,
   PoolState,
+  StableSwapCurve,
   SwapQuoteParam,
   SwapResult,
-  VirtualPrice,
+  TokenMultiplier,
 } from './types';
-import { Amm, IDL as AmmIdl } from './idl';
-import { Vault, IDL as VaultIdl } from './vault-idl';
+import { Amm as AmmIdl, IDL as AmmIDL } from './idl';
+import { TokenInfo } from '@solana/spl-token-registry';
 
-export const createProgram = (connection: Connection, cluster: Cluster) => {
+export const createProgram = (connection: Connection, programId?: string) => {
   const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
-  const ammProgram = new Program<Amm>(AmmIdl, PROGRAM_ID, provider);
-  const vaultProgram = new Program<Vault>(VaultIdl, VAULT_PROGRAM_ID, provider);
+  const ammProgram = new Program<AmmIdl>(AmmIDL, programId ?? PROGRAM_ID, provider);
+  const vaultProgram = new Program<VaultIdl>(VaultIDL, VAULT_PROGRAM_ID, provider);
 
   return { provider, ammProgram, vaultProgram };
 };
@@ -217,68 +224,6 @@ export const getOnchainTime = async (connection: Connection) => {
   return currentTime;
 };
 
-// Typescript implementation of https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/src/state.rs#L87
-const getLastVirtualPrice = (apyState: ApyState): VirtualPrice | null => {
-  const { snapshot } = apyState;
-  const virtualPrices = snapshot.virtualPrices as VirtualPrice[];
-
-  let prev = ((_) => {
-    if (snapshot.pointer.eq(new BN(0))) {
-      return virtualPrices.length - 1;
-    } else {
-      return snapshot.pointer.toNumber() - 1;
-    }
-  })();
-
-  const virtualPrice = virtualPrices[prev];
-  if (virtualPrice.price.eq(new BN(0))) {
-    return null;
-  }
-  return virtualPrice;
-};
-
-const getVirtualPriceClosestToYesterday = (currentTimestamp: BN, apyState: ApyState): VirtualPrice | null => {
-  const secondsPerDay = new BN(86400);
-  let secondsClosestTo24H = new BN(Number.MAX_SAFE_INTEGER);
-  let virtualPriceClosestTo24H: VirtualPrice | null = null;
-  // Find virtual price closest to 24H, but must > 24H
-  for (const virtualPrice of apyState.snapshot.virtualPrices as VirtualPrice[]) {
-    if (currentTimestamp.gt(virtualPrice.timestamp)) {
-      const diff = currentTimestamp.sub(virtualPrice.timestamp);
-      if (diff.gte(secondsPerDay)) {
-        const secondsTo24H = diff.sub(secondsPerDay);
-        if (secondsTo24H.lt(secondsClosestTo24H) && virtualPrice.price.gt(new BN(0))) {
-          virtualPriceClosestTo24H = virtualPrice;
-        }
-      }
-    }
-  }
-  return virtualPriceClosestTo24H;
-};
-
-// Typescript implementation of https://github.com/mercurial-finance/mercurial-dynamic-amm/blob/main/programs/amm/src/state.rs#L101
-const getFirstVirtualPrice = (apyState: ApyState): VirtualPrice | null => {
-  const { snapshot } = apyState;
-  let initial = snapshot.pointer.toNumber();
-  let current = initial;
-
-  const virtualPrices = snapshot.virtualPrices as VirtualPrice[];
-
-  while ((current + 1) % virtualPrices.length != initial) {
-    if (virtualPrices[current].price.eq(new BN(0))) {
-      current = (current + 1) % virtualPrices.length;
-    } else {
-      break;
-    }
-  }
-
-  let virtualPrice = virtualPrices[current];
-  if (virtualPrice.price.eq(new BN(0))) {
-    return null;
-  }
-  return virtualPrice;
-};
-
 /**
  * Compute "actual" amount deposited to vault (precision loss)
  * @param depositAmount
@@ -315,7 +260,6 @@ export const computeActualDepositAmount = (
  * @param {BN} vaultALpSupply - The total amount of Vault A LP tokens in the pool.
  * @param {BN} vaultBLpSupply - The total amount of Vault B LP token in the pool.
  * @param {BN} poolLpSupply - The total amount of LP tokens in the pool.
- * @param {ApyState} apyState - ApyState
  * @param {SwapCurve} swapCurve - SwapCurve - the swap curve used to calculate the virtual price
  * @param {VaultState} vaultA - VaultState of vault A
  * @param {VaultState} vaultB - VaultState of Vault B
@@ -328,7 +272,6 @@ export const calculatePoolInfo = (
   vaultALpSupply: BN,
   vaultBLpSupply: BN,
   poolLpSupply: BN,
-  apyState: ApyState,
   swapCurve: SwapCurve,
   vaultA: VaultState,
   vaultB: VaultState,
@@ -339,49 +282,14 @@ export const calculatePoolInfo = (
   const tokenAAmount = getAmountByShare(poolVaultALp, vaultAWithdrawableAmount, vaultALpSupply);
   const tokenBAmount = getAmountByShare(poolVaultBLp, vaultBWithdrawableAmount, vaultBLpSupply);
 
-  let firstTimestamp = new BN(0);
-  let apy,
-    virtualPriceNumber = 0,
-    firstVirtualPriceNumber = 0;
-
   const d = swapCurve.computeD(tokenAAmount, tokenBAmount);
-
-  let latestVirtualPrice = new BN(0);
-  if (poolLpSupply.eq(new BN(0))) {
-    const lastVirtualPrice = getLastVirtualPrice(apyState);
-    if (lastVirtualPrice) {
-      latestVirtualPrice = lastVirtualPrice.price;
-    }
-  } else {
-    latestVirtualPrice = d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
-  }
-
-  virtualPriceNumber = latestVirtualPrice.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
-
-  const firstVirtualPrice = getVirtualPriceClosestToYesterday(currentTimestamp, apyState);
-
-  if (firstVirtualPrice && virtualPriceNumber > 0) {
-    // Compute APY
-    const second = virtualPriceNumber;
-    const first = firstVirtualPrice.price.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
-    const timeElapsed = currentTimestamp.sub(firstVirtualPrice.timestamp).toNumber();
-    const rate = second / first;
-    const frequency = (365 * 24 * 3600) / timeElapsed;
-    const compoundRate = rate ** frequency;
-    apy = (compoundRate - 1) * 100;
-
-    firstVirtualPriceNumber = first;
-    firstTimestamp = firstVirtualPrice.timestamp;
-  }
+  const virtualPriceBigNum = poolLpSupply.isZero() ? new BN(0) : d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
+  const virtualPrice = virtualPriceBigNum.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
 
   const poolInformation: PoolInformation = {
     tokenAAmount,
     tokenBAmount,
-    currentTimestamp,
-    apy,
-    firstTimestamp,
-    firstVirtualPrice: firstVirtualPriceNumber,
-    virtualPrice: virtualPriceNumber,
+    virtualPrice,
   };
 
   return poolInformation;
@@ -570,6 +478,116 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
   };
 };
 
+/**
+ * It takes two numbers, and returns three numbers
+ * @param {number} decimalA - The number of decimal places for token A.
+ * @param {number} decimalB - The number of decimal places for token B.
+ * @returns A TokenMultiplier object with the following properties:
+ * - tokenAMultiplier
+ * - tokenBMultiplier
+ * - precisionFactor
+ */
+export const computeTokenMultiplier = (decimalA: number, decimalB: number): TokenMultiplier => {
+  const precisionFactor = Math.max(decimalA, decimalB);
+  const tokenAMultiplier = new BN(10 ** (precisionFactor - decimalA));
+  const tokenBMultiplier = new BN(10 ** (precisionFactor - decimalB));
+  return {
+    tokenAMultiplier,
+    tokenBMultiplier,
+    precisionFactor,
+  };
+};
+
+/**
+ * It fetches the pool account from the AMM program, and returns the mint addresses for the two tokens
+ * @param {Connection} connection - Connection - The connection to the Solana cluster
+ * @param {string} poolAddress - The address of the pool account.
+ * @returns The tokenAMint and tokenBMint addresses for the pool.
+ */
+export async function getTokensMintFromPoolAddress(
+  connection: Connection,
+  poolAddress: string,
+  opt?: {
+    programId?: string;
+  },
+) {
+  const { ammProgram } = createProgram(connection, opt?.programId);
+
+  const poolAccount = await ammProgram.account.pool.fetchNullable(new PublicKey(poolAddress));
+
+  if (!poolAccount) return;
+
+  return {
+    tokenAMint: poolAccount.tokenAMint,
+    tokenBMint: poolAccount.tokenBMint,
+  };
+}
+
+export function derivePoolAddress(
+  connection: Connection,
+  tokenInfoA: TokenInfo,
+  tokenInfoB: TokenInfo,
+  isStable: boolean,
+  opt?: {
+    programId?: string;
+  },
+) {
+  const { ammProgram } = createProgram(connection, opt?.programId);
+  const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
+  const tokenAMint = new PublicKey(tokenInfoA.address);
+  const tokenBMint = new PublicKey(tokenInfoB.address);
+
+  const [poolPubkey] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from([encodeCurveType(curveType)]),
+      getFirstKey(tokenAMint, tokenBMint),
+      getSecondKey(tokenAMint, tokenBMint),
+    ],
+    ammProgram.programId,
+  );
+
+  return poolPubkey;
+}
+
+/**
+ * It checks if a pool exists by checking if the pool account exists
+ * @param {Connection} connection - Connection - the connection to the Solana cluster
+ * @param {TokenInfo} tokenInfoA - TokenInfo
+ * @param {TokenInfo} tokenInfoB - TokenInfo
+ * @param {boolean} isStable - boolean - whether the pool is stable or not
+ * @returns A boolean value.
+ */
+export async function checkPoolExists(
+  connection: Connection,
+  tokenInfoA: TokenInfo,
+  tokenInfoB: TokenInfo,
+  isStable: boolean,
+  opt?: {
+    programId: string;
+  },
+): Promise<PublicKey | undefined> {
+  const { ammProgram } = createProgram(connection, opt?.programId);
+
+  const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
+
+  const tokenAMint = new PublicKey(tokenInfoA.address);
+  const tokenBMint = new PublicKey(tokenInfoB.address);
+  const [poolPubkey] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from([encodeCurveType(curveType)]),
+      getFirstKey(tokenAMint, tokenBMint),
+      getSecondKey(tokenAMint, tokenBMint),
+    ],
+    ammProgram.programId,
+  );
+
+  const poolAccount = await ammProgram.account.pool.fetchNullable(poolPubkey);
+
+  if (!poolAccount) return;
+
+  return poolPubkey;
+}
+
 export function chunks<T>(array: T[], size: number): T[][] {
   return Array.apply<number, T[], T[][]>(0, new Array(Math.ceil(array.length / size))).map((_, index) =>
     array.slice(index * size, (index + 1) * size),
@@ -587,4 +605,64 @@ export async function chunkedGetMultipleAccountInfos(
   ).flat();
 
   return accountInfos;
+}
+
+export function encodeCurveType(curve: StableSwapCurve | ConstantProductCurve) {
+  if (curve['constantProduct']) {
+    return 0;
+  } else if (curve['stable']) {
+    return 1;
+  } else {
+    throw new Error('Unknown curve type');
+  }
+}
+
+export function getSecondKey(key1: PublicKey, key2: PublicKey) {
+  const buf1 = key1.toBuffer();
+  const buf2 = key2.toBuffer();
+  // Buf1 > buf2
+  if (Buffer.compare(buf1, buf2) == 1) {
+    return buf2;
+  }
+  return buf1;
+}
+
+export function getFirstKey(key1: PublicKey, key2: PublicKey) {
+  const buf1 = key1.toBuffer();
+  const buf2 = key2.toBuffer();
+  // Buf1 > buf2
+  if (Buffer.compare(buf1, buf2) == 1) {
+    return buf1;
+  }
+  return buf2;
+}
+
+export const DepegType = {
+  none: (): DepegNone => {
+    return {
+      none: {},
+    };
+  },
+  marinade: (): DepegMarinade => {
+    return {
+      marinade: {},
+    };
+  },
+  lido: (): DepegLido => {
+    return {
+      lido: {},
+    };
+  },
+};
+
+export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, isStable: boolean) {
+  return isStable
+    ? {
+        stable: {
+          amp: PERMISSIONLESS_AMP,
+          tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
+          depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType: DepegType.none() },
+        },
+      }
+    : { constantProduct: {} };
 }

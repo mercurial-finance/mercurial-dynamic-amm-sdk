@@ -9,7 +9,6 @@ export const ERROR = {
 };
 
 export const PROGRAM_ID = 'Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB';
-export const VAULT_PROGRAM_ID = '24Uqj9JCLxUeoC3hGfh5W3s9FM9uCHDS2SG3LYwBpyTi';
 
 export const DEVNET_COIN: Array<TokenInfo> = [
   {
@@ -99,7 +98,11 @@ export const CURVE_TYPE_ACCOUNTS = {
 
 export const SEEDS = Object.freeze({
   APY: 'apy',
+  FEE: 'fee',
+  LP_MINT: 'lp_mint',
 });
+
+export const VAULT_BASE_KEY = new PublicKey('HWzXGcGHy4tcpYfaRDCyLNzXqBTv3E6BttpCH2vJxArv');
 
 export const POOL_BASE_KEY = new PublicKey('H9NnqW5Thn9dUzW3DRXe2xDhKjwZd4qbjngnZwEvnDuC');
 
@@ -110,3 +113,7 @@ export const DEFAULT_SLIPPAGE = 1;
 export const UNLOCK_AMOUNT_BUFFER = 0.998;
 
 export const VIRTUAL_PRICE_PRECISION = new BN(100_000_000);
+
+export const PERMISSIONLESS_AMP = new BN(100);
+
+export const FEE_OWNER = new PublicKey('6WaLrrRfReGKBYUSkmx2K6AuT21ida4j8at2SUiZdXu8');

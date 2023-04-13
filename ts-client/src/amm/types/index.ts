@@ -1,10 +1,13 @@
 import { AccountInfo, PublicKey, Transaction } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { IdlAccounts, IdlTypes } from '@project-serum/anchor';
+import { IdlAccounts, IdlTypes, Program } from '@project-serum/anchor';
 import BN from 'bn.js';
 import { Amm as AmmIdl } from '../idl';
-import { VaultState } from '@mercurial-finance/vault-sdk';
+import { VaultState, VaultIdl } from '@mercurial-finance/vault-sdk';
 import Decimal from 'decimal.js';
+
+export type AmmProgram = Program<AmmIdl>;
+export type VaultProgram = Program<VaultIdl>;
 
 export interface AmmImplementation {
   tokenA: TokenInfo;
@@ -15,7 +18,7 @@ export interface AmmImplementation {
   getPoolTokenMint: () => PublicKey;
   getUserBalance: (owner: PublicKey) => Promise<BN>;
   getLpSupply: () => Promise<BN>;
-  getSwapQuote: (inTokenMint: PublicKey, inAmountLamport: BN, slippage: number) => BN;
+  getSwapQuote: (inTokenMint: PublicKey, inAmountLamport: BN, slippage: number) => SwapQuote;
   swap: (owner: PublicKey, inTokenMint: PublicKey, inAmountLamport: BN, outAmountLamport: BN) => Promise<Transaction>;
   getDepositQuote: (tokenAInAmount: BN, tokenBInAmount: BN, isImbalance: boolean, slippage: number) => DepositQuote;
   deposit: (owner: PublicKey, tokenAInAmount: BN, tokenBInAmount: BN, poolTokenAmount: BN) => Promise<Transaction>;
@@ -27,6 +30,14 @@ export interface AmmImplementation {
     tokenBOutAmount: BN,
   ) => Promise<Transaction>;
 }
+
+export type SwapQuote = {
+  swapInAmount: BN;
+  swapOutAmount: BN;
+  minSwapOutAmount: BN;
+  fee: BN;
+  priceImpact: Decimal;
+};
 
 export type DepositQuote = {
   poolTokenAmountOut: BN;
@@ -112,28 +123,31 @@ export interface TokenMultiplier {
   precisionFactor: number;
 }
 
-export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType' | 'fees'> & {
+export type PoolType = PermissionedType | PermissionedlessType;
+
+export type PermissionedType = {
+  Permissioned: {};
+};
+
+export type PermissionedlessType = {
+  Permissionless: {};
+};
+
+export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType' | 'fees' | 'poolType'> & {
   curveType: CurveType;
   fees: PoolFees;
+  poolType: PoolType;
 };
 export type Depeg = Omit<IdlTypes<AmmIdl>['Depeg'], 'depegType'> & { depegType: DepegType };
 export type PoolFees = IdlTypes<AmmIdl>['PoolFees'];
-export type VirtualPrice = IdlTypes<AmmIdl>['VirtualPrice'];
-export type SnapShot = IdlTypes<AmmIdl>['SnapShot'];
-export type ApyState = Omit<IdlAccounts<AmmIdl>['apy'], 'snapshot'> & { snapshot: SnapShot };
 
 export type PoolInformation = {
-  firstTimestamp: BN;
-  currentTimestamp: BN;
-  firstVirtualPrice: number;
-  virtualPrice: number;
   tokenAAmount: BN;
   tokenBAmount: BN;
-  apy: number;
+  virtualPrice: number;
 };
 
 export type AccountsInfo = {
-  apy: ApyState;
   vaultAReserve: BN;
   vaultBReserve: BN;
   vaultALpSupply: BN;

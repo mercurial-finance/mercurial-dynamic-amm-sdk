@@ -1,3 +1,4 @@
+import { VaultIdl as Vault, IDL as VaultIdl } from '@mercurial-finance/vault-sdk';
 import AmmImpl from './src/amm';
 import { StableSwap, ConstantProductSwap } from './src/amm/curve';
 import { PROGRAM_ID, MAINNET_POOL, DEVNET_POOL, CURVE_TYPE_ACCOUNTS } from './src/amm/constants';
@@ -7,9 +8,11 @@ import {
   calculateSwapQuote,
   calculatePoolInfo,
   getDepegAccounts,
+  checkPoolExists,
+  getTokensMintFromPoolAddress,
+  derivePoolAddress,
 } from './src/amm/utils';
 import { Amm, IDL as AmmIdl } from './src/amm/idl';
-import { Vault, IDL as VaultIdl } from './src/amm/vault-idl';
 
 export default AmmImpl;
 export {
@@ -22,6 +25,9 @@ export {
   calculateMaxSwapOutAmount,
   calculateSwapQuote,
   calculatePoolInfo,
+  checkPoolExists,
+  getTokensMintFromPoolAddress,
+  derivePoolAddress,
   // Constant
   PROGRAM_ID,
   MAINNET_POOL,
@@ -36,6 +42,7 @@ export type {
   AmmImplementation,
   DepositQuote,
   WithdrawQuote,
+  SwapQuote,
   PoolState,
   PoolInformation,
   ParsedClockState,
