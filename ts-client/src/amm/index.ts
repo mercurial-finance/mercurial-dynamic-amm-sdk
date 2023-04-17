@@ -196,6 +196,7 @@ export default class AmmImpl implements AmmImplementation {
     opt?: {
       allowOwnerOffCurve?: boolean;
       cluster?: Cluster;
+      programId?: string;
     },
   ): Promise<AmmImpl[]> {
     const cluster = opt?.cluster ?? 'mainnet-beta';

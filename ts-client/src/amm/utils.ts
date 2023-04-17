@@ -45,9 +45,9 @@ import {
 import { Amm, IDL as AmmIdl } from './idl';
 import { Vault, IDL as VaultIdl } from './vault-idl';
 
-export const createProgram = (connection: Connection, cluster: Cluster) => {
+export const createProgram = (connection: Connection, programId: Cluster) => {
   const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
-  const ammProgram = new Program<Amm>(AmmIdl, PROGRAM_ID, provider);
+  const ammProgram = new Program<Amm>(AmmIdl, programId ?? PROGRAM_ID, provider);
   const vaultProgram = new Program<Vault>(VaultIdl, VAULT_PROGRAM_ID, provider);
 
   return { provider, ammProgram, vaultProgram };
