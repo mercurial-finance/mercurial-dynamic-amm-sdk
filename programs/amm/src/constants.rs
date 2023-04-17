@@ -3,6 +3,12 @@
 /// Minimum seconds between last AMP changes
 pub static MIN_CHANGE_AMP_DURATION: u64 = 600; // 10 minutes
 
+/// Store constants related to PDA seeds
+pub mod seeds {
+    /// Prefix for apy PDA
+    pub static APY_PREFIX: &str = "apy";
+}
+
 /// Store constants related to fees
 pub mod fee {
     /// Trade fee numerator for constant product swap curve.
