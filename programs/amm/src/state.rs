@@ -14,12 +14,7 @@ pub struct Padding {
     /// Padding 0
     pub padding_0: [u8; 15], // 15
     /// Padding 1
-    pub padding: [u128; 31], // 496
-}
-
-impl Padding {
-    /// Space for rental
-    pub const SPACE: usize = 511;
+    pub padding: [u128; 29], // 464
 }
 
 /// Pool type
@@ -68,6 +63,8 @@ pub struct Pool {
     pub fees: PoolFees, //48
     /// Pool type
     pub pool_type: PoolType,
+    /// Stake pubkey of SPL stake pool
+    pub stake: Pubkey,
     /// Padding for future pool field
     pub padding: Padding, // 512 Refer: curve_type.rs for the test
     /// The type of the swap curve supported by the pool.
