@@ -75,6 +75,7 @@ pub struct Pool {
     pub curve_type: CurveType, //9
 }
 
+#[deprecated]
 #[derive(AnchorDeserialize, AnchorSerialize, Debug, Default, Clone, Copy)]
 /// Virtual price snapshot
 pub struct VirtualPrice {
@@ -84,6 +85,7 @@ pub struct VirtualPrice {
     pub timestamp: i64, // 8
 }
 
+#[deprecated]
 #[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone)]
 /// Store virtual price snapshots. One snapshot will be stored per time window (6 hour). Support up to maximum 1 week (7 days)
 pub struct SnapShot {
@@ -145,6 +147,7 @@ impl SnapShot {
     }
 }
 
+#[deprecated]
 #[account]
 #[derive(Default, Debug)]
 /// An PDA. Store virtual prices of the pool. Used for APY calculation.
