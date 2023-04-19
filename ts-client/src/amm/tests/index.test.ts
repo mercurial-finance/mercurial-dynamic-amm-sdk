@@ -605,7 +605,54 @@ describe('Interact with Devnet pool', () => {
   });
 });
 
-describe.only('Interact with Mainnet pool', () => {
+describe('Staging pool', () => {
+  let splBasedDepegPool: AmmImpl;
+  const jitoSolDepegPool = new PublicKey('HcHN59j1xArjLuqfCMJ96yJ2CKatxHMFABEZWvcfPrYZ');
+
+  beforeAll(async () => {
+    const tokenMap = await new TokenListProvider().resolve().then((tokens) => {
+      return tokens.filterByClusterSlug('mainnet-beta').getList();
+    });
+    const SOL = tokenMap.find((token) => token.address === 'So11111111111111111111111111111111111111112');
+    const jitoSOL: TokenInfo = {
+      chainId: SOL!.chainId,
+      address: 'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn',
+      symbol: 'JitoSol',
+      name: 'Jito Sol',
+      decimals: SOL!.decimals,
+    };
+
+    splBasedDepegPool = await AmmImpl.create(MAINNET.connection, jitoSolDepegPool, SOL!, jitoSOL);
+  });
+
+  test('SOL → JitoSOL swap quote', async () => {
+    const solInAmount = new BN('10000');
+    const { swapOutAmount } = splBasedDepegPool.getSwapQuote(
+      new PublicKey(splBasedDepegPool.tokenA.address),
+      solInAmount,
+      DEFAULT_SLIPPAGE,
+    );
+
+    // SOL → JitoSOL get less
+    console.log(`${solInAmount.toString()} SOL → ${swapOutAmount.toString()} JitoSOL`);
+    expect(swapOutAmount.toNumber()).toBeLessThan(solInAmount.toNumber());
+  });
+
+  test('JitoSOL → SOL swap quote', async () => {
+    const jitoSolInAmount = new BN('10000');
+    const { swapOutAmount } = splBasedDepegPool.getSwapQuote(
+      new PublicKey(splBasedDepegPool.tokenB.address),
+      jitoSolInAmount,
+      DEFAULT_SLIPPAGE,
+    );
+
+    // JitoSOL → SOL get more
+    console.log(`${jitoSolInAmount.toString()} JitoSOL → ${swapOutAmount.toString()} SOL`);
+    expect(swapOutAmount.toNumber()).toBeGreaterThan(jitoSolInAmount.toNumber());
+  });
+});
+
+describe('Interact with Mainnet pool', () => {
   let stablePool: AmmImpl;
   let cpPool: AmmImpl;
   let depegPool: AmmImpl;
