@@ -387,7 +387,7 @@ export default class AmmImpl implements AmmImplementation {
       { pubkey: SYSVAR_CLOCK_PUBKEY, type: AccountType.SYSVAR_CLOCK },
     ]);
     const accountsInfoMap = deserializeAccountsBuffer(accountsBufferMap);
-    const depegAccounts = await getDepegAccounts(ammProgram.provider.connection);
+    const depegAccounts = await getDepegAccounts(ammProgram.provider.connection, poolsState);
 
     const ammImpls = await Promise.all(
       accountsToFetch.map(async (accounts) => {
@@ -433,7 +433,14 @@ export default class AmmImpl implements AmmImplementation {
         let swapCurve;
         if ('stable' in poolState.curveType) {
           const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'] as any;
-          swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, currentTime);
+          swapCurve = new StableSwap(
+            amp.toNumber(),
+            tokenMultiplier,
+            depeg,
+            depegAccounts,
+            currentTime,
+            poolState.stake,
+          );
         } else {
           swapCurve = new ConstantProductSwap();
         }
@@ -564,12 +571,12 @@ export default class AmmImpl implements AmmImplementation {
       poolLpSupply,
     };
 
-    const depegAccounts = await getDepegAccounts(ammProgram.provider.connection);
+    const depegAccounts = await getDepegAccounts(ammProgram.provider.connection, [poolState]);
 
     let swapCurve;
     if ('stable' in poolState.curveType) {
       const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'] as any;
-      swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, currentTime);
+      swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, currentTime, poolState.stake);
     } else {
       swapCurve = new ConstantProductSwap();
     }
@@ -670,7 +677,14 @@ export default class AmmImpl implements AmmImplementation {
     if (this.isStablePool) {
       // update swap curve
       const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
-      this.swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, this.depegAccounts, currentTime);
+      this.swapCurve = new StableSwap(
+        amp.toNumber(),
+        tokenMultiplier,
+        depeg,
+        this.depegAccounts,
+        currentTime,
+        poolState.stake,
+      );
     }
 
     const poolInfo = calculatePoolInfo(

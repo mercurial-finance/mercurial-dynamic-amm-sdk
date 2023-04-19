@@ -112,11 +112,15 @@ export type DepegMarinade = {
   marinade: {};
 };
 
+export type DepegSplStake = {
+  splStake: {};
+};
+
 export type DepegLido = {
   lido: {};
 };
 
-export type DepegType = DepegNone | DepegMarinade | DepegLido;
+export type DepegType = DepegNone | DepegMarinade | DepegLido | DepegSplStake;
 
 export interface TokenMultiplier {
   tokenAMultiplier: BN;

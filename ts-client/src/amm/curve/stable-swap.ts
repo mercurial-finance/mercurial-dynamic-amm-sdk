@@ -14,7 +14,7 @@ import { Token, TokenAmount, Percent, ChainId } from '@saberhq/token-utils';
 import { AccountInfo, Connection, Keypair, PublicKey } from '@solana/web3.js';
 import MarinadeIDL from '../marinade-finance.json';
 import { CURVE_TYPE_ACCOUNTS } from '../constants';
-import { Depeg, DepegType, PoolFees, TokenMultiplier } from '../types';
+import { Depeg, DepegType, PoolFees, StakePool, StakePoolLayout, TokenMultiplier } from '../types';
 import Decimal from 'decimal.js';
 
 // Precision for base pool virtual price
@@ -28,6 +28,7 @@ export class StableSwap implements SwapCurve {
     private depeg: Depeg,
     private extraAccounts: Map<String, AccountInfo<Buffer>>,
     private onChainTime: BN,
+    private stakePoolPubkey: PublicKey,
   ) {}
 
   private getBasePoolVirtualPrice(depegType: DepegType): BN {
@@ -44,6 +45,11 @@ export class StableSwap implements SwapCurve {
       const stSolSupply = new BN(account!.data.readBigInt64LE(73).toString());
       const stSolBalance = new BN(account!.data.readBigInt64LE(81).toString());
       return stSolBalance.mul(PRECISION).div(stSolSupply);
+    }
+    if (depegType['splStake']) {
+      const account = this.extraAccounts.get(this.stakePoolPubkey.toBase58());
+      const stakePool: StakePool = StakePoolLayout.decode(account!.data);
+      return stakePool.totalLamports.mul(PRECISION).div(stakePool.poolTokenSupply);
     }
     throw new Error('UnsupportedBasePool');
   }
