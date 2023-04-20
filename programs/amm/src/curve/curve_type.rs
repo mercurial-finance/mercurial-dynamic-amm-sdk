@@ -23,6 +23,8 @@ pub enum DepegType {
     Marinade,
     /// A depeg pool belongs to solido
     Lido,
+    /// A depeg pool belongs to SPL stake pool program
+    SplStake,
 }
 
 impl Default for DepegType {

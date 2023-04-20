@@ -3,8 +3,8 @@ import AmmImpl from '../index';
 import { DEFAULT_SLIPPAGE, MAINNET_POOL, DEVNET_POOL, DEVNET_COIN } from '../constants';
 import { AnchorProvider, BN, Wallet } from '@project-serum/anchor';
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
-import { TokenListProvider } from '@solana/spl-token-registry';
-import { calculateSwapQuote, getDepegAccounts } from '../utils';
+import { TokenListProvider, TokenInfo } from '@solana/spl-token-registry';
+import { calculateSwapQuote, getDepegAccounts, getOnchainTime } from '../utils';
 import { airDropSol } from './utils';
 
 let mockWallet = new Wallet(
@@ -81,14 +81,18 @@ describe('Interact with Devnet pool', () => {
   test('Swap SOL → USDT', async () => {
     const inAmountLamport = new BN(0.1 * 10 ** cpPool.tokenB.decimals);
 
-    const quote = cpPool.getSwapQuote(new PublicKey(cpPool.tokenB.address), inAmountLamport, DEFAULT_SLIPPAGE);
-    expect(quote.toNumber()).toBeGreaterThan(0);
+    const { swapOutAmount, minSwapOutAmount } = cpPool.getSwapQuote(
+      new PublicKey(cpPool.tokenB.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
+    expect(swapOutAmount.toNumber()).toBeGreaterThan(0);
 
     const swapTx = await cpPool.swap(
       mockWallet.publicKey,
       new PublicKey(cpPool.tokenB.address),
       inAmountLamport,
-      quote,
+      minSwapOutAmount,
     );
 
     try {
@@ -104,14 +108,18 @@ describe('Interact with Devnet pool', () => {
   test('Swap USDT → SOL', async () => {
     const inAmountLamport = new BN(0.1 * 10 ** cpPool.tokenA.decimals);
 
-    const quote = cpPool.getSwapQuote(new PublicKey(cpPool.tokenA.address), inAmountLamport, DEFAULT_SLIPPAGE);
-    expect(quote.toNumber()).toBeGreaterThan(0);
+    const { swapOutAmount, minSwapOutAmount } = cpPool.getSwapQuote(
+      new PublicKey(cpPool.tokenA.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
+    expect(swapOutAmount.toNumber()).toBeGreaterThan(0);
 
     const swapTx = await cpPool.swap(
       mockWallet.publicKey,
       new PublicKey(cpPool.tokenA.address),
       inAmountLamport,
-      quote,
+      minSwapOutAmount,
     );
 
     try {
@@ -126,14 +134,18 @@ describe('Interact with Devnet pool', () => {
 
   test('SWAP USDT -> USDC', async () => {
     const inAmountLamport = new BN(0.1 * 10 ** stablePool.tokenA.decimals);
-    const quote = stablePool.getSwapQuote(new PublicKey(stablePool.tokenA.address), inAmountLamport, DEFAULT_SLIPPAGE);
-    expect(Number(quote)).toBeGreaterThan(0);
+    const { swapOutAmount, minSwapOutAmount } = stablePool.getSwapQuote(
+      new PublicKey(stablePool.tokenA.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
+    expect(swapOutAmount.toNumber()).toBeGreaterThan(0);
 
     const swapTx = await stablePool.swap(
       mockWallet.publicKey,
       new PublicKey(stablePool.tokenA.address),
       inAmountLamport,
-      quote,
+      minSwapOutAmount,
     );
 
     try {
@@ -148,14 +160,18 @@ describe('Interact with Devnet pool', () => {
 
   test('SWAP USDC -> USDT', async () => {
     const inAmountLamport = new BN(0.1 * 10 ** stablePool.tokenB.decimals);
-    const quote = stablePool.getSwapQuote(new PublicKey(stablePool.tokenB.address), inAmountLamport, DEFAULT_SLIPPAGE);
-    expect(Number(quote)).toBeGreaterThan(0);
+    const { swapOutAmount, minSwapOutAmount } = stablePool.getSwapQuote(
+      new PublicKey(stablePool.tokenB.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
+    expect(swapOutAmount.toNumber()).toBeGreaterThan(0);
 
     const swapTx = await stablePool.swap(
       mockWallet.publicKey,
       new PublicKey(stablePool.tokenB.address),
       inAmountLamport,
-      quote,
+      minSwapOutAmount,
     );
 
     try {
@@ -171,14 +187,18 @@ describe('Interact with Devnet pool', () => {
   test('Swap SOL → mSOL', async () => {
     const inAmountLamport = new BN(0.01 * 10 ** depegPool.tokenA.decimals);
 
-    const quote = depegPool.getSwapQuote(new PublicKey(depegPool.tokenA.address), inAmountLamport, DEFAULT_SLIPPAGE);
-    expect(Number(quote)).toBeGreaterThan(0);
+    const { swapOutAmount, minSwapOutAmount } = depegPool.getSwapQuote(
+      new PublicKey(depegPool.tokenA.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
+    expect(swapOutAmount.toNumber()).toBeGreaterThan(0);
 
     const swapTx = await depegPool.swap(
       mockWallet.publicKey,
       new PublicKey(depegPool.tokenA.address),
       inAmountLamport,
-      quote,
+      minSwapOutAmount,
     );
 
     try {
@@ -194,19 +214,23 @@ describe('Interact with Devnet pool', () => {
   test('Swap mSOL → SOL', async () => {
     const inAmountLamport = new BN(0.01 * 10 ** depegPool.tokenB.decimals);
 
-    const quote = depegPool.getSwapQuote(new PublicKey(depegPool.tokenB.address), inAmountLamport, DEFAULT_SLIPPAGE);
-    expect(Number(quote)).toBeGreaterThan(0);
+    const { swapOutAmount, minSwapOutAmount } = depegPool.getSwapQuote(
+      new PublicKey(depegPool.tokenB.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
+    expect(swapOutAmount.toNumber()).toBeGreaterThan(0);
 
     const swapTx = await depegPool.swap(
       mockWallet.publicKey,
       new PublicKey(depegPool.tokenB.address),
       inAmountLamport,
-      quote,
+      minSwapOutAmount,
     );
 
     try {
       const swapResult = await provider.sendAndConfirm(swapTx);
-      console.log('Swap Result of SOL → mSOL', swapResult);
+      console.log('Swap Result of mSOL → SOL', swapResult);
       expect(typeof swapResult).toBe('string');
     } catch (error: any) {
       console.trace(error);
@@ -273,7 +297,7 @@ describe('Interact with Devnet pool', () => {
     const inAmountALamport = new BN(0.1 * 10 ** stablePool.tokenA.decimals);
     const inAmountBLamport = new BN(0.1 * 10 ** stablePool.tokenB.decimals);
 
-    const { poolTokenAmountOut, tokenAInAmount, tokenBInAmount } = stablePool.getDepositQuote(
+    const { minPoolTokenAmountOut, tokenAInAmount, tokenBInAmount } = stablePool.getDepositQuote(
       inAmountALamport,
       inAmountBLamport,
       false,
@@ -284,7 +308,7 @@ describe('Interact with Devnet pool', () => {
       mockWallet.publicKey,
       tokenAInAmount,
       tokenBInAmount,
-      poolTokenAmountOut,
+      minPoolTokenAmountOut,
     );
 
     try {
@@ -305,7 +329,7 @@ describe('Interact with Devnet pool', () => {
   test('Deposit USDT in USDT-USDC (balance)', async () => {
     const inAmountALamport = new BN(0.1 * 10 ** stablePool.tokenA.decimals);
 
-    const { poolTokenAmountOut, tokenBInAmount } = stablePool.getDepositQuote(
+    const { minPoolTokenAmountOut, tokenBInAmount } = stablePool.getDepositQuote(
       inAmountALamport,
       new BN(0),
       true,
@@ -316,7 +340,7 @@ describe('Interact with Devnet pool', () => {
       mockWallet.publicKey,
       inAmountALamport,
       tokenBInAmount,
-      poolTokenAmountOut,
+      minPoolTokenAmountOut,
     );
 
     try {
@@ -338,7 +362,7 @@ describe('Interact with Devnet pool', () => {
     const inAmountALamport = new BN(0.1 * 10 ** depegPool.tokenA.decimals);
     const inAmountBLamport = new BN(0.1 * 10 ** depegPool.tokenB.decimals);
 
-    const { poolTokenAmountOut } = depegPool.getDepositQuote(
+    const { minPoolTokenAmountOut, tokenAInAmount, tokenBInAmount } = depegPool.getDepositQuote(
       inAmountALamport,
       inAmountBLamport,
       false,
@@ -347,9 +371,9 @@ describe('Interact with Devnet pool', () => {
 
     const depositTx = await depegPool.deposit(
       mockWallet.publicKey,
-      inAmountALamport,
-      inAmountBLamport,
-      poolTokenAmountOut,
+      tokenAInAmount,
+      tokenBInAmount,
+      minPoolTokenAmountOut,
     );
 
     try {
@@ -370,7 +394,7 @@ describe('Interact with Devnet pool', () => {
   test('Deposit SOL in SOL-mSOL (imbalance)', async () => {
     const inAmountALamport = new BN(0.1 * 10 ** depegPool.tokenA.decimals);
 
-    const { poolTokenAmountOut, tokenBInAmount } = depegPool.getDepositQuote(
+    const { minPoolTokenAmountOut, tokenBInAmount } = depegPool.getDepositQuote(
       inAmountALamport,
       new BN(0),
       false,
@@ -381,7 +405,7 @@ describe('Interact with Devnet pool', () => {
       mockWallet.publicKey,
       inAmountALamport,
       tokenBInAmount,
-      poolTokenAmountOut,
+      minPoolTokenAmountOut,
     );
 
     try {
@@ -402,7 +426,7 @@ describe('Interact with Devnet pool', () => {
   test('Deposit SOL in SOL-mSOL (balance)', async () => {
     const inAmountALamport = new BN(0.1 * 10 ** depegPool.tokenA.decimals);
 
-    const { poolTokenAmountOut, tokenBInAmount } = depegPool.getDepositQuote(
+    const { minPoolTokenAmountOut, tokenBInAmount } = depegPool.getDepositQuote(
       inAmountALamport,
       new BN(0),
       true,
@@ -413,7 +437,7 @@ describe('Interact with Devnet pool', () => {
       mockWallet.publicKey,
       inAmountALamport,
       tokenBInAmount,
-      poolTokenAmountOut,
+      minPoolTokenAmountOut,
     );
 
     try {
@@ -434,13 +458,13 @@ describe('Interact with Devnet pool', () => {
   test('Withdraw from USDT-SOL pool', async () => {
     const outTokenAmountLamport = new BN(0.1 * 10 ** cpPool.decimals);
 
-    const { tokenAOutAmount, tokenBOutAmount } = await cpPool.getWithdrawQuote(outTokenAmountLamport, DEFAULT_SLIPPAGE);
+    const { minTokenAOutAmount, minTokenBOutAmount } = cpPool.getWithdrawQuote(outTokenAmountLamport, DEFAULT_SLIPPAGE);
 
     const withdrawTx = await cpPool.withdraw(
       mockWallet.publicKey,
       outTokenAmountLamport,
-      tokenAOutAmount,
-      tokenBOutAmount,
+      minTokenAOutAmount,
+      minTokenBOutAmount,
     );
 
     try {
@@ -461,7 +485,7 @@ describe('Interact with Devnet pool', () => {
   test('Withdraw USDT from USDT-USDC', async () => {
     const outTokenAmountLamport = new BN(0.1 * 10 ** stablePool.decimals);
 
-    const { tokenAOutAmount, tokenBOutAmount } = await stablePool.getWithdrawQuote(
+    const { minTokenAOutAmount, minTokenBOutAmount } = stablePool.getWithdrawQuote(
       outTokenAmountLamport,
       DEFAULT_SLIPPAGE,
       new PublicKey(stablePool.tokenA.address),
@@ -470,8 +494,8 @@ describe('Interact with Devnet pool', () => {
     const withdrawTx = await stablePool.withdraw(
       mockWallet.publicKey,
       outTokenAmountLamport,
-      tokenAOutAmount,
-      tokenBOutAmount,
+      minTokenAOutAmount,
+      minTokenBOutAmount,
     );
 
     try {
@@ -492,7 +516,7 @@ describe('Interact with Devnet pool', () => {
   test('Withdraw USDC and USDT from USDT-USDC', async () => {
     const outTokenAmountLamport = new BN(0.1 * 10 ** stablePool.decimals);
 
-    const { tokenAOutAmount, tokenBOutAmount } = await stablePool.getWithdrawQuote(
+    const { minTokenAOutAmount, minTokenBOutAmount } = stablePool.getWithdrawQuote(
       outTokenAmountLamport,
       DEFAULT_SLIPPAGE,
     );
@@ -500,8 +524,8 @@ describe('Interact with Devnet pool', () => {
     const withdrawTx = await stablePool.withdraw(
       mockWallet.publicKey,
       outTokenAmountLamport,
-      tokenAOutAmount,
-      tokenBOutAmount,
+      minTokenAOutAmount,
+      minTokenBOutAmount,
     );
 
     try {
@@ -522,7 +546,7 @@ describe('Interact with Devnet pool', () => {
   test('Withdraw SOL from SOL-mSOL', async () => {
     const outTokenAmountLamport = new BN(0.1 * 10 ** depegPool.decimals);
 
-    const { tokenAOutAmount, tokenBOutAmount } = await depegPool.getWithdrawQuote(
+    const { minTokenAOutAmount, minTokenBOutAmount } = depegPool.getWithdrawQuote(
       outTokenAmountLamport,
       DEFAULT_SLIPPAGE,
       new PublicKey(depegPool.tokenB.address),
@@ -531,8 +555,8 @@ describe('Interact with Devnet pool', () => {
     const withdrawTx = await depegPool.withdraw(
       mockWallet.publicKey,
       outTokenAmountLamport,
-      tokenAOutAmount,
-      tokenBOutAmount,
+      minTokenAOutAmount,
+      minTokenBOutAmount,
     );
 
     try {
@@ -553,7 +577,7 @@ describe('Interact with Devnet pool', () => {
   test('Withdraw mSOL from SOL-mSOL', async () => {
     const outTokenAmountLamport = new BN(0.1 * 10 ** depegPool.decimals);
 
-    const { tokenAOutAmount, tokenBOutAmount } = await depegPool.getWithdrawQuote(
+    const { minTokenAOutAmount, minTokenBOutAmount } = depegPool.getWithdrawQuote(
       outTokenAmountLamport,
       DEFAULT_SLIPPAGE,
       new PublicKey(depegPool.tokenB.address),
@@ -562,8 +586,8 @@ describe('Interact with Devnet pool', () => {
     const withdrawTx = await depegPool.withdraw(
       mockWallet.publicKey,
       outTokenAmountLamport,
-      tokenAOutAmount,
-      tokenBOutAmount,
+      minTokenAOutAmount,
+      minTokenBOutAmount,
     );
 
     try {
@@ -578,6 +602,53 @@ describe('Interact with Devnet pool', () => {
       console.trace(error);
       throw new Error(error.message);
     }
+  });
+});
+
+describe('Staging pool', () => {
+  let splBasedDepegPool: AmmImpl;
+  const jitoSolDepegPool = new PublicKey('HcHN59j1xArjLuqfCMJ96yJ2CKatxHMFABEZWvcfPrYZ');
+
+  beforeAll(async () => {
+    const tokenMap = await new TokenListProvider().resolve().then((tokens) => {
+      return tokens.filterByClusterSlug('mainnet-beta').getList();
+    });
+    const SOL = tokenMap.find((token) => token.address === 'So11111111111111111111111111111111111111112');
+    const jitoSOL: TokenInfo = {
+      chainId: SOL!.chainId,
+      address: 'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn',
+      symbol: 'JitoSol',
+      name: 'Jito Sol',
+      decimals: SOL!.decimals,
+    };
+
+    splBasedDepegPool = await AmmImpl.create(MAINNET.connection, jitoSolDepegPool, SOL!, jitoSOL);
+  });
+
+  test('SOL → JitoSOL swap quote', async () => {
+    const solInAmount = new BN('10000');
+    const { swapOutAmount } = splBasedDepegPool.getSwapQuote(
+      new PublicKey(splBasedDepegPool.tokenA.address),
+      solInAmount,
+      DEFAULT_SLIPPAGE,
+    );
+
+    // SOL → JitoSOL get less
+    console.log(`${solInAmount.toString()} SOL → ${swapOutAmount.toString()} JitoSOL`);
+    expect(swapOutAmount.toNumber()).toBeLessThan(solInAmount.toNumber());
+  });
+
+  test('JitoSOL → SOL swap quote', async () => {
+    const jitoSolInAmount = new BN('10000');
+    const { swapOutAmount } = splBasedDepegPool.getSwapQuote(
+      new PublicKey(splBasedDepegPool.tokenB.address),
+      jitoSolInAmount,
+      DEFAULT_SLIPPAGE,
+    );
+
+    // JitoSOL → SOL get more
+    console.log(`${jitoSolInAmount.toString()} JitoSOL → ${swapOutAmount.toString()} SOL`);
+    expect(swapOutAmount.toNumber()).toBeGreaterThan(jitoSolInAmount.toNumber());
   });
 });
 
@@ -623,15 +694,16 @@ describe('Interact with Mainnet pool', () => {
     console.log('Pool token A amount', cpPool.poolInfo.tokenAAmount.toString());
     console.log('Pool token B amount', cpPool.poolInfo.tokenBAmount.toString());
 
-    const [poolVaultALp, poolVaultBLp, vaultAReserve, vaultBReserve] = await Promise.all([
+    const [poolVaultALp, poolVaultBLp, vaultAReserve, vaultBReserve, onChainTimeStamp] = await Promise.all([
       MAINNET.connection.getTokenAccountBalance(cpPool.poolState.aVaultLp),
       MAINNET.connection.getTokenAccountBalance(cpPool.poolState.bVaultLp),
       MAINNET.connection.getTokenAccountBalance(cpPool.vaultA.vaultState.tokenVault),
       MAINNET.connection.getTokenAccountBalance(cpPool.vaultB.vaultState.tokenVault),
+      getOnchainTime(MAINNET.connection),
     ]);
 
     const swapQuoteParams = {
-      currentTime: cpPool.poolInfo.currentTimestamp.toNumber(),
+      currentTime: onChainTimeStamp,
       depegAccounts: new Map(),
       poolState: cpPool.poolState,
       poolVaultALp: new BN(poolVaultALp.value.amount),
@@ -665,15 +737,16 @@ describe('Interact with Mainnet pool', () => {
     console.log('Pool token A amount', stablePool.poolInfo.tokenAAmount.toString());
     console.log('Pool token B amount', stablePool.poolInfo.tokenBAmount.toString());
 
-    const [poolVaultALp, poolVaultBLp, vaultAReserve, vaultBReserve] = await Promise.all([
+    const [poolVaultALp, poolVaultBLp, vaultAReserve, vaultBReserve, onChainTimeStamp] = await Promise.all([
       MAINNET.connection.getTokenAccountBalance(stablePool.poolState.aVaultLp),
       MAINNET.connection.getTokenAccountBalance(stablePool.poolState.bVaultLp),
       MAINNET.connection.getTokenAccountBalance(stablePool.vaultA.vaultState.tokenVault),
       MAINNET.connection.getTokenAccountBalance(stablePool.vaultB.vaultState.tokenVault),
+      getOnchainTime(MAINNET.connection),
     ]);
 
     const swapQuoteParams = {
-      currentTime: stablePool.poolInfo.currentTimestamp.toNumber(),
+      currentTime: onChainTimeStamp,
       depegAccounts: new Map(),
       poolState: stablePool.poolState,
       poolVaultALp: new BN(poolVaultALp.value.amount),

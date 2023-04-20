@@ -84,4 +84,13 @@ pub mod amm {
     ) -> Result<()> {
         Ok(())
     }
+
+    /// Bootstrap pool liquidity when it is depleted
+    pub fn bootstrap_liquidity(
+        ctx: Context<BootstrapLiquidity>,
+        token_a_amount: u64,
+        token_b_amount: u64,
+    ) -> Result<()> {
+        Ok(())
+    }
 }

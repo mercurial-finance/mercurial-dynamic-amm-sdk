@@ -41,6 +41,7 @@ import {
   DepegLido,
   DepegMarinade,
   DepegNone,
+  DepegSplStake,
   ParsedClockState,
   PoolInformation,
   PoolState,
@@ -335,19 +336,49 @@ export const calculateMaxSwapOutAmount = (
   return outTotalAmount.gt(outReserveBalance) ? outReserveBalance : outTotalAmount;
 };
 
+export const getStakePubkey = (poolState: PoolState): PublicKey | null => {
+  // Stable swap curve, and depeg type is not "none"
+  if ('stable' in poolState.curveType && !('none' in poolState.curveType['stable'].depeg.depegType)) {
+    const depegType = poolState.curveType['stable'].depeg.depegType;
+    if (depegType['marinade']) {
+      return CURVE_TYPE_ACCOUNTS.marinade;
+    } else if (depegType['lido']) {
+      return CURVE_TYPE_ACCOUNTS.lido;
+    } else if (depegType['splStake']) {
+      return poolState.stake;
+    }
+  }
+  return null;
+};
+
 /**
- * It gets the account info for the two accounts that are used in depeg Pool
+ * It gets the account info that are used in depeg Pool
  * @param {Connection} connection - Connection - The connection to the Solana cluster
+ * @param {PoolState[]} poolsState - Array of PoolState
  * @returns A map of the depeg accounts.
  */
-export const getDepegAccounts = async (connection: Connection): Promise<Map<String, AccountInfo<Buffer>>> => {
+export const getDepegAccounts = async (
+  connection: Connection,
+  poolsState: PoolState[],
+): Promise<Map<String, AccountInfo<Buffer>>> => {
+  const stakePoolPubkeys = new Set<PublicKey>();
+
+  for (const p of poolsState) {
+    const stakePubkey = getStakePubkey(p);
+    if (stakePubkey != null) {
+      stakePoolPubkeys.add(stakePubkey);
+    }
+  }
+
   const depegAccounts = new Map<String, AccountInfo<Buffer>>();
-  const [marinadeBuffer, solidoBuffer] = await connection.getMultipleAccountsInfo([
-    CURVE_TYPE_ACCOUNTS.marinade,
-    CURVE_TYPE_ACCOUNTS.lido,
-  ]);
-  depegAccounts.set(CURVE_TYPE_ACCOUNTS.marinade.toBase58(), marinadeBuffer!);
-  depegAccounts.set(CURVE_TYPE_ACCOUNTS.lido.toBase58(), solidoBuffer!);
+  const stakePoolKeys = [...stakePoolPubkeys];
+  const accountBuffers = await chunkedGetMultipleAccountInfos(connection, stakePoolKeys);
+
+  for (const [i, key] of stakePoolKeys.entries()) {
+    if (accountBuffers[i] != null) {
+      depegAccounts.set(key.toBase58(), accountBuffers[i]!);
+    }
+  }
 
   return depegAccounts;
 };
@@ -390,7 +421,14 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
   let swapCurve: SwapCurve;
   if ('stable' in poolState.curveType) {
     const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'] as any;
-    swapCurve = new StableSwap(amp.toNumber(), tokenMultiplier, depeg, depegAccounts, new BN(currentTime));
+    swapCurve = new StableSwap(
+      amp.toNumber(),
+      tokenMultiplier,
+      depeg,
+      depegAccounts,
+      new BN(currentTime),
+      poolState.stake,
+    );
   } else {
     swapCurve = new ConstantProductSwap();
   }
@@ -651,6 +689,11 @@ export const DepegType = {
   lido: (): DepegLido => {
     return {
       lido: {},
+    };
+  },
+  splStake: (): DepegSplStake => {
+    return {
+      splStake: {},
     };
   },
 };

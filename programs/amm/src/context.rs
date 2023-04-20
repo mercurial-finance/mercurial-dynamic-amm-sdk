@@ -51,6 +51,75 @@ pub fn get_lp_mint(token_a_mint_decimals: u8, token_b_mint_decimals: u8) -> u8 {
     token_b_mint_decimals
 }
 
+/// Bootstrap pool with zero liquidity
+/// Accounts for bootstrap pool instruction
+#[derive(Accounts)]
+pub struct BootstrapLiquidity<'info> {
+    #[account(
+        mut,
+        has_one = a_vault @ PoolError::InvalidVaultAccount,
+        has_one = b_vault @ PoolError::InvalidVaultAccount,
+        has_one = a_vault_lp @ PoolError::InvalidVaultLpAccount,
+        has_one = b_vault_lp @ PoolError::InvalidVaultLpAccount,
+        has_one = lp_mint @ PoolError::InvalidPoolLpMintAccount,
+        constraint = a_vault_lp.mint == a_vault_lp_mint.key() @ PoolError::MismatchedLpMint,
+        constraint = b_vault_lp.mint == b_vault_lp_mint.key() @ PoolError::MismatchedLpMint,
+        constraint = pool.enabled @ PoolError::PoolDisabled
+    )]
+    /// Pool account (PDA)
+    pub pool: Box<Account<'info, Pool>>,
+    #[account(
+        mut,
+        constraint = lp_mint.supply == 0 @ PoolError::NonDepletedPool
+    )]
+    /// LP token mint of the pool
+    pub lp_mint: Account<'info, Mint>,
+    #[account(mut)]
+    /// user pool lp token account. lp will be burned from this account upon success liquidity removal.
+    pub user_pool_lp: Account<'info, TokenAccount>,
+
+    #[account(mut)]
+    /// LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
+    pub a_vault_lp: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    /// LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
+    pub b_vault_lp: Box<Account<'info, TokenAccount>>,
+
+    #[account(mut)]
+    /// Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.
+    pub a_vault: Box<Account<'info, Vault>>,
+    #[account(mut)]
+    /// Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.
+    pub b_vault: Box<Account<'info, Vault>>,
+
+    #[account(mut)]
+    /// LP token mint of vault a
+    pub a_vault_lp_mint: Box<Account<'info, Mint>>,
+    #[account(mut)]
+    /// LP token mint of vault b
+    pub b_vault_lp_mint: Box<Account<'info, Mint>>,
+
+    #[account(mut)]
+    /// Token vault account of vault A
+    pub a_token_vault: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    /// Token vault account of vault B
+    pub b_token_vault: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    /// User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.
+    pub user_a_token: Account<'info, TokenAccount>,
+    #[account(mut)]
+    /// User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.
+    pub user_b_token: Account<'info, TokenAccount>,
+    /// User account. Must be owner of user_a_token, and user_b_token.
+    pub user: Signer<'info>,
+
+    /// Vault program. the pool will deposit/withdraw liquidity from the vault.
+    pub vault_program: Program<'info, MercurialVault>,
+    /// Token program.
+    pub token_program: Program<'info, Token>,
+}
+
 /// Permissionless Initialize
 /// Accounts for initialize new pool instruction
 #[derive(Accounts)]
