@@ -274,6 +274,40 @@ export class StableSwap implements SwapCurve {
       ? this.downscaleTokenB(withdrawAmountBeforeFees.toU64())
       : this.downscaleTokenA(withdrawAmountBeforeFees.toU64());
   }
+
+  getRemainingAccounts() {
+    let accounts: Array<{
+      pubkey: PublicKey;
+      isWritable: boolean;
+      isSigner: boolean;
+    }> = [];
+
+    if ('marinade' in this.depeg.depegType) {
+      accounts.push({
+        pubkey: CURVE_TYPE_ACCOUNTS.marinade,
+        isWritable: false,
+        isSigner: false,
+      });
+    }
+
+    if ('lido' in this.depeg.depegType) {
+      accounts.push({
+        pubkey: CURVE_TYPE_ACCOUNTS.lido,
+        isWritable: false,
+        isSigner: false,
+      });
+    }
+
+    if (!this.stakePoolPubkey.equals(PublicKey.default)) {
+      accounts.push({
+        pubkey: this.stakePoolPubkey,
+        isWritable: false,
+        isSigner: false,
+      });
+    }
+
+    return accounts;
+  }
 }
 // Helper class to convert the type to the type from saber stable calculator
 class Helper {

@@ -85,41 +85,6 @@ const getPoolState = async (poolMint: PublicKey, program: AmmProgram) => {
   return { ...poolState, lpSupply: new BN(account.value.amount) };
 };
 
-const getRemainingAccounts = (poolState: PoolState) => {
-  let accounts: Array<{
-    pubkey: PublicKey;
-    isWritable: boolean;
-    isSigner: boolean;
-  }> = [];
-  if ('stable' in poolState.curveType) {
-    if ('marinade' in (poolState.curveType['stable'] as any).depeg.depegType) {
-      accounts.push({
-        pubkey: CURVE_TYPE_ACCOUNTS.marinade,
-        isWritable: false,
-        isSigner: false,
-      });
-    }
-
-    if ('lido' in (poolState.curveType['stable'] as any).depeg.depegType) {
-      accounts.push({
-        pubkey: CURVE_TYPE_ACCOUNTS.lido,
-        isWritable: false,
-        isSigner: false,
-      });
-    }
-
-    if (!poolState.stake.equals(PublicKey.default)) {
-      accounts.push({
-        pubkey: poolState.stake,
-        isWritable: false,
-        isSigner: false,
-      });
-    }
-  }
-
-  return accounts;
-};
-
 type DecoderType = { [x: string]: (accountData: Buffer) => BN };
 const decodeAccountTypeMapper = (type: AccountType): ((accountData: Buffer) => BN) => {
   const decoder: DecoderType = {
@@ -879,7 +844,7 @@ export default class AmmImpl implements AmmImplementation {
         tokenProgram: TOKEN_PROGRAM_ID,
         vaultProgram: this.vaultProgram.programId,
       })
-      .remainingAccounts(getRemainingAccounts(this.poolState))
+      .remainingAccounts(this.swapCurve.getRemainingAccounts())
       .preInstructions(preInstructions)
       .postInstructions(postInstructions)
       .transaction();
@@ -1113,7 +1078,7 @@ export default class AmmImpl implements AmmImplementation {
         vaultProgram: this.vaultProgram.programId,
         userPoolLp,
       })
-      .remainingAccounts(getRemainingAccounts(this.poolState))
+      .remainingAccounts(this.swapCurve.getRemainingAccounts())
       .preInstructions(preInstructions)
       .postInstructions(postInstructions)
       .transaction();
@@ -1278,7 +1243,7 @@ export default class AmmImpl implements AmmImplementation {
           });
 
     const withdrawTx = await programMethod
-      .remainingAccounts(getRemainingAccounts(this.poolState))
+      .remainingAccounts(this.swapCurve.getRemainingAccounts())
       .preInstructions(preInstructions)
       .postInstructions(postInstructions)
       .transaction();

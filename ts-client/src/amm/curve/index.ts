@@ -1,3 +1,4 @@
+import { PublicKey } from '@solana/web3.js';
 import { BN } from '@project-serum/anchor';
 import Decimal from 'decimal.js';
 import { PoolFees } from '../types';
@@ -36,6 +37,12 @@ export interface SwapCurve {
     fees: PoolFees,
     tradeDirection: TradeDirection,
   ): BN;
+
+  getRemainingAccounts(): Array<{
+    pubkey: PublicKey;
+    isWritable: boolean;
+    isSigner: boolean;
+  }>;
 }
 
 export enum TradeDirection {
