@@ -96,4 +96,8 @@ export class ConstantProductSwap implements SwapCurve {
   ): BN {
     throw new Error('UnsupportedOperation');
   }
+
+  getRemainingAccounts() {
+    return [];
+  }
 }
