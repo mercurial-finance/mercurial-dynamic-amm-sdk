@@ -107,6 +107,14 @@ const getRemainingAccounts = (poolState: PoolState) => {
         isSigner: false,
       });
     }
+
+    if (!poolState.stake.equals(PublicKey.default)) {
+      accounts.push({
+        pubkey: poolState.stake,
+        isWritable: false,
+        isSigner: false,
+      });
+    }
   }
 
   return accounts;
