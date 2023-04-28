@@ -618,8 +618,10 @@ export async function checkPoolExists(
     ],
     ammProgram.programId,
   );
+  console.log('🚀 ~ file: utils.ts:621 ~ poolPubkey:', poolPubkey);
 
   const poolAccount = await ammProgram.account.pool.fetchNullable(poolPubkey);
+  console.log('🚀 ~ file: utils.ts:623 ~ poolAccount:', poolAccount);
 
   if (!poolAccount) return;
 
