@@ -1,4 +1,4 @@
-import { Program, BN } from '@project-serum/anchor';
+import { BN } from '@project-serum/anchor';
 import {
   PublicKey,
   Connection,
@@ -27,8 +27,7 @@ import {
   VaultProgram,
   WithdrawQuote,
 } from './types';
-import { Amm as AmmIdl } from './idl';
-import { ERROR, CURVE_TYPE_ACCOUNTS, SEEDS, WRAPPED_SOL_MINT, UNLOCK_AMOUNT_BUFFER, FEE_OWNER } from './constants';
+import { ERROR, SEEDS, WRAPPED_SOL_MINT, UNLOCK_AMOUNT_BUFFER, FEE_OWNER } from './constants';
 import { StableSwap, SwapCurve, TradeDirection } from './curve';
 import { ConstantProductSwap } from './curve/constant-product';
 import {
@@ -46,13 +45,11 @@ import {
   getAssociatedTokenAccount,
   deserializeAccount,
   chunkedGetMultipleAccountInfos,
-  encodeCurveType,
-  getFirstKey,
-  getSecondKey,
   generateCurveType,
   derivePoolAddress,
+  chunks,
+  chunkedFetchMultiplePoolAccount,
 } from './utils';
-import sqrt from 'bn-sqrt';
 
 type Opt = {
   allowOwnerOffCurve?: boolean;
@@ -60,11 +57,11 @@ type Opt = {
 };
 
 const getAllPoolState = async (poolMints: Array<PublicKey>, program: AmmProgram) => {
-  const poolStates = (await program.account.pool.fetchMultiple(poolMints)) as Array<PoolState>;
+  const poolStates = (await chunkedFetchMultiplePoolAccount(program, poolMints)) as Array<PoolState>;
   invariant(poolStates.length === poolMints.length, 'Some of the pool state not found');
 
   const poolLpMints = poolStates.map((poolState) => poolState.lpMint);
-  const lpMintAccounts = await chunkedGetMultipleAccountInfos(program.provider.connection, poolLpMints, 100);
+  const lpMintAccounts = await chunkedGetMultipleAccountInfos(program.provider.connection, poolLpMints);
 
   return poolStates.map((poolState, idx) => {
     const lpMintAccount = lpMintAccounts[idx];
@@ -461,7 +458,7 @@ export default class AmmImpl implements AmmImplementation {
   ): Promise<Array<BN>> {
     const ataAccounts = await Promise.all(lpMintList.map((lpMint) => getAssociatedTokenAccount(lpMint, owner)));
 
-    const accountsInfo = await chunkedGetMultipleAccountInfos(connection, ataAccounts, 100);
+    const accountsInfo = await chunkedGetMultipleAccountInfos(connection, ataAccounts);
 
     return accountsInfo.map((accountInfo) => {
       if (!accountInfo) return new BN(0);

@@ -37,6 +37,7 @@ import {
 } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
+  AmmProgram,
   ConstantProductCurve,
   DepegLido,
   DepegMarinade,
@@ -632,12 +633,19 @@ export function chunks<T>(array: T[], size: number): T[][] {
   );
 }
 
+export async function chunkedFetchMultiplePoolAccount(program: AmmProgram, pks: PublicKey[], chunkSize: number = 100) {
+  const accounts = (
+    await Promise.all(chunks(pks, chunkSize).map((chunk) => program.account.pool.fetchMultiple(chunk)))
+  ).flat();
+
+  return accounts.filter(Boolean);
+}
+
 export async function chunkedGetMultipleAccountInfos(
   connection: Connection,
   pks: PublicKey[],
   chunkSize: number = 100,
 ) {
-  const accountInfoMap = new Map<string, AccountInfo<Buffer> | null>();
   const accountInfos = (
     await Promise.all(chunks(pks, chunkSize).map((chunk) => connection.getMultipleAccountsInfo(chunk)))
   ).flat();
