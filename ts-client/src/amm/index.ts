@@ -65,7 +65,6 @@ const getAllPoolState = async (poolMints: Array<PublicKey>, program: AmmProgram)
 
   const poolLpMints = poolStates.map((poolState) => poolState.lpMint);
   const lpMintAccounts = await chunkedGetMultipleAccountInfos(program.provider.connection, poolLpMints, 100);
-  // const lpMintAccounts = await program.provider.connection.getMultipleAccountsInfo(poolLpMints);
 
   return poolStates.map((poolState, idx) => {
     const lpMintAccount = lpMintAccounts[idx];
@@ -463,7 +462,6 @@ export default class AmmImpl implements AmmImplementation {
     const ataAccounts = await Promise.all(lpMintList.map((lpMint) => getAssociatedTokenAccount(lpMint, owner)));
 
     const accountsInfo = await chunkedGetMultipleAccountInfos(connection, ataAccounts, 100);
-    // const accountsInfo = await connection.getMultipleAccountsInfo(ataAccounts);
 
     return accountsInfo.map((accountInfo) => {
       if (!accountInfo) return new BN(0);
