@@ -2,7 +2,7 @@ use anchor_lang::prelude::{Pubkey, Result};
 use mercurial_vault::state::Vault;
 
 use crate::{
-    context::{get_curve_type, get_first_key, get_second_key},
+    context::{get_curve_type, get_first_key, get_second_key, get_trade_fee_bps_bytes},
     curve::curve_type::CurveType,
     error::PoolError,
 };
@@ -48,6 +48,7 @@ pub fn derive_lp_mint(pool: Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(&["lp_mint".as_ref(), pool.as_ref()], &crate::ID)
 }
 
+#[deprecated(note = "use derive_permissionless_pool_with_fee_tier")]
 pub fn derive_permissionless_pool(
     curve_type: CurveType,
     token_a_mint: Pubkey,
@@ -58,6 +59,25 @@ pub fn derive_permissionless_pool(
             &get_curve_type(curve_type).to_le_bytes(),
             get_first_key(token_a_mint, token_b_mint).as_ref(),
             get_second_key(token_a_mint, token_b_mint).as_ref(),
+        ],
+        &crate::ID,
+    )
+}
+
+pub fn derive_permissionless_pool_with_fee_tier(
+    curve_type: CurveType,
+    token_a_mint: Pubkey,
+    token_b_mint: Pubkey,
+    trade_fee_bps: u64,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[
+            &get_curve_type(curve_type).to_le_bytes(),
+            get_first_key(token_a_mint, token_b_mint).as_ref(),
+            get_second_key(token_a_mint, token_b_mint).as_ref(),
+            get_trade_fee_bps_bytes(curve_type, trade_fee_bps)
+                .unwrap()
+                .as_ref(),
         ],
         &crate::ID,
     )
