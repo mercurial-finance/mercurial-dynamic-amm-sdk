@@ -35,7 +35,9 @@ pub mod fee {
     /// Default fee denominator
     pub static FEE_DENOMINATOR: u64 = 100000;
     /// Max fee BPS
-    pub static MAX_FEE_BPS: u64 = 1000; // 1%
+    pub static MAX_FEE_DBPS: u64 = 600; // 6%
+    /// Max basis point. 100% in pct
+    pub static MAX_BASIS_POINT: u64 = 10000;
 }
 
 /// Store constants related to virtual price

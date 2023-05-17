@@ -76,9 +76,21 @@ pub mod amm {
     }
 
     /// initialize_permissionless_pool
+    #[deprecated(note = "use initialize_permissionless_pool_with_fee_tier")]
     pub fn initialize_permissionless_pool(
         ctx: Context<InitializePermissionlessPool>,
         curve_type: CurveType,
+        token_a_amount: u64,
+        token_b_amount: u64,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Initialize permissionless pool with customized fee tier
+    pub fn initialize_permissionless_pool_with_fee_tier(
+        ctx: Context<InitializePermissionlessPoolWithFeeTier>,
+        curve_type: CurveType,
+        trade_fee_bps: u64,
         token_a_amount: u64,
         token_b_amount: u64,
     ) -> Result<()> {

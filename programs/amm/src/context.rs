@@ -3,6 +3,7 @@
 use std::str::FromStr;
 
 use crate::curve::curve_type::CurveType;
+use crate::curve::fees::to_bps;
 use crate::error::PoolError;
 use crate::{state::Pool, vault_utils::MercurialVault};
 use anchor_lang::prelude::*;
@@ -49,6 +50,22 @@ pub fn get_lp_mint(token_a_mint_decimals: u8, token_b_mint_decimals: u8) -> u8 {
         return token_a_mint_decimals;
     }
     token_b_mint_decimals
+}
+
+/// get trade fee bps seed for pool pda
+pub fn get_trade_fee_bps_bytes(curve_type: CurveType, trade_fee_bps: u64) -> Option<Vec<u8>> {
+    let default_fees = curve_type.get_default_fee();
+
+    let default_trade_fee_bps = to_bps(
+        default_fees.trade_fee_numerator.into(),
+        default_fees.trade_fee_denominator.into(),
+    )?;
+
+    if default_trade_fee_bps == trade_fee_bps {
+        return Some(vec![]);
+    }
+
+    Some(trade_fee_bps.to_le_bytes().to_vec())
 }
 
 /// Bootstrap pool with zero liquidity
@@ -120,8 +137,184 @@ pub struct BootstrapLiquidity<'info> {
     pub token_program: Program<'info, Token>,
 }
 
+/// Permissionless Initialize with customized fee tier
+/// Accounts for initialize new pool instruction
+#[derive(Accounts)]
+#[instruction(curve_type: CurveType, trade_fee_bps: u64)]
+pub struct InitializePermissionlessPoolWithFeeTier<'info> {
+    #[account(
+        init,
+        seeds = [
+            &get_curve_type(curve_type).to_le_bytes(),
+            get_first_key(token_a_mint.key(), token_b_mint.key()).as_ref(),
+            get_second_key(token_a_mint.key(), token_b_mint.key()).as_ref(),
+            get_trade_fee_bps_bytes(curve_type, trade_fee_bps).ok_or(PoolError::MathOverflow)?.as_ref(), // Do not include owner trade fee
+        ],
+        bump,
+        payer = payer,
+        // No point to rent for max 10 MB, as when deserialize it will hit stack limit
+        space = 8 + std::mem::size_of::<Pool>()
+    )]
+    /// Pool account (PDA address)
+    pub pool: Box<Account<'info, Pool>>,
+
+    /// LP token mint of the pool
+    #[account(
+        init,
+        seeds = [
+            "lp_mint".as_ref(),
+            pool.key().as_ref()
+        ],
+        bump,
+        payer = payer,
+        mint::decimals = get_lp_mint(token_a_mint.decimals, token_b_mint.decimals),
+        mint::authority = a_vault_lp
+    )]
+    pub lp_mint: Box<Account<'info, Mint>>,
+
+    /// Token A mint of the pool. Eg: USDT
+    pub token_a_mint: Box<Account<'info, Mint>>,
+    /// Token B mint of the pool. Eg: USDC
+    #[account(
+        constraint = token_b_mint.key() != token_a_mint.key() @ PoolError::MismatchedTokenMint
+    )]
+    pub token_b_mint: Box<Account<'info, Mint>>,
+
+    #[account(
+        mut,
+        constraint = a_vault.token_mint == token_a_mint.key() @ PoolError::MismatchedTokenMint
+    )]
+    /// Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.
+    pub a_vault: Box<Account<'info, Vault>>,
+    #[account(
+        mut,
+        constraint = b_vault.token_mint == token_b_mint.key() @ PoolError::MismatchedTokenMint
+    )]
+    /// Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.
+    pub b_vault: Box<Account<'info, Vault>>,
+
+    #[account(mut)]
+    /// Token vault account of vault A
+    pub a_token_vault: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    /// Token vault account of vault B
+    pub b_token_vault: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        constraint = a_vault_lp_mint.key() == a_vault.lp_mint @ PoolError::MismatchedLpMint
+    )]
+    /// LP token mint of vault A
+    pub a_vault_lp_mint: Box<Account<'info, Mint>>,
+    #[account(
+        mut,
+        constraint = b_vault_lp_mint.key() == b_vault.lp_mint @ PoolError::MismatchedLpMint
+    )]
+    /// LP token mint of vault B
+    pub b_vault_lp_mint: Box<Account<'info, Mint>>,
+    /// LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
+    #[account(
+        init,
+        seeds = [
+            a_vault.key().as_ref(),
+            pool.key().as_ref()
+        ],
+        bump,
+        payer = payer,
+        token::mint = a_vault_lp_mint,
+        token::authority = a_vault_lp
+    )]
+    pub a_vault_lp: Box<Account<'info, TokenAccount>>,
+    /// LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault.
+    #[account(
+        init,
+        seeds = [
+            b_vault.key().as_ref(),
+            pool.key().as_ref()
+        ],
+        bump,
+        payer = payer,
+        token::mint = b_vault_lp_mint,
+        token::authority = a_vault_lp
+    )]
+    pub b_vault_lp: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        constraint = payer_token_a.mint == a_vault.token_mint @ PoolError::MismatchedTokenMint
+    )]
+    /// Payer token account for pool token A mint. Used to bootstrap the pool with initial liquidity.
+    pub payer_token_a: Box<Account<'info, TokenAccount>>,
+    #[account(
+        mut,
+        constraint = payer_token_b.mint == b_vault.token_mint @ PoolError::MismatchedTokenMint
+    )]
+    /// Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity.
+    pub payer_token_b: Box<Account<'info, TokenAccount>>,
+
+    /// CHECK: Payer pool LP token account. Used to receive LP during first deposit (initialize pool)
+    #[account(
+        init,
+        payer = payer,
+        associated_token::mint = lp_mint,
+        associated_token::authority = payer,
+    )]
+    pub payer_pool_lp: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        init,
+        seeds = [
+            "fee".as_ref(),
+            token_a_mint.key().as_ref(),
+            pool.key().as_ref()
+        ],
+        bump,
+        payer = payer,
+        token::mint = token_a_mint,
+        token::authority = fee_owner
+    )]
+    /// Admin fee token account for token A. Used to receive trading fee.
+    pub admin_token_a_fee: Box<Account<'info, TokenAccount>>,
+
+    /// Admin fee token account for token B. Used to receive trading fee.
+    #[account(
+        init,
+        seeds = [
+            "fee".as_ref(),
+            token_b_mint.key().as_ref(),
+            pool.key().as_ref()
+        ],
+        bump,
+        payer = payer,
+        token::mint = token_b_mint,
+        token::authority = fee_owner
+    )]
+    pub admin_token_b_fee: Box<Account<'info, TokenAccount>>,
+
+    /// Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    /// CHECK: fee owner
+    #[account(constraint = fee_owner.key() == get_fee_owner() @ PoolError::InvalidFeeOwner)]
+    pub fee_owner: UncheckedAccount<'info>,
+
+    /// Rent account.
+    pub rent: Sysvar<'info, Rent>,
+
+    /// Vault program. The pool will deposit/withdraw liquidity from the vault.
+    pub vault_program: Program<'info, MercurialVault>,
+    /// Token program.
+    pub token_program: Program<'info, Token>,
+    /// Associated token program.
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    /// System program.
+    pub system_program: Program<'info, System>,
+}
+
 /// Permissionless Initialize
 /// Accounts for initialize new pool instruction
+#[deprecated]
 #[derive(Accounts)]
 #[instruction(curve_type: CurveType)]
 pub struct InitializePermissionlessPool<'info> {

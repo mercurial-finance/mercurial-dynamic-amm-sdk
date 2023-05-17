@@ -1,6 +1,6 @@
 //! Fees module includes information about fee charges
 use crate::constants;
-use crate::constants::fee::FEE_DENOMINATOR;
+use crate::constants::fee::{FEE_DENOMINATOR, MAX_BASIS_POINT};
 use crate::error::PoolError;
 use anchor_lang::prelude::*;
 use std::convert::TryFrom;
@@ -40,6 +40,14 @@ impl Default for PoolFees {
             owner_trade_fee_numerator: 0,
         }
     }
+}
+
+/// Convert fees numerator and denominator to BPS. Minimum 1 bps, Maximum 10_000 bps. 0.01% -> 100%
+pub fn to_bps(numerator: u128, denominator: u128) -> Option<u64> {
+    let bps = numerator
+        .checked_mul(MAX_BASIS_POINT.into())?
+        .checked_div(denominator)?;
+    bps.try_into().ok()
 }
 
 /// Helper function for calculating swap fee

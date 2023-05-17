@@ -165,6 +165,7 @@ export default class AmmImpl implements AmmImplementation {
     tokenAAmount: BN,
     tokenBAmount: BN,
     isStable: boolean,
+    tradeFeeBps: BN,
     opt?: {
       cluster?: Cluster;
       programId?: string;
@@ -207,7 +208,7 @@ export default class AmmImpl implements AmmImplementation {
       bVaultLpMint = bVaultAccount.lpMint; // Old vault doesn't have lp mint pda
     }
 
-    const poolPubkey = derivePoolAddress(connection, tokenInfoA, tokenInfoB, isStable, {
+    const poolPubkey = derivePoolAddress(connection, tokenInfoA, tokenInfoB, isStable, tradeFeeBps, {
       programId: opt?.programId,
     });
 
@@ -250,7 +251,7 @@ export default class AmmImpl implements AmmImplementation {
     }
 
     const createPermissionlessPoolTx = await ammProgram.methods
-      .initializePermissionlessPool(curveType, tokenAAmount, tokenBAmount)
+      .initializePermissionlessPoolWithFeeTier(curveType, tradeFeeBps, tokenAAmount, tokenBAmount)
       .accounts({
         pool: poolPubkey,
         tokenAMint,

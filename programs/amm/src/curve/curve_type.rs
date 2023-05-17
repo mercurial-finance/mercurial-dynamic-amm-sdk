@@ -1,6 +1,9 @@
 //! Curve type
 use anchor_lang::prelude::*;
 
+use super::fees::PoolFees;
+use crate::constants::fee::*;
+
 pub const PERMISSIONLESS_AMP: u64 = 100;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default, Copy, Eq, PartialEq)]
@@ -84,5 +87,30 @@ impl CurveType {
                     CurveType::ConstantProduct { .. }
                 )
         )
+    }
+    /// Get default fee settings
+    pub fn get_default_fee(&self) -> PoolFees {
+        match self {
+            CurveType::ConstantProduct {} => PoolFees {
+                trade_fee_numerator: CONSTANT_PRODUCT_TRADE_FEE_NUMERATOR,
+                trade_fee_denominator: FEE_DENOMINATOR,
+                owner_trade_fee_numerator: CONSTANT_PRODUCT_ADMIN_TRADE_FEE_NUMERATOR,
+                owner_trade_fee_denominator: FEE_DENOMINATOR,
+            },
+            CurveType::Stable { .. } => PoolFees {
+                trade_fee_numerator: STABLE_SWAP_TRADE_FEE_NUMERATOR,
+                trade_fee_denominator: FEE_DENOMINATOR,
+                owner_trade_fee_numerator: STABLE_SWAP_ADMIN_TRADE_FEE_NUMERATOR,
+                owner_trade_fee_denominator: FEE_DENOMINATOR,
+            },
+        }
+    }
+
+    /// Get allowed trade fee bps
+    pub fn get_allowed_trade_fee_bps(&self) -> &[u64] {
+        match self {
+            CurveType::ConstantProduct {} => &[25, 100, 400, 600],
+            CurveType::Stable { .. } => &[1, 4, 10, 100],
+        }
     }
 }
