@@ -110,7 +110,7 @@ impl CurveType {
     pub fn get_allowed_trade_fee_bps(&self) -> &[u64] {
         match self {
             CurveType::ConstantProduct {} => &[25, 100, 400, 600],
-            CurveType::Stable { .. } => &[1, 4, 10],
+            CurveType::Stable { .. } => &[1, 4, 10, 100],
         }
     }
 }
