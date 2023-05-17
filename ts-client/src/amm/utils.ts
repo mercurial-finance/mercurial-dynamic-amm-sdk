@@ -34,6 +34,8 @@ import {
   PROGRAM_ID,
   VIRTUAL_PRICE_PRECISION,
   PERMISSIONLESS_AMP,
+  STABLE_SWAP_DEFAULT_TRADE_FEE_BPS,
+  CONSTANT_PRODUCT_DEFAULT_TRADE_FEE_BPS,
 } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
@@ -567,6 +569,7 @@ export function derivePoolAddress(
   tokenInfoA: TokenInfo,
   tokenInfoB: TokenInfo,
   isStable: boolean,
+  tradeFeeBps: BN,
   opt?: {
     programId?: string;
   },
@@ -581,6 +584,7 @@ export function derivePoolAddress(
       Buffer.from([encodeCurveType(curveType)]),
       getFirstKey(tokenAMint, tokenBMint),
       getSecondKey(tokenAMint, tokenBMint),
+      getTradeFeeBpsBuffer(curveType, tradeFeeBps),
     ],
     ammProgram.programId,
   );
@@ -681,6 +685,21 @@ export function getFirstKey(key1: PublicKey, key2: PublicKey) {
     return buf1;
   }
   return buf2;
+}
+
+export function getTradeFeeBpsBuffer(curve: StableSwapCurve | ConstantProductCurve, tradeFeeBps: BN) {
+  let defaultFeeBps: BN;
+  if (curve['stable']) {
+    defaultFeeBps = new BN(STABLE_SWAP_DEFAULT_TRADE_FEE_BPS);
+  } else {
+    defaultFeeBps = new BN(CONSTANT_PRODUCT_DEFAULT_TRADE_FEE_BPS);
+  }
+
+  if (tradeFeeBps.eq(defaultFeeBps)) {
+    return new Uint8Array();
+  }
+
+  return new Uint8Array(tradeFeeBps.toBuffer('le', 8));
 }
 
 export const DepegType = {
