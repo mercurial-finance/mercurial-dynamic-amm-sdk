@@ -601,7 +601,7 @@ export default class AmmImpl implements AmmImplementation {
   }
 
   get feeBps(): BN {
-    return this.poolState.fees.tradeFeeNumerator.div(this.poolState.fees.tradeFeeDenominator).mul(new BN(100));
+    return this.poolState.fees.tradeFeeNumerator.mul(new BN(10_000)).div(this.poolState.fees.tradeFeeDenominator);
   }
 
   /**
