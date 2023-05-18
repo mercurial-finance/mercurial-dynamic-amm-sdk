@@ -600,6 +600,10 @@ export default class AmmImpl implements AmmImplementation {
     return 'stable' in this.poolState.curveType;
   }
 
+  get feeBps(): BN {
+    return this.poolState.fees.tradeFeeNumerator.div(this.poolState.fees.tradeFeeDenominator).mul(new BN(100));
+  }
+
   /**
    * It updates the state of the pool
    */
