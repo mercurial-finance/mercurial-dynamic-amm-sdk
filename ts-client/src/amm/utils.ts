@@ -612,7 +612,9 @@ export async function checkPoolExists(
 ): Promise<PublicKey | undefined> {
   const { ammProgram } = createProgram(connection, opt?.programId);
 
-  const poolPubkey = derivePoolAddress(connection, tokenInfoA, tokenInfoB, isStable, tradeFeeBps);
+  const poolPubkey = derivePoolAddress(connection, tokenInfoA, tokenInfoB, isStable, tradeFeeBps, {
+    programId: opt?.programId,
+  });
 
   const poolAccount = await ammProgram.account.pool.fetchNullable(poolPubkey);
 
