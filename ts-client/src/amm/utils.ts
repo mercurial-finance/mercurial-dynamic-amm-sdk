@@ -605,24 +605,14 @@ export async function checkPoolExists(
   tokenInfoA: TokenInfo,
   tokenInfoB: TokenInfo,
   isStable: boolean,
+  tradeFeeBps: BN,
   opt?: {
     programId: string;
   },
 ): Promise<PublicKey | undefined> {
   const { ammProgram } = createProgram(connection, opt?.programId);
 
-  const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
-
-  const tokenAMint = new PublicKey(tokenInfoA.address);
-  const tokenBMint = new PublicKey(tokenInfoB.address);
-  const [poolPubkey] = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from([encodeCurveType(curveType)]),
-      getFirstKey(tokenAMint, tokenBMint),
-      getSecondKey(tokenAMint, tokenBMint),
-    ],
-    ammProgram.programId,
-  );
+  const poolPubkey = derivePoolAddress(connection, tokenInfoA, tokenInfoB, isStable, tradeFeeBps);
 
   const poolAccount = await ammProgram.account.pool.fetchNullable(poolPubkey);
 
