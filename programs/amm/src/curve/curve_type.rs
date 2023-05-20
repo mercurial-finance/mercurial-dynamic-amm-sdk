@@ -1,7 +1,7 @@
 //! Curve type
 use anchor_lang::prelude::*;
 
-use super::fees::PoolFees;
+use super::{depeg::Depeg, fees::PoolFees};
 use crate::constants::fee::*;
 
 pub const PERMISSIONLESS_AMP: u64 = 100;
@@ -34,17 +34,6 @@ impl Default for DepegType {
     fn default() -> Self {
         Self::None
     }
-}
-
-/// Contains information for depeg pool
-#[derive(Clone, Copy, Debug, Default, AnchorSerialize, AnchorDeserialize)]
-pub struct Depeg {
-    /// The virtual price of staking / interest bearing token
-    pub base_virtual_price: u64,
-    /// The virtual price of staking / interest bearing token
-    pub base_cache_updated: u64,
-    /// Type of the depeg pool
-    pub depeg_type: DepegType,
 }
 
 #[derive(Clone, Copy, Debug, AnchorDeserialize, AnchorSerialize)]

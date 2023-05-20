@@ -25,4 +25,6 @@ overflow-checks = true
 anchor-lang = "0.26.0"
 anchor-spl = "0.26.0"
 mercurial-vault = { version="0.4.4", features = ["cpi"] }
+marinade-sdk = { git="https://github.com/mercurial-finance/marinade-sdk", rev = "93313bcaab59a69ca57d43cc6088ab6b99b67997", features = ["cpi"] }
+spl-stake-pool = { ver="0.6.4", features = ["no-entrypoint"] }
 
