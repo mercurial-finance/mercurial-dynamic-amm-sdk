@@ -1,8 +1,10 @@
 pub mod constants;
 pub mod context;
 pub mod curve;
+mod depeg;
 pub mod error;
 pub mod event;
+mod math;
 pub mod state;
 pub mod utils;
 pub mod vault_utils;

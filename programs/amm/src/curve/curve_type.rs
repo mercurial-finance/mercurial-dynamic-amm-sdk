@@ -17,6 +17,26 @@ pub struct TokenMultiplier {
     pub precision_factor: u8, // 1
 }
 
+impl TokenMultiplier {
+    /// Upscale the token amount using token_a_multiplier.
+    pub fn upscale_token_a(&self, token_amount: u128) -> Option<u128> {
+        token_amount.checked_mul(self.token_a_multiplier.into())
+    }
+    /// Upscale the token amount using token_b_multiplier.
+    pub fn upscale_token_b(&self, token_amount: u128) -> Option<u128> {
+        token_amount.checked_mul(self.token_b_multiplier.into())
+    }
+
+    /// Downscale the token amount using token_a_multiplier
+    pub fn downscale_token_a(&self, token_amount: u128) -> Option<u128> {
+        token_amount.checked_div(self.token_a_multiplier.into())
+    }
+    /// Downscale the token amount using token_b_multiplier
+    pub fn downscale_token_b(&self, token_amount: u128) -> Option<u128> {
+        token_amount.checked_div(self.token_b_multiplier.into())
+    }
+}
+
 /// Type of depeg pool
 #[derive(Clone, Copy, Debug, AnchorDeserialize, AnchorSerialize, PartialEq)]
 pub enum DepegType {
@@ -28,6 +48,13 @@ pub enum DepegType {
     Lido,
     /// A depeg pool belongs to SPL stake pool program
     SplStake,
+}
+
+impl DepegType {
+    /// Check whether the pool is a depeg pool or not
+    pub fn is_none(&self) -> bool {
+        matches!(self, DepegType::None)
+    }
 }
 
 impl Default for DepegType {
