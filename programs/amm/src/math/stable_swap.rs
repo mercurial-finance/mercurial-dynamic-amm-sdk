@@ -85,9 +85,9 @@ impl SwapCurve for StableSwap {
             upscaled_swap_source_amount,
             upscaled_swap_destination_amount,
             &SaberFees {
-                admin_trade_fee_denominator: 0,
+                admin_trade_fee_denominator: FEE_DENOMINATOR,
                 admin_withdraw_fee_denominator: FEE_DENOMINATOR,
-                trade_fee_denominator: 0,
+                trade_fee_denominator: FEE_DENOMINATOR,
                 withdraw_fee_denominator: FEE_DENOMINATOR,
                 ..Default::default()
             },
@@ -95,7 +95,7 @@ impl SwapCurve for StableSwap {
 
         let downscaled_destination_amount_swapped = match trade_direction {
             TradeDirection::AtoB => self.downscale_token_b(result.amount_swapped)?,
-            TradeDirection::BtoA => self.downscale_token_a(result.admin_fee)?,
+            TradeDirection::BtoA => self.downscale_token_a(result.amount_swapped)?,
         };
 
         let swap_source_amount: u128 = swap_source_amount.into();

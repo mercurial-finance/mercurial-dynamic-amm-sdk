@@ -24,6 +24,7 @@ pub struct VaultInfo {
     pub vault: Vault,
 }
 
+#[derive(Clone)]
 pub struct QuoteData {
     /// Pool state to swap
     pub pool: Pool,
@@ -49,6 +50,7 @@ pub struct QuoteData {
     pub stake_data: HashMap<Pubkey, Vec<u8>>,
 }
 
+#[derive(Debug, Clone)]
 pub struct QuoteResult {
     /// Swap out amount
     pub out_amount: u64,
@@ -107,8 +109,9 @@ pub fn compute_quote(
     };
 
     let (
-        in_vault,
+        mut in_vault,
         out_vault,
+        in_vault_lp,
         in_vault_lp_mint,
         out_vault_lp_mint,
         out_vault_token_account,
@@ -118,6 +121,7 @@ pub fn compute_quote(
         TradeDirection::AtoB => (
             vault_a,
             vault_b,
+            pool_vault_a_lp_token,
             vault_a_lp_mint,
             vault_b_lp_mint,
             vault_b_token,
@@ -127,6 +131,7 @@ pub fn compute_quote(
         TradeDirection::BtoA => (
             vault_b,
             vault_a,
+            pool_vault_b_lp_token,
             vault_b_lp_mint,
             vault_a_lp_mint,
             vault_a_token,
@@ -149,7 +154,9 @@ pub fn compute_quote(
         .checked_sub(owner_fee.try_into()?)
         .context("Fail to calculate in_amount_after_owner_fee")?;
 
-    let in_vault_lp = in_vault
+    let before_in_token_total_amount = in_token_total_amount;
+
+    let in_lp = in_vault
         .getunmint_amount(
             current_time,
             in_amount_after_owner_fee,
@@ -157,8 +164,26 @@ pub fn compute_quote(
         )
         .context("Fail to get in_vault_lp")?;
 
-    let actual_in_amount = in_vault
-        .get_amount_by_share(current_time, in_vault_lp, in_vault_lp_mint.supply)
+    in_vault.total_amount = in_vault
+        .total_amount
+        .checked_add(in_amount_after_owner_fee)
+        .context("Fail to add in_vault.total_amount")?;
+
+    let after_in_token_total_amount = in_vault
+        .get_amount_by_share(
+            current_time,
+            in_lp
+                .checked_add(in_vault_lp.amount)
+                .context("Fail to get new in_vault_lp")?,
+            in_vault_lp_mint
+                .supply
+                .checked_add(in_lp)
+                .context("Fail to get new in_vault_lp_mint")?,
+        )
+        .context("Fail to get after_in_token_total_amount")?;
+
+    let actual_in_amount = after_in_token_total_amount
+        .checked_sub(before_in_token_total_amount)
         .context("Fail to get actual_in_amount")?;
 
     let actual_in_amount_after_fee = actual_in_amount

@@ -1,7 +1,7 @@
 pub mod constants;
 pub mod context;
 pub mod curve;
-mod depeg;
+pub mod depeg;
 pub mod error;
 pub mod event;
 mod math;
