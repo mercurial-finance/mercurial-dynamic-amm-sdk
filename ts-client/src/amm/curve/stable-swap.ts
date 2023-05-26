@@ -54,7 +54,7 @@ export class StableSwap implements SwapCurve {
     throw new Error('UnsupportedBasePool');
   }
 
-  private async updateDepegInfoIfExpired() {
+  private updateDepegInfoIfExpired() {
     if (!this.depeg.depegType['none']) {
       const expired = this.onChainTime.toNumber() > this.depeg.baseCacheUpdated.add(BASE_CACHE_EXPIRE).toNumber();
       if (expired) {
