@@ -445,6 +445,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
   const isFromAToB = inTokenMint.equals(tokenAMint);
   const [
     sourceAmount,
+    swapSourceVaultLpAmount,
     swapSourceAmount,
     swapDestinationAmount,
     swapSourceVault,
@@ -453,9 +454,20 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
     swapDestinationVaultLpSupply,
     tradeDirection,
   ] = isFromAToB
-    ? [inAmountLamport, tokenAAmount, tokenBAmount, vaultA, vaultB, vaultALpSupply, vaultBLpSupply, TradeDirection.AToB]
+    ? [
+        inAmountLamport,
+        poolVaultALp,
+        tokenAAmount,
+        tokenBAmount,
+        vaultA,
+        vaultB,
+        vaultALpSupply,
+        vaultBLpSupply,
+        TradeDirection.AToB,
+      ]
     : [
         inAmountLamport,
+        poolVaultBLp,
         tokenBAmount,
         tokenAAmount,
         vaultB,
@@ -468,15 +480,26 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
   const tradeFee = calculateTradingFee(sourceAmount, poolState);
 
   const sourceVaultWithdrawableAmount = calculateWithdrawableAmount(currentTime, swapSourceVault);
+
+  const beforeSwapSourceAmount = swapSourceAmount;
+  const sourceAmountLessAdminFee = sourceAmount.sub(adminFee);
+
   // Get vault lp minted when deposit to the vault
   const sourceVaultLp = getUnmintAmount(
-    sourceAmount.sub(adminFee),
+    sourceAmountLessAdminFee,
     sourceVaultWithdrawableAmount,
     swapSourceVaultLpSupply,
   );
 
-  const actualSourceAmount = getAmountByShare(sourceVaultLp, sourceVaultWithdrawableAmount, swapSourceVaultLpSupply);
+  const sourceVaultTotalAmount = sourceVaultWithdrawableAmount.add(sourceAmountLessAdminFee);
 
+  const afterSwapSourceAmount = getAmountByShare(
+    sourceVaultLp.add(swapSourceVaultLpAmount),
+    sourceVaultTotalAmount,
+    swapSourceVaultLpSupply.add(sourceVaultLp),
+  );
+
+  const actualSourceAmount = afterSwapSourceAmount.sub(beforeSwapSourceAmount);
   let sourceAmountWithFee = actualSourceAmount.sub(tradeFee);
 
   const { outAmount: destinationAmount, priceImpact } = swapCurve.computeOutAmount(

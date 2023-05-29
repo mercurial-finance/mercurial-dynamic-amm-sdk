@@ -18,6 +18,7 @@ cpi = ["no-entrypoint"]
 default = []
 staging = []
 test-bpf = []
+test-bpf-snapshot = []
 
 [profile.release]
 overflow-checks = true

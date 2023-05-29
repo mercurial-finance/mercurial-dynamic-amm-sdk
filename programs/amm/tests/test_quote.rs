@@ -14,7 +14,7 @@ use amm::{
 };
 use anchor_lang::{
     prelude::{AccountMeta, Clock, Pubkey},
-    AccountDeserialize, InstructionData, ToAccountMetas,
+    AccountDeserialize, AccountSerialize, InstructionData, ToAccountMetas,
 };
 use anchor_spl::token::{Mint, TokenAccount};
 use mercurial_vault::state::Vault;
@@ -34,6 +34,24 @@ const SOL_USDT: Pubkey = pubkey!("9CopBY6iQBaZKAhhQANfy7g4VXZkx9zKm8AisPd5Ufay")
 const MSOL_SOL: Pubkey = pubkey!("HcjZvfeSNJbNkfLD4eEcRBr96AD3w1GpmMppaeRZf7ur");
 const STSOL_SOL: Pubkey = pubkey!("7EJSgV2pthhDfb4UiER9vzTqe2eojei9GEQAQnkqJ96e");
 const JITOSOL_SOL: Pubkey = pubkey!("ERgpKaq59Nnfm9YRVAAhnq16cZhHxGcDoDWCzXbhiaNw");
+#[derive(serde::Serialize)]
+struct Snapshot {
+    pool: Pubkey,
+    in_token_mint: Pubkey,
+    in_amount: u64,
+    out_amount: u64,
+    pool_state: Vec<u8>,
+    vault_a_state: Vec<u8>,
+    vault_b_state: Vec<u8>,
+    pool_vault_a_lp: u64,
+    pool_vault_b_lp: u64,
+    vault_a_lp_supply: u64,
+    vault_b_lp_supply: u64,
+    vault_a_reserve: u64,
+    vault_b_reserve: u64,
+    stakes_state: HashMap<String, Vec<u8>>,
+    onchain_timestamp: u64,
+}
 
 fn create_ata_account(user: &Pubkey, mint: &Pubkey, amount: u64) -> (Pubkey, Account) {
     let ata = get_associated_token_address(user, mint);
@@ -70,6 +88,58 @@ fn create_ata_account(user: &Pubkey, mint: &Pubkey, amount: u64) -> (Pubkey, Acc
             rent_epoch: 0,
         },
     )
+}
+
+fn snapshot_assertion(
+    pool_pubkey: Pubkey,
+    in_token_mint: Pubkey,
+    in_amount: u64,
+    out_amount: u64,
+    quote_data: QuoteData,
+) {
+    let mut snapshot = Snapshot {
+        pool: pool_pubkey,
+        in_token_mint,
+        in_amount,
+        out_amount,
+        pool_state: vec![],
+        vault_a_state: vec![],
+        vault_b_state: vec![],
+        pool_vault_a_lp: quote_data.pool_vault_a_lp_token.amount,
+        pool_vault_b_lp: quote_data.pool_vault_b_lp_token.amount,
+        vault_a_lp_supply: quote_data.vault_a_lp_mint.supply,
+        vault_b_lp_supply: quote_data.vault_b_lp_mint.supply,
+        vault_a_reserve: quote_data.vault_a_token.amount,
+        vault_b_reserve: quote_data.vault_b_token.amount,
+        stakes_state: quote_data
+            .stake_data
+            .clone()
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect(),
+        onchain_timestamp: quote_data.clock.unix_timestamp as u64,
+    };
+
+    quote_data
+        .pool
+        .try_serialize(&mut snapshot.pool_state)
+        .unwrap();
+
+    quote_data
+        .vault_a
+        .try_serialize(&mut snapshot.vault_a_state)
+        .unwrap();
+
+    quote_data
+        .vault_b
+        .try_serialize(&mut snapshot.vault_b_state)
+        .unwrap();
+
+    let file_name = format!(
+        "./../../ts-client/src/amm/tests/snapshots/snapshot-{}-{}-{}.json",
+        pool_pubkey, in_token_mint, in_amount
+    );
+    std::fs::write(file_name, serde_json::to_string(&snapshot).unwrap()).unwrap();
 }
 
 struct SetupContext {
@@ -338,10 +408,21 @@ async fn assert_swap_result_with_quote(
     let after_user_destination_account: TokenAccount =
         fetch_and_deserialize(banks_client, user_destination_token).await;
 
-    let quote = compute_quote(in_token_mint, in_amount, quote_data).unwrap();
+    let quote = compute_quote(in_token_mint, in_amount, quote_data.clone()).unwrap();
     let out_amount = after_user_destination_account.amount - before_user_destination_account.amount;
 
     assert_eq!(quote.out_amount, out_amount);
+
+    #[cfg(feature = "test-bpf-snapshot")]
+    {
+        snapshot_assertion(
+            pool_pubkey,
+            in_token_mint,
+            in_amount,
+            out_amount,
+            quote_data,
+        );
+    }
 }
 
 #[tokio::test]
