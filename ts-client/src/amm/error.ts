@@ -21,7 +21,7 @@ class DynamicAmmError extends Error {
       if (anchorError?.program.toBase58() === PROGRAM_ID) {
         _errorCode = anchorError.error.errorCode.number;
         _errorName = anchorError.error.errorCode.code;
-        _errorMessage = anchorError.message;
+        _errorMessage = anchorError.error.errorMessage;
       }
     } else {
       const idlError = IDL.errors.find((err) => err.code === error);
