@@ -1,5 +1,6 @@
 import { VaultIdl as Vault, IDL as VaultIdl } from '@mercurial-finance/vault-sdk';
 import AmmImpl from './src/amm';
+import DynamicAmmError from './src/amm/error';
 import { StableSwap, ConstantProductSwap } from './src/amm/curve';
 import {
   PROGRAM_ID,
@@ -26,6 +27,7 @@ export {
   // Classes
   ConstantProductSwap,
   StableSwap,
+  DynamicAmmError,
   // Utils
   getDepegAccounts,
   getOnchainTime,
