@@ -17,7 +17,7 @@ class DynamicAmmError extends Error {
 
     let errorCode;
     if (typeof error === 'object') {
-      const anchorError = AnchorError.parse(JSON.parse(JSON.stringify(error)) as string[]);
+      const anchorError = AnchorError.parse(JSON.parse(JSON.stringify(error)).logs as string[]);
 
       if (anchorError?.program.toBase58() === PROGRAM_ID) errorCode = anchorError?.error.errorCode;
     }
