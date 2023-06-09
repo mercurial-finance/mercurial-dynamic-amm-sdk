@@ -15,19 +15,22 @@ class DynamicAmmError extends Error {
     let _errorName = 'Something went wrong';
     let _errorMessage = 'Something went wrong';
 
-    let errorCode;
-    if (typeof error === 'object') {
+    if (error instanceof Error) {
       const anchorError = AnchorError.parse(JSON.parse(JSON.stringify(error)).logs as string[]);
 
-      if (anchorError?.program.toBase58() === PROGRAM_ID) errorCode = anchorError?.error.errorCode;
-    }
+      if (anchorError?.program.toBase58() === PROGRAM_ID) {
+        _errorCode = anchorError.error.errorCode.number;
+        _errorName = anchorError.error.errorCode.code;
+        _errorMessage = anchorError.message;
+      }
+    } else {
+      const idlError = IDL.errors.find((err) => err.code === error);
 
-    const idlError = IDL.errors.find((err) => err.code === errorCode);
-
-    if (idlError) {
-      _errorCode = idlError.code;
-      _errorName = idlError.name;
-      _errorMessage = idlError.msg;
+      if (idlError) {
+        _errorCode = idlError.code;
+        _errorName = idlError.name;
+        _errorMessage = idlError.msg;
+      }
     }
 
     super(_errorMessage);
