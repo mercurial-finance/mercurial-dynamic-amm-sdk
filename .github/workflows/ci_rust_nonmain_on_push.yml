@@ -3,18 +3,18 @@ name: CI on non-main
 on:
   pull_request:
     paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'LICENSE'
-      - '.editorconfig'
+      - "docs/**"
+      - "README.md"
+      - "LICENSE"
+      - ".editorconfig"
     branches:
-      - main
+      - master
       - develop
       - staging
 
 env:
   SOLANA_CLI_VERSION: 1.14.6
-  
+
 jobs:
   changed_files_rust:
     runs-on: ubuntu-latest

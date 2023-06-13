@@ -3,12 +3,12 @@ name: Continuous Integration NPM
 on:
   pull_request:
     paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'LICENSE'
-      - '.editorconfig'
+      - "docs/**"
+      - "README.md"
+      - "LICENSE"
+      - ".editorconfig"
     branches:
-      - main
+      - master
       - develop
       - staging
 
