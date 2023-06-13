@@ -5,23 +5,7 @@ import { AnchorProvider, BN, Wallet } from '@project-serum/anchor';
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 import { TokenListProvider, TokenInfo } from '@solana/spl-token-registry';
 import { calculateSwapQuote, getDepegAccounts, getOnchainTime } from '../utils';
-import { airDropSol } from './utils';
-
-let mockWallet = new Wallet(
-  process.env.WALLET_PRIVATE_KEY ? Keypair.fromSecretKey(bs58.decode(process.env.WALLET_PRIVATE_KEY)) : new Keypair(),
-);
-
-const MAINNET = {
-  connection: new Connection(process.env.MAINNET_RPC_ENDPOINT as string),
-  cluster: 'mainnet-beta',
-};
-
-const DEVNET = {
-  connection: new Connection('https://api.devnet.solana.com/', {
-    commitment: 'confirmed',
-  }),
-  cluster: 'devnet',
-};
+import { DEVNET, MAINNET, airDropSol, mockWallet } from './utils';
 
 describe('Interact with Devnet pool', () => {
   const provider = new AnchorProvider(DEVNET.connection, mockWallet, {
