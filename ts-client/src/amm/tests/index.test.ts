@@ -711,7 +711,7 @@ describe('Interact with Mainnet pool', () => {
     expect(priceImpact2.toNumber()).toBeGreaterThan(priceImpact1.toNumber());
   });
 
-  test.only('Ssamm price impact', async () => {
+  test('Ssamm price impact', async () => {
     const inTokenMint = new PublicKey(stablePool.tokenA.address);
     const onePercentAmount = stablePool.poolInfo.tokenAAmount.div(new BN(100));
     const fivePercentAmount = stablePool.poolInfo.tokenAAmount.mul(new BN(5)).div(new BN(100));
