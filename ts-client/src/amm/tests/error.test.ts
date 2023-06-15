@@ -53,7 +53,7 @@ describe('Interact with Mainnet pool', () => {
       new BN(Number.MAX_SAFE_INTEGER),
     );
 
-    provider.sendAndConfirm(cpDepositTx).catch((error) => {
+    await provider.sendAndConfirm(cpDepositTx).catch((error) => {
       const ammError = new DynamicAmmError(error);
 
       expect(ammError.errorCode).toBe(IDL.errors[4].code);
@@ -73,7 +73,7 @@ describe('Interact with Mainnet pool', () => {
       new BN(Number.MAX_SAFE_INTEGER),
     );
 
-    provider.sendAndConfirm(depegPoolDepositTx).catch((error) => {
+    await provider.sendAndConfirm(depegPoolDepositTx).catch((error) => {
       const ammError = new DynamicAmmError(error);
 
       expect(ammError.errorCode).toBe(IDL.errors[4].code);
@@ -93,7 +93,7 @@ describe('Interact with Mainnet pool', () => {
       new BN(Number.MAX_SAFE_INTEGER),
     );
 
-    provider.sendAndConfirm(stablePoolDepositTx).catch((error) => {
+    await provider.sendAndConfirm(stablePoolDepositTx).catch((error) => {
       const ammError = new DynamicAmmError(error);
 
       expect(ammError.errorCode).toBe(IDL.errors[4].code);
