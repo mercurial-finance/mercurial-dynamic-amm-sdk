@@ -2152,9 +2152,9 @@ dependencies = [
 
 [[package]]
 name = "mercurial-vault"
-version = "0.4.6"
+version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4de33aa4bc345cde8862076575e8ee03550dfa1e4bc3a083f693964c2adbbdd3"
+checksum = "12c961c3453e5c2903847186bc77aa03d1c7c8840cb89ebeab7607522a3a74d9"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
