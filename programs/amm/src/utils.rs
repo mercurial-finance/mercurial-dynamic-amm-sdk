@@ -157,7 +157,7 @@ pub fn compute_quote(
     let before_in_token_total_amount = in_token_total_amount;
 
     let in_lp = in_vault
-        .getunmint_amount(
+        .get_unmint_amount(
             current_time,
             in_amount_after_owner_fee,
             in_vault_lp_mint.supply,
@@ -205,7 +205,7 @@ pub fn compute_quote(
         .context("Fail to get swap result")?;
 
     let out_vault_lp = out_vault
-        .getunmint_amount(
+        .get_unmint_amount(
             current_time,
             destination_amount_swapped.try_into()?,
             out_vault_lp_mint.supply,
