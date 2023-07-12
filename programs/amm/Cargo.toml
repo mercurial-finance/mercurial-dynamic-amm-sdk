@@ -1,6 +1,6 @@
 [package]
 name = "mercurial-amm"
-version = "0.4.7"
+version = "0.4.8"
 description = "Created with Anchor"
 edition = "2021"
 license = "MIT"
