@@ -3,6 +3,8 @@ use anchor_lang::prelude::*;
 
 /// Add liquidity event
 #[event]
+#[derive(Debug, Clone, Copy)]
+
 pub struct AddLiquidity {
     /// LP amount user received upon add liquidity.
     pub lp_mint_amount: u64,
@@ -14,6 +16,8 @@ pub struct AddLiquidity {
 
 /// Remove liquidity event
 #[event]
+#[derive(Debug, Clone, Copy)]
+
 pub struct RemoveLiquidity {
     /// LP amount burned from user upon add remove liquidity.
     pub lp_unmint_amount: u64,
@@ -25,6 +29,8 @@ pub struct RemoveLiquidity {
 
 /// Swap event
 #[event]
+#[derive(Debug, Clone, Copy)]
+
 pub struct Swap {
     /// Token amount user deposited to the pool for token exchange.
     pub in_amount: u64,
@@ -40,6 +46,7 @@ pub struct Swap {
 
 /// Pool info event
 #[event]
+#[derive(Debug, Clone, Copy)]
 pub struct PoolInfo {
     /// Total token A amount in the pool
     pub token_a_amount: u64,
@@ -47,12 +54,6 @@ pub struct PoolInfo {
     pub token_b_amount: u64,
     /// Current virtual price
     pub virtual_price: f64,
-    /// Oldest virtual price from historical snapshots
-    pub first_virtual_price: f64,
-    /// Unix timestamp of oldest virtual price snapshot was token
-    pub first_timestamp: u64,
     /// Current unix timestamp
     pub current_timestamp: u64,
-    /// Pool APY
-    pub apy: f64,
 }
