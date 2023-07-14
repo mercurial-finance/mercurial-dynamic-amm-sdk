@@ -280,23 +280,15 @@ export const calculatePoolInfo = (
   vaultA: VaultState,
   vaultB: VaultState,
 ) => {
-  console.log('🚀 ~ file: utils.ts:283 ~ poolLpSupply:', poolLpSupply.toString());
   const vaultAWithdrawableAmount = calculateWithdrawableAmount(currentTimestamp.toNumber(), vaultA);
-  console.log('🚀 ~ file: utils.ts:285 ~ vaultAWithdrawableAmount:', vaultAWithdrawableAmount.toString());
   const vaultBWithdrawableAmount = calculateWithdrawableAmount(currentTimestamp.toNumber(), vaultB);
-  console.log('🚀 ~ file: utils.ts:287 ~ vaultBWithdrawableAmount:', vaultBWithdrawableAmount.toString());
 
   const tokenAAmount = getAmountByShare(poolVaultALp, vaultAWithdrawableAmount, vaultALpSupply);
-  console.log('🚀 ~ file: utils.ts:287 ~ tokenAAmount:', tokenAAmount.toString());
   const tokenBAmount = getAmountByShare(poolVaultBLp, vaultBWithdrawableAmount, vaultBLpSupply);
-  console.log('🚀 ~ file: utils.ts:289 ~ tokenBAmount:', tokenBAmount.toString());
 
   const d = swapCurve.computeD(tokenAAmount, tokenBAmount);
-  console.log('🚀 ~ file: utils.ts:293 ~ d:', d.toString());
   const virtualPriceBigNum = poolLpSupply.isZero() ? new BN(0) : d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
-  console.log('🚀 ~ file: utils.ts:294 ~ virtualPriceBigNum:', virtualPriceBigNum.toString());
   const virtualPrice = virtualPriceBigNum.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
-  console.log('🚀 ~ file: utils.ts:296 ~ virtualPrice:', virtualPrice.toString());
 
   const poolInformation: PoolInformation = {
     tokenAAmount,
