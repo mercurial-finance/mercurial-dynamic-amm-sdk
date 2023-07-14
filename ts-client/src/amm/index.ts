@@ -317,36 +317,47 @@ export default class AmmImpl implements AmmImplementation {
       ammProgram,
     );
 
-    const tokensInfoPda = await poolList.reduce<
-      Promise<Array<{ info: TokenInfo; vaultPda: PublicKey; tokenVaultPda: PublicKey; lpMintPda: PublicKey }>>
-    >(async (accListPromise, { tokenInfoA, tokenInfoB, excludeVault }) => {
-      const accList = await accListPromise;
-      const vaultAPdas = await getVaultPdas(
+    const tokensInfoPda = poolList.reduce<
+      Array<{ info: TokenInfo; vaultPda: PublicKey; tokenVaultPda: PublicKey; lpMintPda: PublicKey }>
+    >((accList, { tokenInfoA, tokenInfoB, excludeVault }) => {
+      const vaultAPdas = getVaultPdas(
         new PublicKey(tokenInfoA.address),
         new PublicKey(VAULT_PROGRAM_ID),
         excludeVault ? PublicKey.default : undefined,
       );
-      const vaultBPdas = await getVaultPdas(
+      const vaultBPdas = getVaultPdas(
         new PublicKey(tokenInfoB.address),
         new PublicKey(VAULT_PROGRAM_ID),
         excludeVault ? PublicKey.default : undefined,
       );
 
       return [...accList, { info: tokenInfoA, ...vaultAPdas }, { info: tokenInfoB, ...vaultBPdas }];
-    }, Promise.resolve([]));
+    }, []);
     const vaultsImpl = await VaultImpl.createMultipleForPool(connection, tokensInfoPda);
 
     const accountsToFetch = await Promise.all(
       poolsState.map(async (poolState, index) => {
-        const { pool, tokenInfoA, tokenInfoB } = poolList[index];
+        const { pool, tokenInfoA, tokenInfoB, excludeVault } = poolList[index];
 
         invariant(tokenInfoA.address === poolState.tokenAMint.toBase58(), `TokenInfoA provided is incorrect`);
         invariant(tokenInfoB.address === poolState.tokenBMint.toBase58(), `TokenInfoB provided is incorrect`);
         invariant(tokenInfoA, `TokenInfo ${poolState.tokenAMint.toBase58()} not found`);
         invariant(tokenInfoB, `TokenInfo ${poolState.tokenBMint.toBase58()} not found`);
 
-        const vaultA = vaultsImpl.find(({ tokenInfo }) => tokenInfo.address === tokenInfoA.address);
-        const vaultB = vaultsImpl.find(({ tokenInfo }) => tokenInfo.address === tokenInfoB.address);
+        const vaultAPdas = getVaultPdas(
+          new PublicKey(tokenInfoA.address),
+          new PublicKey(VAULT_PROGRAM_ID),
+          excludeVault ? PublicKey.default : undefined,
+        );
+
+        const vaultBPdas = getVaultPdas(
+          new PublicKey(tokenInfoB.address),
+          new PublicKey(VAULT_PROGRAM_ID),
+          excludeVault ? PublicKey.default : undefined,
+        );
+
+        const vaultA = vaultsImpl.find(({ vaultPda }) => vaultPda.equals(vaultAPdas.vaultPda));
+        const vaultB = vaultsImpl.find(({ vaultPda }) => vaultPda.equals(vaultBPdas.vaultPda));
 
         invariant(vaultA, `Vault ${poolState.tokenAMint.toBase58()} not found`);
         invariant(vaultB, `Vault ${poolState.tokenBMint.toBase58()} not found`);
