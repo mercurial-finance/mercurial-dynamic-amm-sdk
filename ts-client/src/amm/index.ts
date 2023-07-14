@@ -14,7 +14,11 @@ import {
 } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
-import VaultImpl, { calculateWithdrawableAmount, getVaultPdas } from '@mercurial-finance/vault-sdk';
+import VaultImpl, {
+  PROGRAM_ID as VAULT_PROGRAM_ID,
+  calculateWithdrawableAmount,
+  getVaultPdas,
+} from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
 import {
   AccountType,
@@ -289,7 +293,7 @@ export default class AmmImpl implements AmmImplementation {
 
   public static async createMultiple(
     connection: Connection,
-    poolList: Array<{ pool: PublicKey; tokenInfoA: TokenInfo; tokenInfoB: TokenInfo }>,
+    poolList: Array<{ pool: PublicKey; tokenInfoA: TokenInfo; tokenInfoB: TokenInfo; excludeVault?: boolean }>,
     opt?: {
       allowOwnerOffCurve?: boolean;
       cluster?: Cluster;
@@ -313,23 +317,47 @@ export default class AmmImpl implements AmmImplementation {
       ammProgram,
     );
 
-    const tokenInfos = poolList.reduce<Array<TokenInfo>>(
-      (accList, { tokenInfoA, tokenInfoB }) => Array.from(new Set([...accList, tokenInfoA, tokenInfoB])),
-      [],
-    );
-    const vaultsImpl = await VaultImpl.createMultiple(connection, tokenInfos);
+    const tokensInfoPda = poolList.reduce<
+      Array<{ info: TokenInfo; vaultPda: PublicKey; tokenVaultPda: PublicKey; lpMintPda: PublicKey }>
+    >((accList, { tokenInfoA, tokenInfoB, excludeVault }) => {
+      const vaultAPdas = getVaultPdas(
+        new PublicKey(tokenInfoA.address),
+        new PublicKey(VAULT_PROGRAM_ID),
+        excludeVault ? PublicKey.default : undefined,
+      );
+      const vaultBPdas = getVaultPdas(
+        new PublicKey(tokenInfoB.address),
+        new PublicKey(VAULT_PROGRAM_ID),
+        excludeVault ? PublicKey.default : undefined,
+      );
+
+      return [...accList, { info: tokenInfoA, ...vaultAPdas }, { info: tokenInfoB, ...vaultBPdas }];
+    }, []);
+    const vaultsImpl = await VaultImpl.createMultipleWithPda(connection, tokensInfoPda);
 
     const accountsToFetch = await Promise.all(
       poolsState.map(async (poolState, index) => {
-        const { pool, tokenInfoA, tokenInfoB } = poolList[index];
+        const { pool, tokenInfoA, tokenInfoB, excludeVault } = poolList[index];
 
         invariant(tokenInfoA.address === poolState.tokenAMint.toBase58(), `TokenInfoA provided is incorrect`);
         invariant(tokenInfoB.address === poolState.tokenBMint.toBase58(), `TokenInfoB provided is incorrect`);
         invariant(tokenInfoA, `TokenInfo ${poolState.tokenAMint.toBase58()} not found`);
         invariant(tokenInfoB, `TokenInfo ${poolState.tokenBMint.toBase58()} not found`);
 
-        const vaultA = vaultsImpl.find(({ tokenInfo }) => tokenInfo.address === tokenInfoA.address);
-        const vaultB = vaultsImpl.find(({ tokenInfo }) => tokenInfo.address === tokenInfoB.address);
+        const vaultAPdas = getVaultPdas(
+          new PublicKey(tokenInfoA.address),
+          new PublicKey(VAULT_PROGRAM_ID),
+          excludeVault ? PublicKey.default : undefined,
+        );
+
+        const vaultBPdas = getVaultPdas(
+          new PublicKey(tokenInfoB.address),
+          new PublicKey(VAULT_PROGRAM_ID),
+          excludeVault ? PublicKey.default : undefined,
+        );
+
+        const vaultA = vaultsImpl.find(({ vaultPda }) => vaultPda.equals(vaultAPdas.vaultPda));
+        const vaultB = vaultsImpl.find(({ vaultPda }) => vaultPda.equals(vaultBPdas.vaultPda));
 
         invariant(vaultA, `Vault ${poolState.tokenAMint.toBase58()} not found`);
         invariant(vaultB, `Vault ${poolState.tokenBMint.toBase58()} not found`);
