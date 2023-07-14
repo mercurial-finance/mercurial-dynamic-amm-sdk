@@ -333,7 +333,7 @@ export default class AmmImpl implements AmmImplementation {
 
       return [...accList, { info: tokenInfoA, ...vaultAPdas }, { info: tokenInfoB, ...vaultBPdas }];
     }, []);
-    const vaultsImpl = await VaultImpl.createMultipleForPool(connection, tokensInfoPda);
+    const vaultsImpl = await VaultImpl.createMultipleWithPda(connection, tokensInfoPda);
 
     const accountsToFetch = await Promise.all(
       poolsState.map(async (poolState, index) => {
