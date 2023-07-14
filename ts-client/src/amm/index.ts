@@ -14,7 +14,11 @@ import {
 } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
-import VaultImpl, { calculateWithdrawableAmount, getVaultPdas } from '@mercurial-finance/vault-sdk';
+import VaultImpl, {
+  PROGRAM_ID as VAULT_PROGRAM_ID,
+  calculateWithdrawableAmount,
+  getVaultPdas,
+} from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
 import {
   AccountType,
@@ -289,7 +293,7 @@ export default class AmmImpl implements AmmImplementation {
 
   public static async createMultiple(
     connection: Connection,
-    poolList: Array<{ pool: PublicKey; tokenInfoA: TokenInfo; tokenInfoB: TokenInfo }>,
+    poolList: Array<{ pool: PublicKey; tokenInfoA: TokenInfo; tokenInfoB: TokenInfo; excludeVault?: boolean }>,
     opt?: {
       allowOwnerOffCurve?: boolean;
       cluster?: Cluster;
@@ -313,11 +317,24 @@ export default class AmmImpl implements AmmImplementation {
       ammProgram,
     );
 
-    const tokenInfos = poolList.reduce<Array<TokenInfo>>(
-      (accList, { tokenInfoA, tokenInfoB }) => Array.from(new Set([...accList, tokenInfoA, tokenInfoB])),
-      [],
-    );
-    const vaultsImpl = await VaultImpl.createMultiple(connection, tokenInfos);
+    const tokensInfoPda = await poolList.reduce<
+      Promise<Array<{ info: TokenInfo; vaultPda: PublicKey; tokenVaultPda: PublicKey; lpMintPda: PublicKey }>>
+    >(async (accListPromise, { tokenInfoA, tokenInfoB, excludeVault }) => {
+      const accList = await accListPromise;
+      const vaultAPdas = await getVaultPdas(
+        new PublicKey(tokenInfoA.address),
+        new PublicKey(VAULT_PROGRAM_ID),
+        excludeVault ? PublicKey.default : undefined,
+      );
+      const vaultBPdas = await getVaultPdas(
+        new PublicKey(tokenInfoB.address),
+        new PublicKey(VAULT_PROGRAM_ID),
+        excludeVault ? PublicKey.default : undefined,
+      );
+
+      return [...accList, { info: tokenInfoA, ...vaultAPdas }, { info: tokenInfoB, ...vaultBPdas }];
+    }, Promise.resolve([]));
+    const vaultsImpl = await VaultImpl.createMultiple(connection, tokensInfoPda);
 
     const accountsToFetch = await Promise.all(
       poolsState.map(async (poolState, index) => {
