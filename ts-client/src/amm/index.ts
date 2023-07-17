@@ -630,7 +630,6 @@ export default class AmmImpl implements AmmImplementation {
     const totalTokenBalance = this.poolInfo.tokenAAmount
       .mul(tokenMultiplier.tokenAMultiplier)
       .add(this.poolInfo.tokenBAmount.mul(tokenMultiplier.tokenBMultiplier));
-    console.log('🚀 ~ file: index.ts:633 ~ AmmImpl ~ getdepegToken ~ totalTokenBalance:', totalTokenBalance.toString());
 
     if (totalTokenBalance.isZero()) return null;
 
