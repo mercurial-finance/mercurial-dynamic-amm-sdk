@@ -26,7 +26,7 @@ overflow-checks = true
 [dependencies]
 anchor-lang = "0.26.0"
 anchor-spl = "0.26.0"
-mercurial-vault = { version="0.4.7", features = ["cpi"] }
+mercurial-vault = { version = "0.4.7", features = ["cpi"] }
 spl-token-swap = { version = "3.0.0", features = ["no-entrypoint"] }
 meteora-stable-swap-math = "1.8.1"
 meteora-stable-swap-client = "1.8.1"
@@ -35,10 +35,10 @@ spl-stake-pool = { ver="0.6.4", features = ["no-entrypoint"] }
 anyhow = "1.0.71"
 
 [dev-dependencies]
-solana-program-test = "1.14.17"
-solana-sdk = "1.14.17"
-solana-account-decoder = "1.14.17"
-solana-client = "1.14.17"
+solana-program-test = "~1.14.17"
+solana-sdk = "~1.14.17"
+solana-account-decoder = "~1.14.17"
+solana-client = "~1.14.17"
 spl-associated-token-account = { version = "1.1.2", features = ["no-entrypoint"] }
 serde_json = "1.0.95"
 serde = "1.0.159"
