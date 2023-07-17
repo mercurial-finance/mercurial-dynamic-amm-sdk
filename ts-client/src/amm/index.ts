@@ -625,6 +625,7 @@ export default class AmmImpl implements AmmImplementation {
   }
 
   get depegTokens(): TokenInfo[] {
+    if (!this.isStablePool) return [];
     const { tokenMultiplier } = this.poolState.curveType['stable'] as any;
     const totalTokenBalance = this.poolInfo.tokenAAmount
       .mul(tokenMultiplier.tokenAMultiplier)
