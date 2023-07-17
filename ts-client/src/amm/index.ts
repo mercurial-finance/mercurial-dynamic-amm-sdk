@@ -624,6 +624,29 @@ export default class AmmImpl implements AmmImplementation {
     return this.poolState.fees.tradeFeeNumerator.mul(new BN(10000)).div(this.poolState.fees.tradeFeeDenominator);
   }
 
+  get depegTokens(): TokenInfo[] {
+    const { tokenMultiplier } = this.poolState.curveType['stable'] as any;
+    const totalTokenBalance = this.poolInfo.tokenAAmount
+      .mul(tokenMultiplier.tokenAMultiplier)
+      .add(this.poolInfo.tokenBAmount.mul(tokenMultiplier.tokenBMultiplier));
+
+    const isTokenADepeg = this.poolInfo.tokenAAmount
+      .mul(new BN(2))
+      .div(totalTokenBalance)
+      .mul(new BN(100))
+      .lt(new BN(5));
+    const isTokenBDepeg = this.poolInfo.tokenAAmount
+      .mul(new BN(2))
+      .div(totalTokenBalance)
+      .mul(new BN(100))
+      .lt(new BN(5));
+
+    const depegTokens: TokenInfo[] = [];
+    isTokenADepeg && depegTokens.push(this.tokenA);
+    isTokenBDepeg && depegTokens.push(this.tokenB);
+    return depegTokens;
+  }
+
   /**
    * It updates the state of the pool
    */
