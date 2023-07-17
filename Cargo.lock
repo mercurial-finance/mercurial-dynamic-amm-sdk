@@ -2085,16 +2085,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "marinade-sdk"
-version = "0.1.0"
-source = "git+https://github.com/mercurial-finance/marinade-sdk?rev=93313bcaab59a69ca57d43cc6088ab6b99b67997#93313bcaab59a69ca57d43cc6088ab6b99b67997"
-dependencies = [
- "borsh 0.9.3",
- "solana-program",
- "spl-token",
-]
-
-[[package]]
 name = "memchr"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2129,14 +2119,16 @@ dependencies = [
 
 [[package]]
 name = "mercurial-amm"
-version = "0.4.8"
+version = "0.4.9"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "anyhow",
  "bincode",
- "marinade-sdk",
  "mercurial-vault",
+ "meteora-marinade-sdk",
+ "meteora-stable-swap-client",
+ "meteora-stable-swap-math",
  "serde",
  "serde_json",
  "solana-account-decoder",
@@ -2146,8 +2138,6 @@ dependencies = [
  "spl-associated-token-account",
  "spl-stake-pool",
  "spl-token-swap",
- "stable-swap-client",
- "stable-swap-math",
 ]
 
 [[package]]
@@ -2171,6 +2161,42 @@ dependencies = [
  "keccak",
  "rand_core 0.6.4",
  "zeroize",
+]
+
+[[package]]
+name = "meteora-marinade-sdk"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50c09de3fb32038db15de6415911bd54a0b27cc1b8b06ea3a711609dad63ed80"
+dependencies = [
+ "borsh 0.9.3",
+ "solana-program",
+ "spl-token",
+]
+
+[[package]]
+name = "meteora-stable-swap-client"
+version = "1.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2d87299e3c4f880d8356f865f338e5df92b3ba278744c846bf7deed35dadafc"
+dependencies = [
+ "arrayref",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
+name = "meteora-stable-swap-math"
+version = "1.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d1cab62980353eb1c6bfbf5c228825380f0b95a385949f9d35f93ddef7307a2"
+dependencies = [
+ "borsh 0.9.3",
+ "meteora-stable-swap-client",
+ "num-traits",
+ "uint 0.9.1",
 ]
 
 [[package]]
@@ -4372,29 +4398,6 @@ dependencies = [
  "spl-math",
  "spl-token",
  "thiserror",
-]
-
-[[package]]
-name = "stable-swap-client"
-version = "1.8.1"
-source = "git+https://github.com/mercurial-finance/stable-swap?rev=f49a9166fd1b7afd14dded3cdd600fb19b4c6982#f49a9166fd1b7afd14dded3cdd600fb19b4c6982"
-dependencies = [
- "arrayref",
- "num-derive",
- "num-traits",
- "solana-program",
- "thiserror",
-]
-
-[[package]]
-name = "stable-swap-math"
-version = "1.8.1"
-source = "git+https://github.com/mercurial-finance/stable-swap?rev=f49a9166fd1b7afd14dded3cdd600fb19b4c6982#f49a9166fd1b7afd14dded3cdd600fb19b4c6982"
-dependencies = [
- "borsh 0.9.3",
- "num-traits",
- "stable-swap-client",
- "uint 0.9.1",
 ]
 
 [[package]]
