@@ -630,6 +630,7 @@ export default class AmmImpl implements AmmImplementation {
     const totalTokenBalance = this.poolInfo.tokenAAmount
       .mul(tokenMultiplier.tokenAMultiplier)
       .add(this.poolInfo.tokenBAmount.mul(tokenMultiplier.tokenBMultiplier));
+    console.log('🚀 ~ file: index.ts:633 ~ AmmImpl ~ getdepegToken ~ totalTokenBalance:', totalTokenBalance.toString());
 
     if (totalTokenBalance.isZero()) return null;
 
@@ -638,13 +639,12 @@ export default class AmmImpl implements AmmImplementation {
       .div(totalTokenBalance)
       .mul(new BN(100))
       .gt(new BN(95));
-    const isTokenBDepeg = this.poolInfo.tokenAAmount
+    const isTokenBDepeg = this.poolInfo.tokenBAmount
       .mul(new BN(2))
       .div(totalTokenBalance)
       .mul(new BN(100))
       .gt(new BN(95));
 
-    const depegTokens: TokenInfo[] = [];
     if (isTokenADepeg) return this.tokenA;
     if (isTokenBDepeg) return this.tokenB;
     return null;
