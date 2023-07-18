@@ -633,22 +633,14 @@ export default class AmmImpl implements AmmImplementation {
       this.poolInfo.tokenBAmount.toString(),
       tokenMultiplier.tokenBMultiplier.toString(),
     );
-    const totalTokenBalance = this.poolInfo.tokenAAmount
-      .mul(tokenMultiplier.tokenAMultiplier)
-      .add(this.poolInfo.tokenBAmount.mul(tokenMultiplier.tokenBMultiplier));
+    const tokenABalance = this.poolInfo.tokenAAmount.mul(tokenMultiplier.tokenAMultiplier);
+    const tokenBBalance = this.poolInfo.tokenBAmount.mul(tokenMultiplier.tokenBMultiplier);
+    const totalTokenBalance = tokenABalance.add(tokenBBalance);
 
     if (totalTokenBalance.isZero()) return null;
 
-    const isTokenADepeg = this.poolInfo.tokenAAmount
-      .mul(new BN(2))
-      .div(totalTokenBalance)
-      .mul(new BN(100))
-      .gt(new BN(95));
-    const isTokenBDepeg = this.poolInfo.tokenBAmount
-      .mul(new BN(2))
-      .div(totalTokenBalance)
-      .mul(new BN(100))
-      .gt(new BN(95));
+    const isTokenBDepeg = tokenABalance.mul(new BN(2)).div(totalTokenBalance).mul(new BN(100)).lt(new BN(5));
+    const isTokenADepeg = tokenBBalance.mul(new BN(2)).div(totalTokenBalance).mul(new BN(100)).lt(new BN(5));
 
     if (isTokenADepeg) return this.tokenA;
     if (isTokenBDepeg) return this.tokenB;
