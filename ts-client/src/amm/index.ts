@@ -639,8 +639,8 @@ export default class AmmImpl implements AmmImplementation {
 
     if (totalTokenBalance.isZero()) return null;
 
-    const isTokenBDepeg = tokenABalance.mul(new BN(2)).div(totalTokenBalance).mul(new BN(100)).lt(new BN(5));
-    const isTokenADepeg = tokenBBalance.mul(new BN(2)).div(totalTokenBalance).mul(new BN(100)).lt(new BN(5));
+    const isTokenADepeg = tokenABalance.div(totalTokenBalance).mul(new BN(100)).gt(new BN(95));
+    const isTokenBDepeg = tokenBBalance.div(totalTokenBalance).mul(new BN(100)).gt(new BN(95));
 
     if (isTokenADepeg) return this.tokenA;
     if (isTokenBDepeg) return this.tokenB;
