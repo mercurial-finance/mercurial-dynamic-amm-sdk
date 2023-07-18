@@ -1,6 +1,6 @@
 [package]
 name = "mercurial-amm"
-version = "0.4.8"
+version = "0.4.9"
 description = "Created with Anchor"
 edition = "2021"
 license = "MIT"
@@ -26,19 +26,19 @@ overflow-checks = true
 [dependencies]
 anchor-lang = "0.26.0"
 anchor-spl = "0.26.0"
-mercurial-vault = { version="0.4.7", features = ["cpi"] }
+mercurial-vault = { version = "0.4.7", features = ["cpi"] }
 spl-token-swap = { version = "3.0.0", features = ["no-entrypoint"] }
-stable-swap-math = { git="https://github.com/mercurial-finance/stable-swap", rev = "f49a9166fd1b7afd14dded3cdd600fb19b4c6982" }
-stable-swap-client = { git="https://github.com/mercurial-finance/stable-swap", rev = "f49a9166fd1b7afd14dded3cdd600fb19b4c6982" }
-marinade-sdk = { git="https://github.com/mercurial-finance/marinade-sdk", rev = "93313bcaab59a69ca57d43cc6088ab6b99b67997", features = ["cpi"] }
+meteora-stable-swap-math = "1.8.1"
+meteora-stable-swap-client = "1.8.1"
+meteora-marinade-sdk = { version = "0.1.0", features = ["cpi"] }
 spl-stake-pool = { ver="0.6.4", features = ["no-entrypoint"] }
 anyhow = "1.0.71"
 
 [dev-dependencies]
-solana-program-test = "1.14.17"
-solana-sdk = "1.14.17"
-solana-account-decoder = "1.14.17"
-solana-client = "1.14.17"
+solana-program-test = "~1.14.17"
+solana-sdk = "~1.14.17"
+solana-account-decoder = "~1.14.17"
+solana-client = "~1.14.17"
 spl-associated-token-account = { version = "1.1.2", features = ["no-entrypoint"] }
 serde_json = "1.0.95"
 serde = "1.0.159"

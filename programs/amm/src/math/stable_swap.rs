@@ -3,8 +3,8 @@ use crate::{
     constants::{depeg::PRECISION, fee::FEE_DENOMINATOR},
     curve::curve_type::{Depeg, DepegType, TokenMultiplier},
 };
-use stable_swap_client::fees::Fees as SaberFees;
-use stable_swap_math::curve::StableSwap as SaberStableSwap;
+use meteora_stable_swap_client::fees::Fees as SaberFees;
+use meteora_stable_swap_math::curve::StableSwap as SaberStableSwap;
 
 /// Stable swap curve
 #[derive(Clone, Copy, Debug)]
