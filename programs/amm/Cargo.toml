@@ -31,7 +31,7 @@ spl-token-swap = { version = "3.0.0", features = ["no-entrypoint"] }
 meteora-stable-swap-math = "1.8.1"
 meteora-stable-swap-client = "1.8.1"
 meteora-marinade-sdk = { version = "0.1.0", features = ["cpi"] }
-spl-stake-pool = { ver="0.6.4", features = ["no-entrypoint"] }
+spl-stake-pool = { version = "0.6.4", features = ["no-entrypoint"] }
 anyhow = "1.0.71"
 
 [dev-dependencies]
