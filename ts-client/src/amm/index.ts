@@ -14,11 +14,7 @@ import {
 } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
-import VaultImpl, {
-  PROGRAM_ID as VAULT_PROGRAM_ID,
-  calculateWithdrawableAmount,
-  getVaultPdas,
-} from '@mercurial-finance/vault-sdk';
+import VaultImpl, { calculateWithdrawableAmount, getVaultPdas } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
 import {
   AccountType,
@@ -51,7 +47,6 @@ import {
   chunkedGetMultipleAccountInfos,
   generateCurveType,
   derivePoolAddress,
-  chunks,
   chunkedFetchMultiplePoolAccount,
 } from './utils';
 
@@ -620,6 +615,12 @@ export default class AmmImpl implements AmmImplementation {
     return 'stable' in this.poolState.curveType;
   }
 
+  get isLST(): boolean {
+    if (!this.isStablePool || !this.swapCurve.depeg?.depegType) return false;
+
+    return !Object.keys(this.swapCurve.depeg.depegType).includes('none');
+  }
+
   get feeBps(): BN {
     return this.poolState.fees.tradeFeeNumerator.mul(new BN(10000)).div(this.poolState.fees.tradeFeeDenominator);
   }
@@ -627,9 +628,9 @@ export default class AmmImpl implements AmmImplementation {
   get depegToken(): TokenInfo | null {
     if (!this.isStablePool) return null;
     const { tokenMultiplier } = this.poolState.curveType['stable'] as any;
-    const totalTokenBalance = this.poolInfo.tokenAAmount
-      .mul(tokenMultiplier.tokenAMultiplier)
-      .add(this.poolInfo.tokenBAmount.mul(tokenMultiplier.tokenBMultiplier));
+    const tokenABalance = this.poolInfo.tokenAAmount.mul(tokenMultiplier.tokenAMultiplier);
+    const tokenBBalance = this.poolInfo.tokenBAmount.mul(tokenMultiplier.tokenBMultiplier);
+    const totalTokenBalance = tokenABalance.add(tokenBBalance);
 
     if (totalTokenBalance.isZero()) return null;
 

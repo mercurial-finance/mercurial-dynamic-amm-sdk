@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { BN } from '@project-serum/anchor';
 import Decimal from 'decimal.js';
-import { PoolFees } from '../types';
+import { Depeg, PoolFees } from '../types';
 
 export interface OutResult {
   outAmount: BN;
@@ -9,6 +9,8 @@ export interface OutResult {
 }
 
 export interface SwapCurve {
+  depeg?: Depeg;
+
   computeOutAmount(
     sourceAmount: BN,
     swapSourceAmount: BN,

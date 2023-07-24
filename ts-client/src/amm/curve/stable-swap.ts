@@ -25,7 +25,7 @@ export class StableSwap implements SwapCurve {
   constructor(
     private amp: number,
     private tokenMultiplier: TokenMultiplier,
-    private depeg: Depeg,
+    public depeg: Depeg,
     private extraAccounts: Map<String, AccountInfo<Buffer>>,
     private onChainTime: BN,
     private stakePoolPubkey: PublicKey,

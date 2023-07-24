@@ -668,6 +668,12 @@ describe('Interact with Mainnet pool', () => {
     expect(stablePool.getPoolTokenMint()).toBeDefined();
   });
 
+  test('LST Flag', () => {
+    expect(cpPool.isLST).toBe(false);
+    expect(depegPool.isLST).toBe(true);
+    expect(stablePool.isLST).toBe(false);
+  });
+
   test('Cpamm price impact', async () => {
     const inTokenMint = new PublicKey(cpPool.tokenA.address);
     const onePercentAmount = cpPool.poolInfo.tokenAAmount.div(new BN(100));
