@@ -13,7 +13,14 @@ import {
   ComputeBudgetProgram,
 } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
+import {
+  AccountLayout,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  MintLayout,
+  NATIVE_MINT,
+  TOKEN_PROGRAM_ID,
+  u64,
+} from '@solana/spl-token';
 import VaultImpl, { calculateWithdrawableAmount, getVaultPdas } from '@mercurial-finance/vault-sdk';
 import invariant from 'invariant';
 import {
@@ -27,7 +34,7 @@ import {
   VaultProgram,
   WithdrawQuote,
 } from './types';
-import { ERROR, SEEDS, WRAPPED_SOL_MINT, UNLOCK_AMOUNT_BUFFER, FEE_OWNER } from './constants';
+import { ERROR, SEEDS, UNLOCK_AMOUNT_BUFFER, FEE_OWNER } from './constants';
 import { StableSwap, SwapCurve, TradeDirection } from './curve';
 import { ConstantProductSwap } from './curve/constant-product';
 import {
@@ -51,7 +58,6 @@ import {
 } from './utils';
 
 type Opt = {
-  allowOwnerOffCurve?: boolean;
   cluster: Cluster;
 };
 
@@ -132,7 +138,6 @@ const deserializeAccountsBuffer = (accountInfoMap: Map<string, AccountTypeInfo>)
 export default class AmmImpl implements AmmImplementation {
   private opt: Opt = {
     cluster: 'mainnet-beta',
-    allowOwnerOffCurve: false,
   };
 
   private constructor(
@@ -241,11 +246,11 @@ export default class AmmImpl implements AmmImplementation {
 
     const payerPoolLp = await getAssociatedTokenAccount(lpMint, payer);
 
-    if (tokenInfoA.address === WRAPPED_SOL_MINT.toBase58()) {
+    if (tokenInfoA.address === NATIVE_MINT.toBase58()) {
       preInstructions = preInstructions.concat(wrapSOLInstruction(payer, payerTokenA, BigInt(tokenAAmount.toString())));
     }
 
-    if (tokenInfoB.address === WRAPPED_SOL_MINT.toBase58()) {
+    if (tokenInfoB.address === NATIVE_MINT.toBase58()) {
       preInstructions = preInstructions.concat(wrapSOLInstruction(payer, payerTokenB, BigInt(tokenBAmount.toString())));
     }
 
@@ -290,7 +295,6 @@ export default class AmmImpl implements AmmImplementation {
     connection: Connection,
     poolList: Array<{ pool: PublicKey; tokenInfoA: TokenInfo; tokenInfoB: TokenInfo }>,
     opt?: {
-      allowOwnerOffCurve?: boolean;
       cluster?: Cluster;
       programId?: string;
     },
@@ -457,7 +461,6 @@ export default class AmmImpl implements AmmImplementation {
           swapCurve,
           depegAccounts,
           {
-            allowOwnerOffCurve: opt?.allowOwnerOffCurve,
             cluster,
           },
         );
@@ -494,7 +497,6 @@ export default class AmmImpl implements AmmImplementation {
     opt?: {
       programId?: string;
       vaultSeedBaseKey?: PublicKey;
-      allowOwnerOffCurve?: boolean;
       cluster?: Cluster;
     },
   ): Promise<AmmImpl> {
@@ -593,7 +595,6 @@ export default class AmmImpl implements AmmImplementation {
       swapCurve,
       depegAccounts,
       {
-        allowOwnerOffCurve: opt?.allowOwnerOffCurve,
         cluster,
       },
     );
@@ -747,7 +748,7 @@ export default class AmmImpl implements AmmImplementation {
    * @returns The amount of tokens the user has.
    */
   public async getUserBalance(owner: PublicKey) {
-    const account = await getAssociatedTokenAccount(this.poolState.lpMint, owner, this.opt.allowOwnerOffCurve);
+    const account = await getAssociatedTokenAccount(this.poolState.lpMint, owner);
     if (!account) return new BN(0);
 
     const parsedAccountInfo = await this.program.provider.connection.getParsedAccountInfo(account);
@@ -861,15 +862,15 @@ export default class AmmImpl implements AmmImplementation {
     createUserSourceIx && preInstructions.push(createUserSourceIx);
     createUserDestinationIx && preInstructions.push(createUserDestinationIx);
 
-    if (sourceToken.equals(WRAPPED_SOL_MINT)) {
+    if (sourceToken.equals(NATIVE_MINT)) {
       preInstructions = preInstructions.concat(
         wrapSOLInstruction(owner, userSourceToken, BigInt(inAmountLamport.toString())),
       );
     }
 
     const postInstructions: Array<TransactionInstruction> = [];
-    if (WRAPPED_SOL_MINT.equals(destinationToken)) {
-      const unwrapSOLIx = await unwrapSOLInstruction(owner, this.opt.allowOwnerOffCurve);
+    if (NATIVE_MINT.equals(destinationToken)) {
+      const unwrapSOLIx = await unwrapSOLInstruction(owner);
       unwrapSOLIx && postInstructions.push(unwrapSOLIx);
     }
 
@@ -1082,20 +1083,20 @@ export default class AmmImpl implements AmmImplementation {
     createTokenBIx && preInstructions.push(createTokenBIx);
     createLpMintIx && preInstructions.push(createLpMintIx);
 
-    if (WRAPPED_SOL_MINT.equals(new PublicKey(this.tokenA.address))) {
+    if (NATIVE_MINT.equals(new PublicKey(this.tokenA.address))) {
       preInstructions = preInstructions.concat(
         wrapSOLInstruction(owner, userAToken, BigInt(tokenAInAmount.toString())),
       );
     }
-    if (WRAPPED_SOL_MINT.equals(new PublicKey(this.tokenB.address))) {
+    if (NATIVE_MINT.equals(new PublicKey(this.tokenB.address))) {
       preInstructions = preInstructions.concat(
         wrapSOLInstruction(owner, userBToken, BigInt(tokenBInAmount.toString())),
       );
     }
 
     const postInstructions: Array<TransactionInstruction> = [];
-    if ([this.tokenA.address, this.tokenB.address].includes(WRAPPED_SOL_MINT.toBase58())) {
-      const closeWrappedSOLIx = await unwrapSOLInstruction(owner, this.opt.allowOwnerOffCurve);
+    if ([this.tokenA.address, this.tokenB.address].includes(NATIVE_MINT.toBase58())) {
+      const closeWrappedSOLIx = await unwrapSOLInstruction(owner);
       closeWrappedSOLIx && postInstructions.push(closeWrappedSOLIx);
     }
 
@@ -1238,7 +1239,7 @@ export default class AmmImpl implements AmmImplementation {
     const preInstructions: Array<TransactionInstruction> = [];
     const [[userAToken, createUserAIx], [userBToken, createUserBIx], [userPoolLp, createLpTokenIx]] = await Promise.all(
       [this.poolState.tokenAMint, this.poolState.tokenBMint, this.poolState.lpMint].map((key) =>
-        getOrCreateATAInstruction(key, owner, this.program.provider.connection, this.opt.allowOwnerOffCurve),
+        getOrCreateATAInstruction(key, owner, this.program.provider.connection),
       ),
     );
 
@@ -1247,8 +1248,8 @@ export default class AmmImpl implements AmmImplementation {
     createLpTokenIx && preInstructions.push(createLpTokenIx);
 
     const postInstructions: Array<TransactionInstruction> = [];
-    if ([this.tokenA.address, this.tokenB.address].includes(WRAPPED_SOL_MINT.toBase58())) {
-      const closeWrappedSOLIx = await unwrapSOLInstruction(owner, this.opt.allowOwnerOffCurve);
+    if ([this.tokenA.address, this.tokenB.address].includes(NATIVE_MINT.toBase58())) {
+      const closeWrappedSOLIx = await unwrapSOLInstruction(owner);
       closeWrappedSOLIx && postInstructions.push(closeWrappedSOLIx);
     }
 
@@ -1305,7 +1306,7 @@ export default class AmmImpl implements AmmImplementation {
   private async createATAPreInstructions(owner: PublicKey, mintList: Array<PublicKey>) {
     return Promise.all(
       mintList.map((mint) => {
-        return getOrCreateATAInstruction(mint, owner, this.program.provider.connection, this.opt.allowOwnerOffCurve);
+        return getOrCreateATAInstruction(mint, owner, this.program.provider.connection);
       }),
     );
   }
