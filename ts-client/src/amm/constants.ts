@@ -106,8 +106,6 @@ export const VAULT_BASE_KEY = new PublicKey('HWzXGcGHy4tcpYfaRDCyLNzXqBTv3E6Bttp
 
 export const POOL_BASE_KEY = new PublicKey('H9NnqW5Thn9dUzW3DRXe2xDhKjwZd4qbjngnZwEvnDuC');
 
-export const WRAPPED_SOL_MINT = new PublicKey('So11111111111111111111111111111111111111112');
-
 export const DEFAULT_SLIPPAGE = 1;
 
 export const UNLOCK_AMOUNT_BUFFER = 0.998;

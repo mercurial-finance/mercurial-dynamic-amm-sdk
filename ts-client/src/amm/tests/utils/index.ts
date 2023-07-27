@@ -1,8 +1,7 @@
 import { Wallet } from '@project-serum/anchor';
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
-import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
-const LAMPORTS_PER_SOL = 1e9;
 export const airDropSol = async (connection: Connection, publicKey: PublicKey, amount = 1) => {
   try {
     const airdropSignature = await connection.requestAirdrop(publicKey, amount * LAMPORTS_PER_SOL);

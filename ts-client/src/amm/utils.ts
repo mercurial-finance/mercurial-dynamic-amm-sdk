@@ -15,6 +15,7 @@ import {
   AccountInfo as AccountInfoInt,
   AccountLayout,
   u64,
+  NATIVE_MINT,
 } from '@solana/spl-token';
 import {
   AccountInfo,
@@ -30,7 +31,6 @@ import invariant from 'invariant';
 import {
   CURVE_TYPE_ACCOUNTS,
   ERROR,
-  WRAPPED_SOL_MINT,
   PROGRAM_ID,
   VIRTUAL_PRICE_PRECISION,
   PERMISSIONLESS_AMP,
@@ -89,35 +89,18 @@ export const getMinAmountWithSlippage = (amount: BN, slippageRate: number) => {
   return amount.mul(new BN(slippage)).div(new BN(10000));
 };
 
-export const getAssociatedTokenAccount = async (
-  tokenMint: PublicKey,
-  owner: PublicKey,
-  allowOwnerOffCurve: boolean = false,
-) => {
-  return await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    tokenMint,
-    owner,
-    allowOwnerOffCurve,
-  );
+export const getAssociatedTokenAccount = async (tokenMint: PublicKey, owner: PublicKey) => {
+  return await Token.getAssociatedTokenAddress(ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, tokenMint, owner, true);
 };
 
 export const getOrCreateATAInstruction = async (
   tokenMint: PublicKey,
   owner: PublicKey,
   connection: Connection,
-  allowOwnerOffCurve?: boolean,
 ): Promise<[PublicKey, TransactionInstruction?]> => {
   let toAccount;
   try {
-    toAccount = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      tokenMint,
-      owner,
-      allowOwnerOffCurve ?? false,
-    );
+    toAccount = await getAssociatedTokenAccount(tokenMint, owner);
     const account = await connection.getAccountInfo(toAccount);
     if (!account) {
       const ix = Token.createAssociatedTokenAccountInstruction(
@@ -159,15 +142,8 @@ export const wrapSOLInstruction = (from: PublicKey, to: PublicKey, amount: bigin
   ];
 };
 
-export const unwrapSOLInstruction = async (owner: PublicKey, allowOwnerOffCurve?: boolean) => {
-  const wSolATAAccount = await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    WRAPPED_SOL_MINT,
-    owner,
-    allowOwnerOffCurve ?? false,
-  );
-
+export const unwrapSOLInstruction = async (owner: PublicKey) => {
+  const wSolATAAccount = await getAssociatedTokenAccount(NATIVE_MINT, owner);
   if (wSolATAAccount) {
     const closedWrappedSolInstruction = Token.createCloseAccountInstruction(
       TOKEN_PROGRAM_ID,
