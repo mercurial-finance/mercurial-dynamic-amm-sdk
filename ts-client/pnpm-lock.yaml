@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@mercurial-finance/vault-sdk':
-    specifier: 0.5.0
-    version: 0.5.0(@saberhq/solana-contrib@1.14.11)(@saberhq/token-utils@1.13.32)
+    specifier: 0.5.1
+    version: 0.5.1(@saberhq/solana-contrib@1.14.11)(@saberhq/token-utils@1.13.32)
   '@project-serum/anchor':
     specifier: 0.24.2
     version: 0.24.2
@@ -980,8 +980,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@mercurial-finance/vault-sdk@0.5.0(@saberhq/solana-contrib@1.14.11)(@saberhq/token-utils@1.13.32):
-    resolution: {integrity: sha512-zdn9/9XNJepBX9f4drd1ID7S5rZX6oWm3ojV4Ga63qqX5oy8/x01vSj7MOZr3H55ylqozBjKLzucpMWbM+Gsaw==}
+  /@mercurial-finance/vault-sdk@0.5.1(@saberhq/solana-contrib@1.14.11)(@saberhq/token-utils@1.13.32):
+    resolution: {integrity: sha512-cnjQAxEULFdcuZfQVGJcoFRmMIh3nULwUU8/liQa9epF2q2YnLols0GpFVyl+lBZrNvSjs6F5/2lstMsEs4lfA==}
     dependencies:
       '@blockworks-foundation/mango-client': 3.6.20
       '@mercurial-finance/apricot-sdk': 0.17.6
