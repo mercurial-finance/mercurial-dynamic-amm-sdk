@@ -40,8 +40,28 @@ const provider = new AnchorProvider(mainnetConnection, mockWallet, {
 });
 // Alternatively, to use Solana Wallet Adapter
 
-const constantProductPool = await AmmImpl.create(connection, MAINNET_POOL.USDC_SOL);
-const stablePool = await AmmImpl.create(connection, MAINNET_POOL.USDT_USDC);
+// https://station.jup.ag/blog/jupiter-token-list-api#endpoints
+const tokenList = await fetch('https://token.jup.ag/all').then(res => res.json());
+const USDC = tokenList.find(token => token.address === <USDC_ADDRESS>);
+const USDT = tokenList.find(token => token.address === <USDT_ADDRESS>);
+const SOL = tokenList.find(token => token.address === <SOL_ADDRESS>);
+const constantProductPool = await AmmImpl.create(connection, MAINNET_POOL.USDC_SOL, USDC, SOL);
+const stablePool = await AmmImpl.create(connection, MAINNET_POOL.USDT_USDC, USDT, USDC);
+
+// If you need to create multiple, can consider using `createMultiple`
+const pools = [
+  {
+    pool: MAINNET_POOL.USDC_SOL,
+    tokenInfoA: USDC,
+    tokenInfoB: SOL
+  },
+  {
+    pool: MAINNET_POOL.USDT_USDC,
+    tokenInfoA: USDT,
+    tokenInfoB: USDC
+  }
+]
+const [constantProductPool, stablePool] = await AmmImpl.createMultiple(connection, pools)
 ```
 
 3. To interact with the AmmImpl
