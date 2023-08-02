@@ -1,10 +1,11 @@
-import { Cluster, PublicKey } from '@solana/web3.js';
-import AmmImpl from '../index';
-import { DEFAULT_SLIPPAGE, MAINNET_POOL, DEVNET_POOL, DEVNET_COIN } from '../constants';
 import { AnchorProvider, BN } from '@project-serum/anchor';
-import { TokenListProvider, TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
+import { Cluster, Keypair, PublicKey } from '@solana/web3.js';
+import { DEFAULT_SLIPPAGE, DEVNET_COIN, DEVNET_POOL, MAINNET_POOL } from '../constants';
+import AmmImpl from '../index';
 import { calculateSwapQuote, getOnchainTime } from '../utils';
-import { DEVNET, MAINNET, airDropSol, mockWallet } from './utils';
+import { DEVNET, MAINNET, airDropSol, getOrCreateATA, mockWallet } from './utils';
+import { NATIVE_MINT } from '@solana/spl-token';
 
 describe('Interact with Devnet pool', () => {
   const provider = new AnchorProvider(DEVNET.connection, mockWallet, {
@@ -16,6 +17,8 @@ describe('Interact with Devnet pool', () => {
   let currentCpPoolBalance: BN;
   let currentDepegPoolBalance: BN;
   let currentStablePoolBalance: BN;
+
+  let referrer = Keypair.generate();
 
   beforeAll(async () => {
     await airDropSol(DEVNET.connection, mockWallet.publicKey);
@@ -88,6 +91,45 @@ describe('Interact with Devnet pool', () => {
     }
   });
 
+  test('Swap SOL → USDT with referrer fee', async () => {
+    const referrerSolAta = await getOrCreateATA(provider.connection, NATIVE_MINT, referrer.publicKey, mockWallet.payer);
+    const inAmountLamport = new BN(0.1 * 10 ** cpPool.tokenB.decimals);
+
+    const { swapOutAmount, minSwapOutAmount } = cpPool.getSwapQuote(
+      new PublicKey(cpPool.tokenB.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
+    expect(swapOutAmount.toNumber()).toBeGreaterThan(0);
+
+    const swapTx = await cpPool.swap(
+      mockWallet.publicKey,
+      new PublicKey(cpPool.tokenB.address),
+      inAmountLamport,
+      minSwapOutAmount,
+      referrerSolAta,
+    );
+
+    try {
+      const beforeReferrerTokenBalance = await provider.connection
+        .getTokenAccountBalance(referrerSolAta)
+        .then((r) => r.value.uiAmount);
+
+      const swapResult = await provider.sendAndConfirm(swapTx);
+      console.log('Swap Result of SOL → USDT', swapResult);
+      expect(typeof swapResult).toBe('string');
+
+      const afterReferrerTokenBalance = await provider.connection
+        .getTokenAccountBalance(referrerSolAta)
+        .then((r) => r.value.uiAmount);
+
+      expect(afterReferrerTokenBalance!).toBeGreaterThan(beforeReferrerTokenBalance!);
+    } catch (error: any) {
+      console.trace(error);
+      throw new Error(error.message);
+    }
+  });
+
   test('Swap USDT → SOL', async () => {
     const inAmountLamport = new BN(0.1 * 10 ** cpPool.tokenA.decimals);
 
@@ -115,7 +157,7 @@ describe('Interact with Devnet pool', () => {
     }
   });
 
-  test('SWAP USDT -> USDC', async () => {
+  test('Swap USDT -> USDC', async () => {
     const inAmountLamport = new BN(0.1 * 10 ** stablePool.tokenA.decimals);
     const { swapOutAmount, minSwapOutAmount } = stablePool.getSwapQuote(
       new PublicKey(stablePool.tokenA.address),
@@ -141,7 +183,7 @@ describe('Interact with Devnet pool', () => {
     }
   });
 
-  test('SWAP USDC -> USDT', async () => {
+  test('Swap USDC -> USDT', async () => {
     const inAmountLamport = new BN(0.1 * 10 ** stablePool.tokenB.decimals);
     const { swapOutAmount, minSwapOutAmount } = stablePool.getSwapQuote(
       new PublicKey(stablePool.tokenB.address),
@@ -188,6 +230,45 @@ describe('Interact with Devnet pool', () => {
       const swapResult = await provider.sendAndConfirm(swapTx);
       console.log('Swap Result of SOL → mSOL', swapResult);
       expect(typeof swapResult).toBe('string');
+    } catch (error: any) {
+      console.trace(error);
+      throw new Error(error.message);
+    }
+  });
+
+  test('Swap SOL → mSOL with referrer fee', async () => {
+    const referrerSolAta = await getOrCreateATA(provider.connection, NATIVE_MINT, referrer.publicKey, mockWallet.payer);
+    const inAmountLamport = new BN(0.01 * 10 ** depegPool.tokenA.decimals);
+
+    const { swapOutAmount, minSwapOutAmount } = depegPool.getSwapQuote(
+      new PublicKey(depegPool.tokenA.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
+    expect(swapOutAmount.toNumber()).toBeGreaterThan(0);
+
+    const swapTx = await depegPool.swap(
+      mockWallet.publicKey,
+      new PublicKey(depegPool.tokenA.address),
+      inAmountLamport,
+      minSwapOutAmount,
+      referrerSolAta,
+    );
+
+    try {
+      const beforeReferrerTokenBalance = await provider.connection
+        .getTokenAccountBalance(referrerSolAta)
+        .then((r) => r.value.uiAmount);
+
+      const swapResult = await provider.sendAndConfirm(swapTx);
+      console.log('Swap Result of SOL → mSOL', swapResult);
+      expect(typeof swapResult).toBe('string');
+
+      const afterReferrerTokenBalance = await provider.connection
+        .getTokenAccountBalance(referrerSolAta)
+        .then((r) => r.value.uiAmount);
+
+      expect(afterReferrerTokenBalance!).toBeGreaterThan(beforeReferrerTokenBalance!);
     } catch (error: any) {
       console.trace(error);
       throw new Error(error.message);
