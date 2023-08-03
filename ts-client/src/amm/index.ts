@@ -844,9 +844,16 @@ export default class AmmImpl implements AmmImplementation {
    * @param {PublicKey} inTokenMint - The mint of the token you're swapping from.
    * @param {BN} inAmountLamport - The amount of the input token you want to swap.
    * @param {BN} outAmountLamport - The minimum amount of the output token you want to receive.
+   * @param {PublicKey} [referrerToken] - The referrer fee token account. The mint of the token account must matches inTokenMint. 20% of admin trade fee.
    * @returns A transaction object
    */
-  public async swap(owner: PublicKey, inTokenMint: PublicKey, inAmountLamport: BN, outAmountLamport: BN) {
+  public async swap(
+    owner: PublicKey,
+    inTokenMint: PublicKey,
+    inAmountLamport: BN,
+    outAmountLamport: BN,
+    referrerToken?: PublicKey,
+  ) {
     const [sourceToken, destinationToken] =
       this.tokenA.address === inTokenMint.toBase58()
         ? [this.poolState.tokenAMint, this.poolState.tokenBMint]
@@ -874,6 +881,15 @@ export default class AmmImpl implements AmmImplementation {
       unwrapSOLIx && postInstructions.push(unwrapSOLIx);
     }
 
+    const remainingAccounts = this.swapCurve.getRemainingAccounts();
+    if (referrerToken) {
+      remainingAccounts.push({
+        isSigner: false,
+        isWritable: true,
+        pubkey: referrerToken,
+      });
+    }
+
     const swapTx = await this.program.methods
       .swap(inAmountLamport, outAmountLamport)
       .accounts({
@@ -893,7 +909,7 @@ export default class AmmImpl implements AmmImplementation {
         tokenProgram: TOKEN_PROGRAM_ID,
         vaultProgram: this.vaultProgram.programId,
       })
-      .remainingAccounts(this.swapCurve.getRemainingAccounts())
+      .remainingAccounts(remainingAccounts)
       .preInstructions(preInstructions)
       .postInstructions(postInstructions)
       .transaction();
