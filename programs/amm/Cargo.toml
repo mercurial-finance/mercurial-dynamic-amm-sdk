@@ -24,21 +24,21 @@ test-bpf-snapshot = []
 overflow-checks = true
 
 [dependencies]
-anchor-lang = "0.26.0"
-anchor-spl = "0.26.0"
-mercurial-vault = { version = "0.4.7", features = ["cpi"] }
+anchor-lang = "0.28.0"
+anchor-spl = "0.28.0"
+mercurial-vault = { git="https://github.com/mercurial-finance/mercurial_sdk", features= ["cpi" , "no-entrypoint"], rev = "c590d6ba19ecb58d80dbe8b33fa8056a1ddbff43" }
 spl-token-swap = { version = "3.0.0", features = ["no-entrypoint"] }
-meteora-stable-swap-math = "1.8.1"
-meteora-stable-swap-client = "1.8.1"
+meteora-stable-swap-math = { git="https://github.com/mercurial-finance/stable-swap", rev = "f49a9166fd1b7afd14dded3cdd600fb19b4c6982", package="stable-swap-math"}
+meteora-stable-swap-client = { git="https://github.com/mercurial-finance/stable-swap", rev = "f49a9166fd1b7afd14dded3cdd600fb19b4c6982", package="stable-swap-client" }
 meteora-marinade-sdk = { version = "0.1.0", features = ["cpi"] }
-spl-stake-pool = { version = "0.6.4", features = ["no-entrypoint"] }
+spl-stake-pool = { git = "https://github.com/solana-labs/solana-program-library", rev = "cd79bba17331235ab489bae56600043ea853c70b", features = ["no-entrypoint"] }
 anyhow = "1.0.71"
 
 [dev-dependencies]
-solana-program-test = "~1.14.17"
-solana-sdk = "~1.14.17"
-solana-account-decoder = "~1.14.17"
-solana-client = "~1.14.17"
+solana-program-test = "1.16.12"
+solana-sdk = "1.16.12"
+solana-account-decoder = "1.16.12"
+solana-client = "1.16.12"
 spl-associated-token-account = { version = "1.1.2", features = ["no-entrypoint"] }
 serde_json = "1.0.95"
 serde = "1.0.159"

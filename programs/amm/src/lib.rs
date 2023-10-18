@@ -107,4 +107,14 @@ pub mod amm {
     ) -> Result<()> {
         Ok(())
     }
+
+    /// Update fee claimer
+    pub fn set_fee_claimer(ctx: Context<SetFeeClaimer>, fee_claimer: Pubkey) -> Result<()> {
+        Ok(())
+    }
+
+    /// claim fee
+    pub fn claim_fee(ctx: Context<ClaimFee>, amount: u64) -> Result<()> {
+        Ok(())
+    }
 }

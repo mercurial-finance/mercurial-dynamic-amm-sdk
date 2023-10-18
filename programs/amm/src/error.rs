@@ -172,4 +172,8 @@ pub enum PoolError {
     /// Amount is not peg
     #[msg("Token amount is not 1:1")]
     AmountNotPeg,
+
+    /// Invalid fee claimer account.
+    #[msg("Invalid fee claimer account")]
+    InvalidFeeClaimerAccount,
 }

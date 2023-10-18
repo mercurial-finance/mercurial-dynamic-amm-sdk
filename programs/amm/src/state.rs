@@ -11,7 +11,7 @@ pub struct Padding {
     /// Padding 0
     pub padding_0: [u8; 15], // 15
     /// Padding 1
-    pub padding: [u128; 29], // 464
+    pub padding: [u128; 27], // 432
 }
 
 /// Pool type
@@ -62,6 +62,8 @@ pub struct Pool {
     pub pool_type: PoolType,
     /// Stake pubkey of SPL stake pool
     pub stake: Pubkey,
+    /// Fee claimer of pool
+    pub fee_claimer: Pubkey, // 32
     /// Padding for future pool field
     pub padding: Padding, // 512 Refer: curve_type.rs for the test
     /// The type of the swap curve supported by the pool.

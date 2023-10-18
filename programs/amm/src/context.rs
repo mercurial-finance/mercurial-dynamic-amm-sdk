@@ -712,3 +712,45 @@ pub struct Swap<'info> {
     /// Token program.
     pub token_program: Program<'info, Token>,
 }
+
+/// Accounts for set pool fees instruction
+#[derive(Accounts)]
+pub struct ClaimFee<'info> {
+    #[account(
+        has_one = a_vault_lp @ PoolError::InvalidVaultLpAccount,
+        has_one = fee_claimer @ PoolError::InvalidFeeClaimerAccount,
+        constraint = pool.admin_token_a_fee == admin_token_fee.key() || pool.admin_token_b_fee == admin_token_fee.key() @ PoolError::InvalidAdminFeeAccount
+    )]
+    /// Pool account (PDA)
+    pub pool: Box<Account<'info, Pool>>,
+
+    /// admin token fee
+    #[account(mut)]
+    pub admin_token_fee: Box<Account<'info, TokenAccount>>,
+
+    /// claimer token fee
+    #[account(mut)]
+    pub claimer_token_fee: Box<Account<'info, TokenAccount>>,
+
+    /// Token program.
+    pub token_program: Program<'info, Token>,
+
+    /// A vault lp
+    pub a_vault_lp: Account<'info, TokenAccount>,
+
+    /// Admin account. Must be owner of the pool.
+    pub fee_claimer: Signer<'info>,
+}
+
+/// Accounts for set pool fees instruction
+#[derive(Accounts)]
+pub struct SetFeeClaimer<'info> {
+    #[account(
+        mut,
+        has_one = admin @ PoolError::InvalidAdminAccount,
+    )]
+    /// Pool account (PDA)
+    pub pool: Box<Account<'info, Pool>>,
+    /// Admin account. Must be owner of the pool.
+    pub admin: Signer<'info>,
+}
