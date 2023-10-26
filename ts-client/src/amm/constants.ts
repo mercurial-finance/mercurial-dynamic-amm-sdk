@@ -77,15 +77,15 @@ export const DEVNET_COIN: Array<TokenInfo> = [
 ];
 
 export const DEVNET_POOL = Object.freeze({
-  USDT_USDC: 'BAHscmu1NncGS7t4rc5gSBPv1UFEMkvLaon1Ahdd5rHi',
-  USDT_SOL: 'Bgf1Sy5kfeDgib4go4NgzHuZwek8wE8NZus56z6uizzi',
-  SOL_MSOL: '2rkn2yM4wJcHPV57T8fPWeBksrfSpiNZoEjRgjtxNDEQ',
+  USDT_USDC: new PublicKey('BAHscmu1NncGS7t4rc5gSBPv1UFEMkvLaon1Ahdd5rHi'),
+  USDT_SOL: new PublicKey('Bgf1Sy5kfeDgib4go4NgzHuZwek8wE8NZus56z6uizzi'),
+  SOL_MSOL: new PublicKey('2rkn2yM4wJcHPV57T8fPWeBksrfSpiNZoEjRgjtxNDEQ'),
 });
 
 export const MAINNET_POOL = Object.freeze({
-  USDT_USDC: '32D4zRxNc1EssbJieVHfPhZM3rH6CzfUPrWUuWxD9prG',
-  USDC_SOL: '5yuefgbJJpmFNK2iiYbLSpv1aZXq7F9AUKkZKErTYCvs',
-  SOL_STSOL: '7EJSgV2pthhDfb4UiER9vzTqe2eojei9GEQAQnkqJ96e',
+  USDT_USDC: new PublicKey('32D4zRxNc1EssbJieVHfPhZM3rH6CzfUPrWUuWxD9prG'),
+  USDC_SOL: new PublicKey('5yuefgbJJpmFNK2iiYbLSpv1aZXq7F9AUKkZKErTYCvs'),
+  SOL_STSOL: new PublicKey('7EJSgV2pthhDfb4UiER9vzTqe2eojei9GEQAQnkqJ96e'),
 });
 
 // Extra accounts for depeg pools. Might add more addresses in the future when more different types of pools are being added

@@ -731,9 +731,9 @@ describe('Interact with Mainnet pool', () => {
     const STSOL = tokenMap.find((token) => token.address === '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj');
 
     const pools = [
-      { pool: new PublicKey(MAINNET_POOL.USDC_SOL), tokenInfoA: USDC!, tokenInfoB: SOL! },
-      { pool: new PublicKey(MAINNET_POOL.SOL_STSOL), tokenInfoA: SOL!, tokenInfoB: STSOL! },
-      { pool: new PublicKey(MAINNET_POOL.USDT_USDC), tokenInfoA: USDC!, tokenInfoB: USDT! },
+      { pool: MAINNET_POOL.USDC_SOL, tokenInfoA: USDC!, tokenInfoB: SOL! },
+      { pool: MAINNET_POOL.SOL_STSOL, tokenInfoA: SOL!, tokenInfoB: STSOL! },
+      { pool: MAINNET_POOL.USDT_USDC, tokenInfoA: USDC!, tokenInfoB: USDT! },
     ];
     const [pool1, pool2, pool3] = await AmmImpl.createMultiple(MAINNET.connection, pools, {
       cluster: MAINNET.cluster as Cluster,
