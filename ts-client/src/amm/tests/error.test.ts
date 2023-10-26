@@ -23,9 +23,9 @@ describe('Interact with Mainnet pool', () => {
     const MSOL = DEVNET_COIN.find((token) => token.address === 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So');
 
     const pools = [
-      { pool: new PublicKey(DEVNET_POOL.USDT_SOL), tokenInfoA: USDT!, tokenInfoB: SOL! },
-      { pool: new PublicKey(DEVNET_POOL.SOL_MSOL), tokenInfoA: SOL!, tokenInfoB: MSOL! },
-      { pool: new PublicKey(DEVNET_POOL.USDT_USDC), tokenInfoA: USDT!, tokenInfoB: USDC! },
+      { pool: DEVNET_POOL.USDT_SOL, tokenInfoA: USDT!, tokenInfoB: SOL! },
+      { pool: DEVNET_POOL.SOL_MSOL, tokenInfoA: SOL!, tokenInfoB: MSOL! },
+      { pool: DEVNET_POOL.USDT_USDC, tokenInfoA: USDT!, tokenInfoB: USDC! },
     ];
 
     const [pool1, pool2, pool3] = await AmmImpl.createMultiple(DEVNET.connection, pools, {
