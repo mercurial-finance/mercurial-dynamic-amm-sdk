@@ -186,13 +186,16 @@ const withdrawResult = await provider.sendAndConfirm(withdrawTx);
 const inAmountLamport = new BN(0.1 * 10 ** constantProductPool.tokenB.decimals);
 
 // Swap SOL → USDT
-const swapQuote = constantProductPool.getSwapQuote(new PublicKey(constantProductPool.tokenB.address), inAmountLamport);
+const { minSwapOutAmount } = constantProductPool.getSwapQuote(
+  new PublicKey(constantProductPool.tokenB.address),
+  inAmountLamport,
+);
 
 const swapTx = await constantProductPool.swap(
   mockWallet.publicKey,
   new PublicKey(constantProductPool.tokenB.address),
   inAmountLamport,
-  swapQuote,
+  minSwapOutAmount,
 );
 const swapResult = await provider.sendAndConfirm(withdrawTx);
 ```
