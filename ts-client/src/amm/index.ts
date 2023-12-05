@@ -1057,6 +1057,7 @@ export default class AmmImpl implements AmmImplementation {
       this.accountsInfo.vaultBLpSupply,
       vaultBWithdrawableAmount,
     );
+
     const poolTokenAmountOut = this.swapCurve.computeImbalanceDeposit(
       actualDepositAAmount,
       actualDepositBAmount,
