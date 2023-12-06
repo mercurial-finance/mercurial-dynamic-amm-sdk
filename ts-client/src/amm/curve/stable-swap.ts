@@ -1,25 +1,18 @@
-import { getPriceImpact, OutResult, SwapCurve, TradeDirection } from '.';
 import { BN, BorshCoder, Idl } from '@project-serum/anchor';
-import {
-  computeY,
-  computeD,
-  calculateEstimatedMintAmount,
-  Fees,
-  IReserve,
-  calculateEstimatedWithdrawOneAmount,
-  IExchangeInfo,
-} from '@saberhq/stableswap-sdk';
+import { Fees, computeD, computeY, normalizedTradeFee } from '@saberhq/stableswap-sdk';
+import { Fraction, Percent, ZERO } from '@saberhq/token-utils';
+import { AccountInfo, PublicKey } from '@solana/web3.js';
 import JSBI from 'jsbi';
-import { Token, TokenAmount, Percent, ChainId } from '@saberhq/token-utils';
-import { AccountInfo, Connection, Keypair, PublicKey } from '@solana/web3.js';
-import MarinadeIDL from '../marinade-finance.json';
+import { OutResult, SwapCurve, TradeDirection, getPriceImpact } from '.';
 import { CURVE_TYPE_ACCOUNTS } from '../constants';
+import MarinadeIDL from '../marinade-finance.json';
 import { Depeg, DepegType, PoolFees, StakePool, StakePoolLayout, TokenMultiplier } from '../types';
-import Decimal from 'decimal.js';
 
 // Precision for base pool virtual price
 const PRECISION = new BN(1_000_000);
 const BASE_CACHE_EXPIRE = new BN(60 * 10);
+
+const N_COINS = JSBI.BigInt(2);
 
 export class StableSwap implements SwapCurve {
   constructor(
@@ -234,6 +227,7 @@ export class StableSwap implements SwapCurve {
     fees: PoolFees,
   ): BN {
     this.updateDepegInfoIfExpired();
+
     const [upscaledDepositAAmount, upscaledDepositBAmount, upscaledSwapTokenAAmount, upscaledSwapTokenBAmount] = [
       this.upscaleTokenA(depositAAmount),
       this.upscaleTokenB(depositBAmount),
@@ -241,11 +235,15 @@ export class StableSwap implements SwapCurve {
       this.upscaleTokenB(swapTokenBAmount),
     ];
     const { mintAmount } = calculateEstimatedMintAmount(
-      Helper.toExchange(this.amp, upscaledSwapTokenAAmount, upscaledSwapTokenBAmount, lpSupply, fees),
+      JSBI.BigInt(this.amp),
+      Helper.toFees(fees),
+      JSBI.BigInt(lpSupply.toString()),
+      [JSBI.BigInt(upscaledSwapTokenAAmount.toString()), JSBI.BigInt(upscaledSwapTokenBAmount.toString())],
       JSBI.BigInt(upscaledDepositAAmount.toString()),
       JSBI.BigInt(upscaledDepositBAmount.toString()),
     );
-    return mintAmount.toU64();
+
+    return new BN(mintAmount.toString());
   }
 
   computeWithdrawOne(
@@ -261,18 +259,20 @@ export class StableSwap implements SwapCurve {
       this.upscaleTokenA(swapTokenAAmount),
       this.upscaleTokenB(swapTokenBAmount),
     ];
-    const exchange = Helper.toExchange(this.amp, upscaledSwapTokenAAmount, upscaledSwapTokenBAmount, lpSupply, fees);
-    const withdrawToken =
-      tradeDirection == TradeDirection.BToA ? exchange.reserves[0].amount.token : exchange.reserves[1].amount.token;
+
     const { withdrawAmountBeforeFees } = calculateEstimatedWithdrawOneAmount({
-      exchange,
-      poolTokenAmount: Helper.toTokenAmount(lpAmount),
-      withdrawToken,
+      ampFactor: JSBI.BigInt(this.amp),
+      feeInfo: Helper.toFees(fees),
+      lpTotalSupply: JSBI.BigInt(lpSupply.toString()),
+      poolTokenAmount: JSBI.BigInt(lpAmount.toString()),
+      reserves: [JSBI.BigInt(upscaledSwapTokenAAmount.toString()), JSBI.BigInt(upscaledSwapTokenBAmount.toString())],
+      tradeDirection,
     });
+
     // Before withdrawal fee
     return tradeDirection == TradeDirection.AToB
-      ? this.downscaleTokenB(withdrawAmountBeforeFees.toU64())
-      : this.downscaleTokenA(withdrawAmountBeforeFees.toU64());
+      ? this.downscaleTokenB(new BN(withdrawAmountBeforeFees.toString()))
+      : this.downscaleTokenA(new BN(withdrawAmountBeforeFees.toString()));
   }
 
   getRemainingAccounts() {
@@ -309,49 +309,157 @@ export class StableSwap implements SwapCurve {
     return accounts;
   }
 }
-// Helper class to convert the type to the type from saber stable calculator
-class Helper {
-  public static toExchange(
-    amp: number,
-    swapTokenAAmount: BN,
-    swapTokenBAmount: BN,
-    lpSupply: BN,
-    fees: PoolFees,
-  ): IExchangeInfo {
+
+function calculateEstimatedWithdrawOneAmount({
+  ampFactor,
+  feeInfo,
+  lpTotalSupply,
+  reserves,
+  poolTokenAmount,
+  tradeDirection,
+}: {
+  ampFactor: JSBI;
+  feeInfo: Fees;
+  lpTotalSupply: JSBI;
+  reserves: [JSBI, JSBI];
+  poolTokenAmount: JSBI;
+  tradeDirection: TradeDirection;
+}): {
+  withdrawAmount: JSBI;
+  withdrawAmountBeforeFees: JSBI;
+  swapFee: JSBI;
+  withdrawFee: JSBI;
+  lpSwapFee: JSBI;
+  lpWithdrawFee: JSBI;
+  adminSwapFee: JSBI;
+  adminWithdrawFee: JSBI;
+} {
+  if (JSBI.equal(poolTokenAmount, ZERO)) {
     return {
-      ampFactor: JSBI.BigInt(amp),
-      fees: this.toFees(fees),
-      lpTotalSupply: this.toTokenAmount(lpSupply),
-      reserves: [this.toReserve(swapTokenAAmount), this.toReserve(swapTokenBAmount)],
+      withdrawAmount: ZERO,
+      withdrawAmountBeforeFees: ZERO,
+      swapFee: ZERO,
+      withdrawFee: ZERO,
+      lpSwapFee: ZERO,
+      lpWithdrawFee: ZERO,
+      adminSwapFee: ZERO,
+      adminWithdrawFee: ZERO,
     };
   }
+
+  const [baseReserves, quoteReserves] =
+    tradeDirection == TradeDirection.BToA ? [reserves[0], reserves[1]] : [reserves[1], reserves[0]];
+
+  const d_0 = computeD(ampFactor, baseReserves, quoteReserves);
+  const d_1 = JSBI.subtract(d_0, JSBI.divide(JSBI.multiply(poolTokenAmount, d_0), lpTotalSupply));
+
+  const new_y = computeY(ampFactor, quoteReserves, d_1);
+
+  // expected_base_amount = swap_base_amount * d_1 / d_0 - new_y;
+  const expected_base_amount = JSBI.subtract(JSBI.divide(JSBI.multiply(baseReserves, d_1), d_0), new_y);
+  // expected_quote_amount = swap_quote_amount - swap_quote_amount * d_1 / d_0;
+  const expected_quote_amount = JSBI.subtract(quoteReserves, JSBI.divide(JSBI.multiply(quoteReserves, d_1), d_0));
+  // new_base_amount = swap_base_amount - expected_base_amount * fee / fee_denominator;
+  const new_base_amount = new Fraction(baseReserves.toString(), 1).subtract(
+    normalizedTradeFee(feeInfo, N_COINS, expected_base_amount),
+  );
+  // new_quote_amount = swap_quote_amount - expected_quote_amount * fee / fee_denominator;
+  const new_quote_amount = new Fraction(quoteReserves.toString(), 1).subtract(
+    normalizedTradeFee(feeInfo, N_COINS, expected_quote_amount),
+  );
+  const dy = new_base_amount.subtract(computeY(ampFactor, JSBI.BigInt(new_quote_amount.toFixed(0)), d_1).toString());
+  const dy_0 = JSBI.subtract(baseReserves, new_y);
+
+  // lp fees
+  const swapFee = new Fraction(dy_0.toString(), 1).subtract(dy);
+  const withdrawFee = dy.multiply(feeInfo.withdraw.asFraction);
+
+  // admin fees
+  const adminSwapFee = swapFee.multiply(feeInfo.adminTrade.asFraction);
+  const adminWithdrawFee = withdrawFee.multiply(feeInfo.adminWithdraw.asFraction);
+
+  // final LP fees
+  const lpSwapFee = swapFee.subtract(adminSwapFee);
+  const lpWithdrawFee = withdrawFee.subtract(adminWithdrawFee);
+
+  // final withdraw amount
+  const withdrawAmount = dy.subtract(withdrawFee).subtract(swapFee);
+
+  // final quantities
+  return {
+    withdrawAmount: JSBI.BigInt(withdrawAmount.toFixed(0)),
+    withdrawAmountBeforeFees: JSBI.BigInt(dy.toFixed(0)),
+    swapFee: JSBI.BigInt(swapFee.toFixed(0)),
+    withdrawFee: JSBI.BigInt(withdrawFee.toFixed(0)),
+    lpSwapFee: JSBI.BigInt(lpSwapFee.toFixed(0)),
+    lpWithdrawFee: JSBI.BigInt(lpWithdrawFee.toFixed(0)),
+    adminSwapFee: JSBI.BigInt(adminSwapFee.toFixed(0)),
+    adminWithdrawFee: JSBI.BigInt(adminWithdrawFee.toFixed(0)),
+  };
+}
+
+function calculateEstimatedMintAmount(
+  ampFactor: JSBI,
+  feeInfo: Fees,
+  lpTotalSupply: JSBI,
+  reserves: [JSBI, JSBI],
+  depositAmountA: JSBI,
+  depositAmountB: JSBI,
+): {
+  mintAmountBeforeFees: JSBI;
+  mintAmount: JSBI;
+  fees: JSBI;
+} {
+  if (JSBI.equal(depositAmountA, ZERO) && JSBI.equal(depositAmountB, ZERO)) {
+    return {
+      mintAmountBeforeFees: ZERO,
+      mintAmount: ZERO,
+      fees: ZERO,
+    };
+  }
+
+  const amp = ampFactor;
+  const [reserveA, reserveB] = reserves;
+  const d0 = computeD(amp, reserveA, reserveB);
+
+  const d1 = computeD(amp, JSBI.add(reserveA, depositAmountA), JSBI.add(reserveB, depositAmountB));
+  if (JSBI.lessThan(d1, d0)) {
+    throw new Error('New D cannot be less than previous D');
+  }
+
+  const oldBalances = reserves.map((r) => r);
+  const newBalances = [JSBI.add(reserveA, depositAmountA), JSBI.add(reserveB, depositAmountB)] as const;
+  const adjustedBalances = newBalances.map((newBalance, i) => {
+    const oldBalance = oldBalances[i] as JSBI;
+    const idealBalance = new Fraction(d1, d0).multiply(oldBalance);
+    const difference = idealBalance.subtract(newBalance);
+    const diffAbs = difference.greaterThan(0) ? difference : difference.multiply(-1);
+    const fee = normalizedTradeFee(feeInfo, N_COINS, JSBI.BigInt(diffAbs.toFixed(0)));
+    return JSBI.subtract(newBalance, JSBI.BigInt(fee.toFixed(0)));
+  }) as [JSBI, JSBI];
+  const d2 = computeD(amp, adjustedBalances[0], adjustedBalances[1]);
+
+  const lpSupply = lpTotalSupply;
+  const mintAmountRaw = JSBI.divide(JSBI.multiply(lpSupply, JSBI.subtract(d2, d0)), d0);
+  const mintAmountRawBeforeFees = JSBI.divide(JSBI.multiply(lpSupply, JSBI.subtract(d1, d0)), d0);
+
+  const fees = JSBI.subtract(mintAmountRawBeforeFees, mintAmountRaw);
+
+  return {
+    mintAmount: mintAmountRaw,
+    mintAmountBeforeFees: mintAmountRawBeforeFees,
+    fees,
+  };
+}
+
+// Helper class to convert the type to the type from saber stable calculator
+class Helper {
   public static toFees(fees: PoolFees): Fees {
     return {
       adminTrade: new Percent(fees.ownerTradeFeeNumerator, fees.ownerTradeFeeDenominator),
       trade: new Percent(fees.tradeFeeNumerator, fees.tradeFeeDenominator),
       adminWithdraw: new Percent(0, 100),
       withdraw: new Percent(0, 100),
-    };
-  }
-  public static toTokenAmount(amount: BN): TokenAmount {
-    return new TokenAmount(
-      // Only amount, address, and chainId are necessary for the calculation
-      new Token({
-        address: Keypair.generate().publicKey.toBase58(),
-        chainId: ChainId.MainnetBeta,
-        decimals: 0,
-        name: '',
-        symbol: '',
-      }),
-      amount.toString(),
-    );
-  }
-  public static toReserve(amount: BN): IReserve {
-    // Only amount is necessary for the calculation
-    return {
-      adminFeeAccount: PublicKey.default,
-      amount: this.toTokenAmount(amount),
-      reserveAccount: PublicKey.default,
     };
   }
 }
