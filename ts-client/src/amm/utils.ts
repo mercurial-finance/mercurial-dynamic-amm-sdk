@@ -51,10 +51,10 @@ import {
   StableSwapCurve,
   SwapQuoteParam,
   SwapResult,
+  TokenInfo,
   TokenMultiplier,
 } from './types';
 import { Amm as AmmIdl, IDL as AmmIDL } from './idl';
-import { TokenInfo } from '@solana/spl-token-registry';
 
 export const createProgram = (connection: Connection, programId?: string) => {
   const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());

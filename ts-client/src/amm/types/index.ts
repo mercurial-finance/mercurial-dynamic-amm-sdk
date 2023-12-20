@@ -1,5 +1,4 @@
 import { AccountInfo, PublicKey, Transaction } from '@solana/web3.js';
-import { TokenInfo } from '@solana/spl-token-registry';
 import { IdlAccounts, IdlTypes, Program } from '@project-serum/anchor';
 import BN from 'bn.js';
 import { Amm as AmmIdl } from '../idl';
@@ -9,6 +8,36 @@ import { publicKey, struct, u64, u8, option } from '@project-serum/borsh';
 
 export type AmmProgram = Program<AmmIdl>;
 export type VaultProgram = Program<VaultIdl>;
+
+export interface TokenExtensions {
+  readonly website?: string;
+  readonly bridgeContract?: string;
+  readonly assetContract?: string;
+  readonly address?: string;
+  readonly explorer?: string;
+  readonly twitter?: string;
+  readonly github?: string;
+  readonly medium?: string;
+  readonly tgann?: string;
+  readonly tggroup?: string;
+  readonly discord?: string;
+  readonly serumV3Usdt?: string;
+  readonly serumV3Usdc?: string;
+  readonly coingeckoId?: string;
+  readonly imageUrl?: string;
+  readonly description?: string;
+}
+
+export interface TokenInfo {
+  address: string;
+  chainId: number;
+  name: string;
+  symbol: string;
+  decimals: number;
+  logoURI?: string;
+  tags?: string[];
+  extensions?: TokenExtensions;
+}
 
 export interface AmmImplementation {
   tokenA: TokenInfo;
