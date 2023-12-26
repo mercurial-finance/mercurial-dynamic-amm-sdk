@@ -34,7 +34,7 @@ import {
   VaultProgram,
   WithdrawQuote,
 } from './types';
-import { ERROR, SEEDS, UNLOCK_AMOUNT_BUFFER, FEE_OWNER } from './constants';
+import { ERROR, SEEDS, UNLOCK_AMOUNT_BUFFER, FEE_OWNER, METAPLEX_PROGRAM } from './constants';
 import { StableSwap, SwapCurve, TradeDirection } from './curve';
 import { ConstantProductSwap } from './curve/constant-product';
 import {
@@ -55,6 +55,7 @@ import {
   generateCurveType,
   derivePoolAddress,
   chunkedFetchMultiplePoolAccount,
+  deriveMintMetadata,
 } from './utils';
 
 type Opt = {
@@ -254,6 +255,8 @@ export default class AmmImpl implements AmmImplementation {
       preInstructions = preInstructions.concat(wrapSOLInstruction(payer, payerTokenB, BigInt(tokenBAmount.toString())));
     }
 
+    const [mintMetadata, _mintMetadataBump] = deriveMintMetadata(lpMint);
+
     const createPermissionlessPoolTx = await ammProgram.methods
       .initializePermissionlessPoolWithFeeTier(curveType, tradeFeeBps, tokenAAmount, tokenBAmount)
       .accounts({
@@ -274,6 +277,8 @@ export default class AmmImpl implements AmmImplementation {
         payerPoolLp,
         aTokenVault,
         bTokenVault,
+        mintMetadata,
+        metadataProgram: METAPLEX_PROGRAM,
         feeOwner: FEE_OWNER,
         payer,
         rent: SYSVAR_RENT_PUBKEY,
