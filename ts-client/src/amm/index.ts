@@ -149,7 +149,6 @@ export default class AmmImpl implements AmmImplementation {
     public poolInfo: PoolInformation,
     public vaultA: VaultImpl,
     public vaultB: VaultImpl,
-    private accountsBufferMap: Map<string, AccountTypeInfo>,
     private accountsInfo: AccountsInfo,
     private swapCurve: SwapCurve,
     private depegAccounts: Map<String, AccountInfo<Buffer>>,
@@ -456,7 +455,6 @@ export default class AmmImpl implements AmmImplementation {
           poolInfo,
           vaultA,
           vaultB,
-          accountsBufferMap,
           accountsInfo,
           swapCurve,
           depegAccounts,
@@ -590,7 +588,6 @@ export default class AmmImpl implements AmmImplementation {
       poolInfo,
       vaultA,
       vaultB,
-      accountsBufferMap,
       accountsInfo,
       swapCurve,
       depegAccounts,
@@ -661,7 +658,17 @@ export default class AmmImpl implements AmmImplementation {
       this.vaultB.refreshVaultState(),
     ]);
 
-    const accountsInfoMap = deserializeAccountsBuffer(this.accountsBufferMap);
+    const accountsBufferMap = await getAccountsBuffer(this.program.provider.connection, [
+      { pubkey: this.vaultA.vaultState.tokenVault, type: AccountType.VAULT_A_RESERVE },
+      { pubkey: this.vaultB.vaultState.tokenVault, type: AccountType.VAULT_B_RESERVE },
+      { pubkey: this.vaultA.vaultState.lpMint, type: AccountType.VAULT_A_LP },
+      { pubkey: this.vaultB.vaultState.lpMint, type: AccountType.VAULT_B_LP },
+      { pubkey: poolState.aVaultLp, type: AccountType.POOL_VAULT_A_LP },
+      { pubkey: poolState.bVaultLp, type: AccountType.POOL_VAULT_B_LP },
+      { pubkey: poolState.lpMint, type: AccountType.POOL_LP_MINT },
+      { pubkey: SYSVAR_CLOCK_PUBKEY, type: AccountType.SYSVAR_CLOCK },
+    ]);
+    const accountsInfoMap = deserializeAccountsBuffer(accountsBufferMap);
 
     const currentTime = accountsInfoMap.get(SYSVAR_CLOCK_PUBKEY.toBase58()) as BN;
     const poolVaultALp = accountsInfoMap.get(poolState.aVaultLp.toBase58()) as BN;
@@ -695,6 +702,9 @@ export default class AmmImpl implements AmmImplementation {
       poolLpSupply,
     };
     this.accountsInfo = accountsInfo;
+
+    const depegAccounts = await getDepegAccounts(this.program.provider.connection, [poolState]);
+    this.depegAccounts = depegAccounts;
 
     if (this.isStablePool) {
       // update swap curve
