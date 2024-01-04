@@ -657,6 +657,7 @@ export default class AmmImpl implements AmmImplementation {
       this.vaultA.refreshVaultState(),
       this.vaultB.refreshVaultState(),
     ]);
+    this.poolState = poolState;
 
     const accountsBufferMap = await getAccountsBuffer(this.program.provider.connection, [
       { pubkey: this.vaultA.vaultState.tokenVault, type: AccountType.VAULT_A_RESERVE },
@@ -691,7 +692,7 @@ export default class AmmImpl implements AmmImplementation {
       'Account Info not found',
     );
 
-    const accountsInfo = {
+    this.accountsInfo = {
       currentTime,
       poolVaultALp,
       poolVaultBLp,
@@ -701,14 +702,11 @@ export default class AmmImpl implements AmmImplementation {
       vaultBReserve,
       poolLpSupply,
     };
-    this.accountsInfo = accountsInfo;
 
-    const depegAccounts = await getDepegAccounts(this.program.provider.connection, [poolState]);
-    this.depegAccounts = depegAccounts;
+    this.depegAccounts = await getDepegAccounts(this.program.provider.connection, [poolState]);
 
-    if (this.isStablePool) {
-      // update swap curve
-      const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'];
+    if ('stable' in poolState.curveType) {
+      const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'] as any;
       this.swapCurve = new StableSwap(
         amp.toNumber(),
         tokenMultiplier,
@@ -717,9 +715,11 @@ export default class AmmImpl implements AmmImplementation {
         currentTime,
         poolState.stake,
       );
+    } else {
+      this.swapCurve = new ConstantProductSwap();
     }
 
-    const poolInfo = calculatePoolInfo(
+    this.poolInfo = calculatePoolInfo(
       currentTime,
       poolVaultALp,
       poolVaultBLp,
@@ -730,7 +730,6 @@ export default class AmmImpl implements AmmImplementation {
       this.vaultA.vaultState,
       this.vaultB.vaultState,
     );
-    this.poolState = { ...poolState, ...poolInfo };
   }
 
   /**
