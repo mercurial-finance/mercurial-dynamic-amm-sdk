@@ -67,33 +67,6 @@ pub struct PoolCreated {
     pub token_a_mint: Pubkey, //32
     /// Token B mint of the pool. Eg: USDC
     pub token_b_mint: Pubkey, //32
-    /// Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.
-    pub a_vault: Pubkey, //32
-    /// Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.
-    pub b_vault: Pubkey, //32
-    /// LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
-    pub a_vault_lp: Pubkey, //32
-    /// LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
-    pub b_vault_lp: Pubkey, //32
-    /// "A" vault lp bump. Used to create signer seeds.
-    pub a_vault_lp_bump: u8, //1
-    /// Flag to determine whether the pool is enabled, or disabled.
-    pub enabled: bool, //1
-    /// Admin fee token account for token A. Used to receive trading fee.
-    pub admin_token_a_fee: Pubkey, //32
-    /// Admin fee token account for token B. Used to receive trading fee.
-    pub admin_token_b_fee: Pubkey, //32
-    /// Owner of the pool.
-    pub admin: Pubkey, //32
-    /// Store the fee charges setting.
-    pub fees: PoolFees, //48
     /// Pool type
     pub pool_type: PoolType,
-    /// Stake pubkey of SPL stake pool
-    pub stake: Pubkey,
-    /// Padding for future pool field
-    pub padding: Padding, // 512 Refer: curve_type.rs for the test
-    /// The type of the swap curve supported by the pool.
-    // Leaving curve_type as last field give us the flexibility to add specific curve information / new curve type
-    pub curve_type: CurveType, //9
 }
