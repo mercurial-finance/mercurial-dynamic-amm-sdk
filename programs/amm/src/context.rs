@@ -291,14 +291,6 @@ pub struct InitializePermissionlessPoolWithFeeTier<'info> {
     )]
     pub admin_token_b_fee: Box<Account<'info, TokenAccount>>,
 
-    /// CHECK: LP mint metadata PDA. Metaplex do the checking.
-    #[account(mut)]
-    pub mint_metadata: UncheckedAccount<'info>,
-
-    /// CHECK: Metadata program
-    #[account(address = mpl_token_metadata::ID)]
-    pub metadata_program: UncheckedAccount<'info>,
-
     /// Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -473,14 +465,6 @@ pub struct InitializePermissionlessPool<'info> {
         token::authority = fee_owner
     )]
     pub admin_token_b_fee: Box<Account<'info, TokenAccount>>,
-
-    /// CHECK: LP mint metadata PDA. Metaplex do the checking.
-    #[account(mut)]
-    pub mint_metadata: UncheckedAccount<'info>,
-
-    /// CHECK: Metadata program
-    #[account(address = mpl_token_metadata::ID)]
-    pub metadata_program: UncheckedAccount<'info>,
 
     /// Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.
     #[account(mut)]
