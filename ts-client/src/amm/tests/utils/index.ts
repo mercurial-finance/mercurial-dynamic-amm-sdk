@@ -1,5 +1,5 @@
-import { Wallet } from '@project-serum/anchor';
-import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
+import { Wallet } from '@coral-xyz/anchor';
+import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import { TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
@@ -40,3 +40,10 @@ export const DEVNET = {
   }),
   cluster: 'devnet',
 };
+
+export const LOCALNET = {
+  connection: new Connection('http://localhost:8899', {
+    commitment: 'confirmed',
+  }),
+  cluster: 'localnet',
+}

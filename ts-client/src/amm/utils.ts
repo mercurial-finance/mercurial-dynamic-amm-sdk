@@ -7,7 +7,7 @@ import {
   VaultIdl,
   PROGRAM_ID as VAULT_PROGRAM_ID,
 } from '@mercurial-finance/vault-sdk';
-import { AnchorProvider, BN, Program } from '@project-serum/anchor';
+import { AnchorProvider, BN, Program } from '@coral-xyz/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
@@ -42,6 +42,7 @@ import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './cu
 import {
   AmmProgram,
   ConstantProductCurve,
+  CurveType,
   DepegLido,
   DepegMarinade,
   DepegNone,
@@ -636,7 +637,11 @@ export function chunks<T>(array: T[], size: number): T[][] {
   );
 }
 
-export async function chunkedFetchMultiplePoolAccount(program: AmmProgram, pks: PublicKey[], chunkSize: number = 100) {
+export async function chunkedFetchMultiplePoolAccount(
+  program: AmmProgram,
+  pks: PublicKey[],
+  chunkSize: number = 100,
+) {
   const accounts = (
     await Promise.all(chunks(pks, chunkSize).map((chunk) => program.account.pool.fetchMultiple(chunk)))
   ).flat();
@@ -724,13 +729,14 @@ export const DepegType = {
   },
 };
 
-export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, isStable: boolean) {
+export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, isStable: boolean): CurveType {
   return isStable
     ? {
         stable: {
           amp: PERMISSIONLESS_AMP,
           tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
           depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType: DepegType.none() },
+          lastAmpUpdatedTimestamp: new BN(0),
         },
       }
     : { constantProduct: {} };

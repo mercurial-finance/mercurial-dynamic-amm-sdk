@@ -2,7 +2,7 @@ import AmmImpl from '..';
 import { DEVNET, airDropSol, mockWallet } from './utils';
 import { DEFAULT_SLIPPAGE, DEVNET_COIN, DEVNET_POOL } from '../constants';
 import { Cluster, PublicKey } from '@solana/web3.js';
-import { AnchorProvider, BN } from '@project-serum/anchor';
+import { AnchorProvider, BN } from '@coral-xyz/anchor';
 import DynamicAmmError from '../error';
 import { IDL } from '../idl';
 

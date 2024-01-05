@@ -1,5 +1,5 @@
 import sqrt from 'bn-sqrt';
-import { BN } from '@project-serum/anchor';
+import { BN } from '@coral-xyz/anchor';
 import { getPriceImpact, OutResult, SwapCurve, TradeDirection } from '.';
 import { PoolFees } from '../types';
 

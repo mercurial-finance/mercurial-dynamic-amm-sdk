@@ -1,4 +1,4 @@
-import { AnchorProvider, BN } from '@project-serum/anchor';
+import { AnchorProvider, BN } from '@coral-xyz/anchor';
 import { TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
 import { Cluster, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { DEFAULT_SLIPPAGE, DEVNET_COIN, DEVNET_POOL, MAINNET_POOL } from '../constants';

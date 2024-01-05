@@ -1,4 +1,4 @@
-import { BN } from '@project-serum/anchor';
+import { BN } from '@coral-xyz/anchor';
 import {
   PublicKey,
   Connection,
@@ -63,7 +63,7 @@ type Opt = {
 };
 
 const getAllPoolState = async (poolMints: Array<PublicKey>, program: AmmProgram) => {
-  const poolStates = (await chunkedFetchMultiplePoolAccount(program, poolMints)) as Array<PoolState>;
+  const poolStates = (await chunkedFetchMultiplePoolAccount(program, poolMints)) as any as Array<PoolState>;
   invariant(poolStates.length === poolMints.length, 'Some of the pool state not found');
 
   const poolLpMints = poolStates.map((poolState) => poolState.lpMint);
