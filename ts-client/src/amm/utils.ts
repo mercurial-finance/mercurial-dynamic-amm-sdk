@@ -7,7 +7,7 @@ import {
   VaultIdl,
   PROGRAM_ID as VAULT_PROGRAM_ID,
 } from '@mercurial-finance/vault-sdk';
-import { AnchorProvider, BN, Program } from '@coral-xyz/anchor';
+import { AnchorProvider, BN, Program, Wallet } from '@coral-xyz/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
@@ -66,6 +66,13 @@ export const createProgram = (connection: Connection, programId?: string) => {
   return { provider, ammProgram, vaultProgram };
 };
 
+export const createProgramWithWallet = (connection: Connection, wallet: Wallet, programId?: string) => {
+  const provider = new AnchorProvider(connection, wallet, AnchorProvider.defaultOptions());
+  const ammProgram = new Program<AmmIdl>(AmmIDL, programId ?? PROGRAM_ID, provider);
+  const vaultProgram = new Program<VaultIdl>(VaultIDL, VAULT_PROGRAM_ID, provider);
+
+  return { provider, ammProgram, vaultProgram };
+};
 /**
  * It takes an amount and a slippage rate, and returns the maximum amount that can be received with
  * that slippage rate

@@ -2,6 +2,7 @@ import { Wallet } from '@coral-xyz/anchor';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import { TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import BN from 'bn.js';
 
 export const airDropSol = async (connection: Connection, publicKey: PublicKey, amount = 1) => {
   try {
@@ -25,6 +26,44 @@ export const getOrCreateATA = async (connection: Connection, mint: PublicKey, ow
   return ata.address;
 };
 
+// export const createAndMintTo = async (connection: Connection, mint: PublicKey, owner: PublicKey, payer: Keypair, amount: number) => {
+//   const token = new Token(connection, mint, TOKEN_PROGRAM_ID, payer);
+//   const ata = await token.getOrCreateAssociatedAccountInfo(owner);
+//   await token.mintTo(ata.address, owner, [], amount);
+//
+//   return ata.address;
+// }
+
+export const createAndMintTo = async (
+  connection: Connection,
+  admin: Keypair,
+  destination: PublicKey,
+  amount: number,
+  decimals: number,
+) => {
+  const tokenMint = await Token.createMint(
+    connection,
+    admin,
+    admin.publicKey,
+    null,
+    decimals,
+    TOKEN_PROGRAM_ID
+  );
+  const destinationAta = await getOrCreateATA(
+    connection,
+    tokenMint.publicKey,
+    destination,
+    admin
+  );
+  await tokenMint.mintTo(destinationAta, admin.publicKey, [], amount);
+  return {
+    tokenMint,
+    ata: destinationAta,
+    ataOwner: destination,
+  };
+};
+
+
 export const mockWallet = new Wallet(
   process.env.WALLET_PRIVATE_KEY ? Keypair.fromSecretKey(bs58.decode(process.env.WALLET_PRIVATE_KEY)) : new Keypair(),
 );
@@ -42,8 +81,9 @@ export const DEVNET = {
 };
 
 export const LOCALNET = {
-  connection: new Connection('http://localhost:8899', {
+  connection: new Connection('http://127.0.0.1:8899', {
     commitment: 'confirmed',
   }),
   cluster: 'localnet',
+  ammProgramId: "HRXQZaMin3k5ivuDxEjUikoZP9PbbtCZNrjHxG28KmoW"
 }
