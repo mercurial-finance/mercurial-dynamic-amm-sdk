@@ -1,6 +1,10 @@
 import { Wallet } from '@coral-xyz/anchor';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
-import { TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+import {
+  TOKEN_PROGRAM_ID,
+  Token
+} from '@solana/spl-token';
+
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 
@@ -22,17 +26,9 @@ export const airDropSol = async (connection: Connection, publicKey: PublicKey, a
 export const getOrCreateATA = async (connection: Connection, mint: PublicKey, owner: PublicKey, payer: Keypair) => {
   const token = new Token(connection, mint, TOKEN_PROGRAM_ID, payer);
   const ata = await token.getOrCreateAssociatedAccountInfo(owner);
-
+  // const ata = Token.getOrCreateAssociatedTokenAccount(connection, mint, owner);
   return ata.address;
 };
-
-// export const createAndMintTo = async (connection: Connection, mint: PublicKey, owner: PublicKey, payer: Keypair, amount: number) => {
-//   const token = new Token(connection, mint, TOKEN_PROGRAM_ID, payer);
-//   const ata = await token.getOrCreateAssociatedAccountInfo(owner);
-//   await token.mintTo(ata.address, owner, [], amount);
-//
-//   return ata.address;
-// }
 
 export const createAndMintTo = async (
   connection: Connection,
@@ -49,16 +45,19 @@ export const createAndMintTo = async (
     decimals,
     TOKEN_PROGRAM_ID
   );
-  const destinationAta = await getOrCreateATA(
+
+  // const tokenAccount = await createAssociatedTokenAccount(connection, admin, tokenMint, admin.publicKey);
+
+  const tokenAccount = await getOrCreateATA(
     connection,
     tokenMint.publicKey,
     destination,
     admin
   );
-  await tokenMint.mintTo(destinationAta, admin.publicKey, [], amount);
+  await tokenMint.mintTo(tokenAccount, admin.publicKey, [], amount * 10 ** decimals);
   return {
     tokenMint,
-    ata: destinationAta,
+    ata: tokenAccount,
     ataOwner: destination,
   };
 };
@@ -85,5 +84,5 @@ export const LOCALNET = {
     commitment: 'confirmed',
   }),
   cluster: 'localnet',
-  ammProgramId: "HRXQZaMin3k5ivuDxEjUikoZP9PbbtCZNrjHxG28KmoW"
+  ammProgramId: "Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB"
 }

@@ -1,4 +1,4 @@
-import { AnchorProvider, BN, Program } from '@coral-xyz/anchor';
+import { AnchorProvider, BN, Program, setProvider } from '@coral-xyz/anchor';
 import VaultImpl from "@mercurial-finance/vault-sdk";
 import { airDropSol, createAndMintTo, DEVNET, getOrCreateATA, LOCALNET, mockWallet } from './utils';
 import { DEVNET_COIN, DEVNET_POOL, FEE_OWNER, VAULT_BASE_KEY } from '../constants';
@@ -7,7 +7,8 @@ import {
   ComputeBudgetProgram,
   Connection,
   Keypair,
-  PublicKey,
+  LAMPORTS_PER_SOL,
+  PublicKey, sendAndConfirmTransaction,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
 } from '@solana/web3.js';
@@ -53,7 +54,8 @@ describe("Events", () => {
   type AmmEvent = IdlEvents<Amm>;
 
   beforeAll(async () => {
-    await airDropSol(provider.connection, mockWallet.publicKey);
+    setProvider(provider);
+    await airDropSol(provider.connection, mockWallet.publicKey, 1000);
 
     let { ata: wsolAta, tokenMint: wsolTokenMint } = await createAndMintTo(provider.connection, mockWallet.payer, mockWallet.publicKey, 100000, WSOL_TOKEN_DECIMAL);
     let { ata: usdcAta, tokenMint: usdcTokenMint} = await createAndMintTo(provider.connection, mockWallet.payer, mockWallet.publicKey, 100000, USDC_TOKEN_DECIMAL);
@@ -92,6 +94,7 @@ describe("Events", () => {
       new BN(1000 * 10 ** USDC_TOKEN_DECIMAL));
   });
 
+
   beforeEach(async () => {
 
   })
@@ -111,7 +114,9 @@ describe("Events", () => {
     };
 
     const pool = await initializePermissionlessPoolWithFeeTier(provider.connection, wsolVault, usdcVault, ammProgram, vaultProgram, mockWallet.payer, curveType, tokenAAmount, tokenBAmount, tradeFeeBps);
-    console.log("new pool ", pool);
+    console.log("new pool ", pool.toBase58());
+
+    setTimeout(() => {}, 2000);
 
     await ammProgram.removeEventListener(listenerId);
   });
