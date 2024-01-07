@@ -11,3 +11,4 @@ ts-client/dist/
 ts-client/package-lock.json
 ts-client/.env
 ts-client/src/amm/generated
+ts-client/.anchor

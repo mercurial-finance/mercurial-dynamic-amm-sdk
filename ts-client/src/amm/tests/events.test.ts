@@ -1,14 +1,13 @@
-import { AnchorProvider, BN, Program, setProvider } from '@coral-xyz/anchor';
-import VaultImpl from "@mercurial-finance/vault-sdk";
+import { AnchorProvider, BN, getProvider, Program} from '@coral-xyz/anchor';
 import { airDropSol, createAndMintTo, DEVNET, getOrCreateATA, LOCALNET, mockWallet } from './utils';
-import { DEVNET_COIN, DEVNET_POOL, FEE_OWNER, VAULT_BASE_KEY } from '../constants';
+import { FEE_OWNER, VAULT_BASE_KEY } from '../constants';
 import {
   Cluster,
   ComputeBudgetProgram,
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
-  PublicKey, sendAndConfirmTransaction,
+  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
 } from '@solana/web3.js';
@@ -17,7 +16,6 @@ import { AmmProgram, ConstantProductCurve, CurveType, VaultProgram } from '../ty
 import { IdlEvents } from '@coral-xyz/anchor';
 import { Amm } from '../idl';
 import {
-  createProgram,
   createProgramWithWallet,
   encodeCurveType,
   getFirstKey,
@@ -25,13 +23,12 @@ import {
   getTradeFeeBpsBuffer,
 } from '../utils';
 import { USDC_TOKEN_DECIMAL, WSOL_TOKEN_DECIMAL } from './constants';
-import { ENV, TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from '@solana/spl-token-registry';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { expect } from 'chai';
 
 describe("Events", () => {
-  const provider = new AnchorProvider(LOCALNET.connection, mockWallet, {
-    commitment: 'confirmed',
-  });
+  const provider = getProvider();
 
   let wsolAta: PublicKey;
   let usdcAta: PublicKey;
@@ -53,8 +50,8 @@ describe("Events", () => {
 
   type AmmEvent = IdlEvents<Amm>;
 
-  beforeAll(async () => {
-    setProvider(provider);
+  before(async () => {
+    // setProvider(provider);
     await airDropSol(provider.connection, mockWallet.publicKey, 1000);
 
     let { ata: wsolAta, tokenMint: wsolTokenMint } = await createAndMintTo(provider.connection, mockWallet.payer, mockWallet.publicKey, 100000, WSOL_TOKEN_DECIMAL);
@@ -63,7 +60,7 @@ describe("Events", () => {
     wsolTokenInfo = createWethTokenInfo(wsolAta);
     usdcTokenInfo = createUsdcTokenInfo(usdcAta);
 
-    let { ammProgram : newAmmProgram, vaultProgram: newVaultProgram } = createProgramWithWallet(provider.connection, mockWallet, LOCALNET.ammProgramId);
+    let { ammProgram : newAmmProgram, vaultProgram: newVaultProgram } = createProgramWithWallet(provider.connection, mockWallet);
     ammProgram = newAmmProgram;
     vaultProgram = newVaultProgram;
 
@@ -99,7 +96,7 @@ describe("Events", () => {
 
   })
 
-  test("initializePermissionlessPool should emit PoolCreated event", async () => {
+  it("initializePermissionlessPool should emit PoolCreated event", async () => {
     const listenerId = ammProgram.addEventListener("PoolCreated", async (event, slot, signature) => {
       console.log("got event");
     });
@@ -379,6 +376,12 @@ export const initializePermissionlessPoolWithFeeTier = async (connection: Connec
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
     }).preInstructions([setComputeUnitLimitIx])
     .signers([userKeypair]).simulate();
+
+  let event = simulation.events[0].data;
+  expect(event.lpMint.toBase58()).to.equal(poolLpMint.toBase58());
+  expect(event.tokenAMint.toBase58()).to.equal(aVaultAccount.tokenMint.toBase58());
+  expect(event.tokenBMint.toBase58()).to.equal(bVaultAccount.tokenMint.toBase58());
+  expect(event.poolType).to.deep.equal({ permissionless: {}});
 
   return poolPubkey;
 };

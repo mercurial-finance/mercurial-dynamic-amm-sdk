@@ -68,7 +68,7 @@ export const mockWallet = new Wallet(
 );
 
 export const MAINNET = {
-  connection: new Connection(process.env.MAINNET_RPC_ENDPOINT as string),
+  connection: new Connection(process.env.MAINNET_RPC_ENDPOINT as string || "https://api.mainnet-beta.solana.com"),
   cluster: 'mainnet-beta',
 };
 
@@ -82,6 +82,7 @@ export const DEVNET = {
 export const LOCALNET = {
   connection: new Connection('http://127.0.0.1:8899', {
     commitment: 'confirmed',
+    wsEndpoint: "ws://127.0.0.1:8900"
   }),
   cluster: 'localnet',
   ammProgramId: "Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB"
