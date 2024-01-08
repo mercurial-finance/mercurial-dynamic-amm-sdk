@@ -1,15 +1,16 @@
-import { BN, getProvider, IdlEvents } from '@coral-xyz/anchor';
-import { PublicKey } from '@solana/web3.js';
+import { BN, getProvider } from '@coral-xyz/anchor';
+import { PublicKey, sendAndConfirmTransaction } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
 import AmmImpl from '../index';
-import { AmmProgram, CurveType, VaultProgram } from '../types';
-import { Amm } from '../idl';
+import { AmmProgram, CurveType, PoolState, VaultProgram } from '../types';
 import { airDropSol, createAndMintTo, mockWallet } from './utils';
 import { USDC_TOKEN_DECIMAL, WSOL_TOKEN_DECIMAL } from './constants';
 import { createProgramWithWallet } from '../utils';
 import { createUsdcTokenInfo, createWethTokenInfo } from './utils/mock_token_info';
 import { depositVault, setupVault } from './utils/vault';
-import { initializePermissionlessPoolWithFeeTier, simulateInitializePermissionlessPoolWithFeeTier } from './utils/pool';
+import { initializePermissionlessPoolWithFeeTier } from './utils/pool';
+import { Token } from '@solana/spl-token';
+import { DEFAULT_SLIPPAGE } from '../constants';
 
 describe('Pool', () => {
   const provider = getProvider();
@@ -20,18 +21,12 @@ describe('Pool', () => {
   let wsolTokenInfo: TokenInfo;
   let usdcTokenInfo: TokenInfo;
 
-  let cpPool: AmmImpl;
-  let depegPool: AmmImpl;
-  let stablePool: AmmImpl;
-  let currentCpPoolBalance: BN;
-  let currentDepegPoolBalance: BN;
-  let currentStablePoolBalance: BN;
-
   let ammProgram: AmmProgram;
   let vaultProgram: VaultProgram;
   let wsolVault: PublicKey;
   let usdcVault: PublicKey;
-  let pool: PublicKey;
+  let usdcTokenMint: Token;
+  let pool: AmmImpl;
 
   before(async () => {
     await airDropSol(provider.connection, mockWallet.publicKey, 1000);
@@ -43,16 +38,17 @@ describe('Pool', () => {
       100000,
       WSOL_TOKEN_DECIMAL,
     );
-    let { ata: usdcAta, tokenMint: usdcTokenMint } = await createAndMintTo(
+    let { ata: usdcAta, tokenMint: _usdcTokenMint } = await createAndMintTo(
       provider.connection,
       mockWallet.payer,
       mockWallet.publicKey,
       100000,
       USDC_TOKEN_DECIMAL,
     );
+    usdcTokenMint = _usdcTokenMint;
 
-    wsolTokenInfo = createWethTokenInfo(wsolAta);
-    usdcTokenInfo = createUsdcTokenInfo(usdcAta);
+    wsolTokenInfo = createWethTokenInfo(wsolTokenMint.publicKey);
+    usdcTokenInfo = createUsdcTokenInfo(usdcTokenMint.publicKey);
 
     let { ammProgram: newAmmProgram, vaultProgram: newVaultProgram } = createProgramWithWallet(
       provider.connection,
@@ -88,7 +84,7 @@ describe('Pool', () => {
       constantProduct: {},
     };
 
-    pool = await initializePermissionlessPoolWithFeeTier(
+    const { pool: _pool } = await initializePermissionlessPoolWithFeeTier(
       provider.connection,
       wsolVault,
       usdcVault,
@@ -100,7 +96,52 @@ describe('Pool', () => {
       tokenBAmount,
       tradeFeeBps,
     );
+
+    pool = await AmmImpl.create(provider.connection, _pool, wsolTokenInfo, usdcTokenInfo);
   });
 
-  it('should able to subscribe reserve changes', async () => {});
+  it('should able to subscribe reserve changes', async () => {
+    const poolState = (await ammProgram.account.pool.fetchNullable(pool.address)) as any as PoolState;
+    const aVaultLp = poolState.aVaultLp;
+    const bVaultLp = poolState.bVaultLp;
+
+    const aVaultLpChangeSubId = provider.connection.onAccountChange(aVaultLp, (accountInfo, context) => {
+      console.log('Vault A LP changed');
+      console.log(accountInfo);
+    });
+
+    const bVaultLpChangeSubId = provider.connection.onAccountChange(bVaultLp, (accountInfo, context) => {
+      console.log('Vault B LP changed');
+      console.log(accountInfo);
+      pool.updateState();
+    });
+
+    const inAmountLamport = new BN(2 * 10 ** WSOL_TOKEN_DECIMAL);
+
+    const { swapOutAmount, minSwapOutAmount } = pool.getSwapQuote(
+      new PublicKey(wsolTokenInfo.address),
+      inAmountLamport,
+      DEFAULT_SLIPPAGE,
+    );
+
+    const swapTx = await pool.swap(
+      mockWallet.publicKey,
+      new PublicKey(wsolTokenInfo.address),
+      inAmountLamport,
+      minSwapOutAmount,
+    );
+
+    try {
+      const swapResult = await sendAndConfirmTransaction(provider.connection, swapTx, [mockWallet.payer]);
+      console.log('Swap Result of SOL → USDC', swapResult);
+    } catch (error: any) {
+      console.trace(error);
+      throw new Error(error.message);
+    }
+
+    setTimeout(() => {}, 3000);
+
+    await provider.connection.removeAccountChangeListener(aVaultLpChangeSubId);
+    await provider.connection.removeAccountChangeListener(bVaultLpChangeSubId);
+  });
 });
