@@ -24,6 +24,3 @@ export interface AmmImplementation {
     tokenBOutAmount: BN,
   ) => Promise<Transaction>;
 }
-
-
-

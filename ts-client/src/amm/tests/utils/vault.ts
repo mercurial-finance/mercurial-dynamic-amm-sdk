@@ -8,11 +8,7 @@ import { getOrCreateATA } from './index';
 /** Setup new vault */
 export async function setupVault(tokenMint: PublicKey, vaultProgram: VaultProgram, adminKeypair: Keypair) {
   const vaultBase = VAULT_BASE_KEY;
-  const { vaultPda, tokenVaultPda, lpMintPda } = await getVaultPdas(
-    tokenMint,
-    vaultBase,
-    vaultProgram
-  );
+  const { vaultPda, tokenVaultPda, lpMintPda } = await getVaultPdas(tokenMint, vaultBase, vaultProgram);
   await vaultProgram.methods
     .initialize()
     .accounts({
@@ -32,22 +28,18 @@ export async function setupVault(tokenMint: PublicKey, vaultProgram: VaultProgra
 }
 
 /** Deposit to vault */
-export async function depositVault(connection: Connection, vault: PublicKey, userKeypair: Keypair, vaultProgram: VaultProgram, depositAmount: BN) {
+export async function depositVault(
+  connection: Connection,
+  vault: PublicKey,
+  userKeypair: Keypair,
+  vaultProgram: VaultProgram,
+  depositAmount: BN,
+) {
   const vaultAccount = await vaultProgram.account.vault.fetch(vault);
 
-  const userWsolLpMint = await getOrCreateATA(
-    connection,
-    vaultAccount.lpMint,
-    userKeypair.publicKey,
-    userKeypair,
-  );
+  const userWsolLpMint = await getOrCreateATA(connection, vaultAccount.lpMint, userKeypair.publicKey, userKeypair);
 
-  const userToken = await getOrCreateATA(
-    connection,
-    vaultAccount.tokenMint,
-    userKeypair.publicKey,
-    userKeypair,
-  );
+  const userToken = await getOrCreateATA(connection, vaultAccount.tokenMint, userKeypair.publicKey, userKeypair);
 
   await vaultProgram.methods
     .deposit(depositAmount, new BN(0))
@@ -62,26 +54,22 @@ export async function depositVault(connection: Connection, vault: PublicKey, use
     })
     .signers([userKeypair])
     .rpc();
-};
+}
 
-export const getVaultPdas = async (
-  tokenMint: PublicKey,
-  base: PublicKey,
-  vaultProgram: VaultProgram,
-) => {
+export const getVaultPdas = async (tokenMint: PublicKey, base: PublicKey, vaultProgram: VaultProgram) => {
   const vaultPda = PublicKey.findProgramAddressSync(
-    [Buffer.from("vault"), tokenMint.toBuffer(), base.toBuffer()],
-    vaultProgram.programId
+    [Buffer.from('vault'), tokenMint.toBuffer(), base.toBuffer()],
+    vaultProgram.programId,
   );
 
   const tokenVaultPda = PublicKey.findProgramAddressSync(
-    [Buffer.from("token_vault"), vaultPda[0].toBuffer()],
-    vaultProgram.programId
+    [Buffer.from('token_vault'), vaultPda[0].toBuffer()],
+    vaultProgram.programId,
   );
 
   const lpMintPda = PublicKey.findProgramAddressSync(
-    [Buffer.from("lp_mint"), vaultPda[0].toBuffer()],
-    vaultProgram.programId
+    [Buffer.from('lp_mint'), vaultPda[0].toBuffer()],
+    vaultProgram.programId,
   );
 
   return {

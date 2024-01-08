@@ -1,9 +1,6 @@
 import { Wallet } from '@coral-xyz/anchor';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
-import {
-  TOKEN_PROGRAM_ID,
-  Token
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
@@ -37,23 +34,11 @@ export const createAndMintTo = async (
   amount: number,
   decimals: number,
 ) => {
-  const tokenMint = await Token.createMint(
-    connection,
-    admin,
-    admin.publicKey,
-    null,
-    decimals,
-    TOKEN_PROGRAM_ID
-  );
+  const tokenMint = await Token.createMint(connection, admin, admin.publicKey, null, decimals, TOKEN_PROGRAM_ID);
 
   // const tokenAccount = await createAssociatedTokenAccount(connection, admin, tokenMint, admin.publicKey);
 
-  const tokenAccount = await getOrCreateATA(
-    connection,
-    tokenMint.publicKey,
-    destination,
-    admin
-  );
+  const tokenAccount = await getOrCreateATA(connection, tokenMint.publicKey, destination, admin);
   await tokenMint.mintTo(tokenAccount, admin.publicKey, [], amount * 10 ** decimals);
   return {
     tokenMint,
@@ -62,13 +47,12 @@ export const createAndMintTo = async (
   };
 };
 
-
 export const mockWallet = new Wallet(
   process.env.WALLET_PRIVATE_KEY ? Keypair.fromSecretKey(bs58.decode(process.env.WALLET_PRIVATE_KEY)) : new Keypair(),
 );
 
 export const MAINNET = {
-  connection: new Connection(process.env.MAINNET_RPC_ENDPOINT as string || "https://api.mainnet-beta.solana.com"),
+  connection: new Connection((process.env.MAINNET_RPC_ENDPOINT as string) || 'https://api.mainnet-beta.solana.com'),
   cluster: 'mainnet-beta',
 };
 
@@ -82,8 +66,8 @@ export const DEVNET = {
 export const LOCALNET = {
   connection: new Connection('http://127.0.0.1:8899', {
     commitment: 'confirmed',
-    wsEndpoint: "ws://127.0.0.1:8900"
+    wsEndpoint: 'ws://127.0.0.1:8900',
   }),
   cluster: 'localnet',
-  ammProgramId: "Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB"
-}
+  ammProgramId: 'Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB',
+};

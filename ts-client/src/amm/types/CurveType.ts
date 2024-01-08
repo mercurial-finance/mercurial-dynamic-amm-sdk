@@ -9,7 +9,7 @@ export type StableSwapCurve = {
     amp: BN;
     tokenMultiplier: TokenMultiplier;
     depeg: Depeg;
-    lastAmpUpdatedTimestamp: BN
+    lastAmpUpdatedTimestamp: BN;
   };
 };
 

@@ -15,9 +15,9 @@ export function createWethTokenInfo(tokenAddress: PublicKey): TokenInfo {
       serumV3Usdc: '9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT',
       serumV3Usdt: 'HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1',
       website: 'https://solana.com/',
-    }
-  }
-};
+    },
+  };
+}
 
 export function createUsdcTokenInfo(tokenAddress: PublicKey): TokenInfo {
   return {
@@ -33,5 +33,5 @@ export function createUsdcTokenInfo(tokenAddress: PublicKey): TokenInfo {
       serumV3Usdt: '77quYg4MGneUdjgXCunt9GgM1usmrxKY31twEy3WHwcS',
       website: 'https://www.centre.io/',
     },
-  }
-};
+  };
+}

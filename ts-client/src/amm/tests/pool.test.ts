@@ -11,7 +11,7 @@ import { createUsdcTokenInfo, createWethTokenInfo } from './utils/mock_token_inf
 import { depositVault, setupVault } from './utils/vault';
 import { initializePermissionlessPoolWithFeeTier, simulateInitializePermissionlessPoolWithFeeTier } from './utils/pool';
 
-describe("Pool", () => {
+describe('Pool', () => {
   const provider = getProvider();
 
   let wsolAta: PublicKey;
@@ -36,36 +36,34 @@ describe("Pool", () => {
   before(async () => {
     await airDropSol(provider.connection, mockWallet.publicKey, 1000);
 
-    let {
-      ata: wsolAta,
-      tokenMint: wsolTokenMint
-    } = await createAndMintTo(provider.connection, mockWallet.payer, mockWallet.publicKey, 100000, WSOL_TOKEN_DECIMAL);
-    let {
-      ata: usdcAta,
-      tokenMint: usdcTokenMint
-    } = await createAndMintTo(provider.connection, mockWallet.payer, mockWallet.publicKey, 100000, USDC_TOKEN_DECIMAL);
+    let { ata: wsolAta, tokenMint: wsolTokenMint } = await createAndMintTo(
+      provider.connection,
+      mockWallet.payer,
+      mockWallet.publicKey,
+      100000,
+      WSOL_TOKEN_DECIMAL,
+    );
+    let { ata: usdcAta, tokenMint: usdcTokenMint } = await createAndMintTo(
+      provider.connection,
+      mockWallet.payer,
+      mockWallet.publicKey,
+      100000,
+      USDC_TOKEN_DECIMAL,
+    );
 
     wsolTokenInfo = createWethTokenInfo(wsolAta);
     usdcTokenInfo = createUsdcTokenInfo(usdcAta);
 
-    let {
-      ammProgram: newAmmProgram,
-      vaultProgram: newVaultProgram
-    } = createProgramWithWallet(provider.connection, mockWallet);
+    let { ammProgram: newAmmProgram, vaultProgram: newVaultProgram } = createProgramWithWallet(
+      provider.connection,
+      mockWallet,
+    );
     ammProgram = newAmmProgram;
     vaultProgram = newVaultProgram;
 
-    wsolVault = await setupVault(
-      wsolTokenMint.publicKey,
-      vaultProgram,
-      mockWallet.payer
-    );
+    wsolVault = await setupVault(wsolTokenMint.publicKey, vaultProgram, mockWallet.payer);
 
-    usdcVault = await setupVault(
-      usdcTokenMint.publicKey,
-      vaultProgram,
-      mockWallet.payer
-    );
+    usdcVault = await setupVault(usdcTokenMint.publicKey, vaultProgram, mockWallet.payer);
 
     await depositVault(
       provider.connection,
@@ -75,22 +73,34 @@ describe("Pool", () => {
       new BN(10 * 10 ** WSOL_TOKEN_DECIMAL),
     );
 
-    await depositVault(provider.connection,
+    await depositVault(
+      provider.connection,
       usdcVault,
       mockWallet.payer,
       vaultProgram,
-      new BN(1000 * 10 ** USDC_TOKEN_DECIMAL));
+      new BN(1000 * 10 ** USDC_TOKEN_DECIMAL),
+    );
 
     const tokenAAmount = new BN(10 * 10 ** WSOL_TOKEN_DECIMAL);
     const tokenBAmount = new BN(1000 * 10 ** USDC_TOKEN_DECIMAL);
     const tradeFeeBps = new BN(25);
     const curveType: CurveType = {
-      constantProduct: {}
+      constantProduct: {},
     };
 
-    pool = await initializePermissionlessPoolWithFeeTier(provider.connection, wsolVault, usdcVault, ammProgram, vaultProgram, mockWallet.payer, curveType, tokenAAmount, tokenBAmount, tradeFeeBps);
+    pool = await initializePermissionlessPoolWithFeeTier(
+      provider.connection,
+      wsolVault,
+      usdcVault,
+      ammProgram,
+      vaultProgram,
+      mockWallet.payer,
+      curveType,
+      tokenAAmount,
+      tokenBAmount,
+      tradeFeeBps,
+    );
   });
 
-  it("should able to subscribe reserve changes", async () => {})
-
+  it('should able to subscribe reserve changes', async () => {});
 });
