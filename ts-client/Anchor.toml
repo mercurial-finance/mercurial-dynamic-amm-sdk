@@ -15,4 +15,3 @@ program = "fixtures/amm.so"
 
 [scripts]
 test = "yarn run ts-mocha -t 1000000 -p ./tsconfig.json src/amm/tests/events.test.ts"
-event-test = "yarn run ts-mocha -t 1000000 -p ./tsconfig.json src/amm/tests/events.test.ts"

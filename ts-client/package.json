@@ -8,6 +8,7 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json && tsc -p tsconfig.esm.json",
     "test": "jest ./src/amm/tests/*.test.ts --runInBand --setupFiles dotenv/config",
     "test-snapshot": "jest ./src/amm/tests/snapshot.test.ts --runInBand",
+    "anchor-test": "anchor test",
     "fmt": "pnpm prettier --write src/**/*.{ts,json}"
   },
   "files": [

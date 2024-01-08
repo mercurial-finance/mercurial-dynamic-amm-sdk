@@ -306,43 +306,6 @@ export const initializePermissionlessPoolWithFeeTier = async (connection: Connec
       units: 1_400_000,
     });
 
-  // await ammProgram.methods
-  //   .initializePermissionlessPoolWithFeeTier(
-  //     curve as any,
-  //     tradeFeeBps,
-  //     aDepositAmount,
-  //     bDepositAmount
-  //   )
-  //   .accounts({
-  //     pool: poolPubkey,
-  //     tokenAMint: aVaultAccount.tokenMint,
-  //     tokenBMint: bVaultAccount.tokenMint,
-  //     aVault,
-  //     bVault,
-  //     aVaultLpMint: aVaultAccount.lpMint,
-  //     bVaultLpMint: bVaultAccount.lpMint,
-  //     aVaultLp: aVaultLpPda[0],
-  //     bVaultLp: bVaultLpPda[0],
-  //     lpMint: poolLpMint,
-  //     payerTokenA: userTokenA,
-  //     payerTokenB: userTokenB,
-  //     adminTokenAFee,
-  //     adminTokenBFee,
-  //     payerPoolLp: payerPoolLp,
-  //     aTokenVault: aVaultAccount.tokenVault,
-  //     bTokenVault: bVaultAccount.tokenVault,
-  //     feeOwner: FEE_OWNER,
-  //     payer: userKeypair.publicKey,
-  //     rent: SYSVAR_RENT_PUBKEY,
-  //     vaultProgram: vaultProgram.programId,
-  //     tokenProgram: TOKEN_PROGRAM_ID,
-  //     systemProgram: SystemProgram.programId,
-  //     associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-  //   })
-  //   .preInstructions([setComputeUnitLimitIx])
-  //   .signers([userKeypair])
-  //   .rpc();
-
   let simulation = await ammProgram.methods.initializePermissionlessPoolWithFeeTier(
       curve as any,
       tradeFeeBps,
