@@ -340,7 +340,9 @@ export const initializePermissionlessPoolWithFeeTier = async (connection: Connec
     }).preInstructions([setComputeUnitLimitIx])
     .signers([userKeypair]).simulate();
 
-  let event = simulation.events[0].data;
+
+  let event= simulation.events[0].data;
+  expect(event.pool.toBase58()).to.equal(poolPubkey.toBase58());
   expect(event.lpMint.toBase58()).to.equal(poolLpMint.toBase58());
   expect(event.tokenAMint.toBase58()).to.equal(aVaultAccount.tokenMint.toBase58());
   expect(event.tokenBMint.toBase58()).to.equal(bVaultAccount.tokenMint.toBase58());

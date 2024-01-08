@@ -59,6 +59,8 @@ pub struct PoolInfo {
 /// New pool created event
 #[event]
 pub struct PoolCreated {
+    /// Pool address
+    pub pool: Pubkey,
     /// LP token mint of the pool
     pub lp_mint: Pubkey, //32
     /// Token A mint of the pool. Eg: USDT
