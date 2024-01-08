@@ -644,11 +644,7 @@ export function chunks<T>(array: T[], size: number): T[][] {
   );
 }
 
-export async function chunkedFetchMultiplePoolAccount(
-  program: AmmProgram,
-  pks: PublicKey[],
-  chunkSize: number = 100,
-) {
+export async function chunkedFetchMultiplePoolAccount(program: AmmProgram, pks: PublicKey[], chunkSize: number = 100) {
   const accounts = (
     await Promise.all(chunks(pks, chunkSize).map((chunk) => program.account.pool.fetchMultiple(chunk)))
   ).flat();
