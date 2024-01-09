@@ -25,13 +25,14 @@ describe('Pool', () => {
   let vaultProgram: VaultProgram;
   let wsolVault: PublicKey;
   let usdcVault: PublicKey;
+  let wsolTokenMint: Token;
   let usdcTokenMint: Token;
   let pool: AmmImpl;
 
   before(async () => {
     await airDropSol(provider.connection, mockWallet.publicKey, 1000);
 
-    let { ata: wsolAta, tokenMint: wsolTokenMint } = await createAndMintTo(
+    let { ata: wsolAta, tokenMint: _wsolTokenMint } = await createAndMintTo(
       provider.connection,
       mockWallet.payer,
       mockWallet.publicKey,
@@ -45,6 +46,7 @@ describe('Pool', () => {
       100000,
       USDC_TOKEN_DECIMAL,
     );
+    wsolTokenMint = _wsolTokenMint;
     usdcTokenMint = _usdcTokenMint;
 
     wsolTokenInfo = createWethTokenInfo(wsolTokenMint.publicKey);
@@ -105,28 +107,36 @@ describe('Pool', () => {
     const aVaultLp = poolState.aVaultLp;
     const bVaultLp = poolState.bVaultLp;
 
-    const aVaultLpChangeSubId = provider.connection.onAccountChange(aVaultLp, (accountInfo, context) => {
-      console.log('Vault A LP changed');
-      console.log(accountInfo);
-    });
-
-    const bVaultLpChangeSubId = provider.connection.onAccountChange(bVaultLp, (accountInfo, context) => {
-      console.log('Vault B LP changed');
-      console.log(accountInfo);
-      pool.updateState();
-    });
-
     const inAmountLamport = new BN(2 * 10 ** WSOL_TOKEN_DECIMAL);
 
+    const aVaultLpChangeSubId = provider.connection.onAccountChange(aVaultLp, async (accountInfo, context) => {
+      console.log('Vault A LP changed');
+      console.log(accountInfo);
+      await pool.updateState();
+
+      const { swapOutAmount, minSwapOutAmount } = pool.getSwapQuote(wsolTokenMint.publicKey, inAmountLamport, DEFAULT_SLIPPAGE);
+      console.log(`SwapOutAmount = `, swapOutAmount.toString());
+    });
+
+    const bVaultLpChangeSubId = provider.connection.onAccountChange(bVaultLp, async (accountInfo, context) => {
+      console.log('Vault B LP changed');
+      console.log(accountInfo);
+      await pool.updateState();
+
+      const { swapOutAmount, minSwapOutAmount } = pool.getSwapQuote(wsolTokenMint.publicKey, inAmountLamport, DEFAULT_SLIPPAGE);
+      console.log(`SwapOutAmount = `, swapOutAmount.toString());
+    });
+
+
     const { swapOutAmount, minSwapOutAmount } = pool.getSwapQuote(
-      new PublicKey(wsolTokenInfo.address),
+      wsolTokenMint.publicKey,
       inAmountLamport,
       DEFAULT_SLIPPAGE,
     );
 
     const swapTx = await pool.swap(
       mockWallet.publicKey,
-      new PublicKey(wsolTokenInfo.address),
+      wsolTokenMint.publicKey,
       inAmountLamport,
       minSwapOutAmount,
     );
