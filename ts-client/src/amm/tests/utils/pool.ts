@@ -6,7 +6,7 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
 } from '@solana/web3.js';
-import { AmmProgram, CurveType, VaultProgram } from '../../types';
+import { AmmProgram, CurveType, PoolCreatedSimulation, VaultProgram } from '../../types';
 import { BN, Program } from '@coral-xyz/anchor';
 import { encodeCurveType, getFirstKey, getSecondKey, getTradeFeeBpsBuffer } from '../../utils';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -40,7 +40,7 @@ export const simulateInitializePermissionlessPoolWithFeeTier = async (
       bDepositAmount,
       tradeFeeBps,
     );
-  let simulation = await instruction.simulate();
+  let simulation: PoolCreatedSimulation = await instruction.simulate();
 
   let event = simulation.events[0].data;
   expect(event.pool.toBase58()).to.equal(pool.toBase58());

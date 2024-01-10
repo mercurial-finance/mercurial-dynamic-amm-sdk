@@ -22,6 +22,7 @@ export * from './Depeg';
 export * from './TokenMultiplier';
 export * from './PoolFees';
 export * from './PoolType';
+export * from './PoolCreatedSimulation';
 
 /** Programs */
 export type AmmProgram = Program<AmmIdl>;

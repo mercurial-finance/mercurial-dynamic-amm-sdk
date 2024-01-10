@@ -114,7 +114,11 @@ describe('Pool', () => {
       console.log(accountInfo);
       await pool.updateState();
 
-      const { swapOutAmount, minSwapOutAmount } = pool.getSwapQuote(wsolTokenMint.publicKey, inAmountLamport, DEFAULT_SLIPPAGE);
+      const { swapOutAmount, minSwapOutAmount } = pool.getSwapQuote(
+        wsolTokenMint.publicKey,
+        inAmountLamport,
+        DEFAULT_SLIPPAGE,
+      );
       console.log(`SwapOutAmount = `, swapOutAmount.toString());
     });
 
@@ -123,10 +127,13 @@ describe('Pool', () => {
       console.log(accountInfo);
       await pool.updateState();
 
-      const { swapOutAmount, minSwapOutAmount } = pool.getSwapQuote(wsolTokenMint.publicKey, inAmountLamport, DEFAULT_SLIPPAGE);
+      const { swapOutAmount, minSwapOutAmount } = pool.getSwapQuote(
+        wsolTokenMint.publicKey,
+        inAmountLamport,
+        DEFAULT_SLIPPAGE,
+      );
       console.log(`SwapOutAmount = `, swapOutAmount.toString());
     });
-
 
     const { swapOutAmount, minSwapOutAmount } = pool.getSwapQuote(
       wsolTokenMint.publicKey,
@@ -134,12 +141,7 @@ describe('Pool', () => {
       DEFAULT_SLIPPAGE,
     );
 
-    const swapTx = await pool.swap(
-      mockWallet.publicKey,
-      wsolTokenMint.publicKey,
-      inAmountLamport,
-      minSwapOutAmount,
-    );
+    const swapTx = await pool.swap(mockWallet.publicKey, wsolTokenMint.publicKey, inAmountLamport, minSwapOutAmount);
 
     try {
       const swapResult = await sendAndConfirmTransaction(provider.connection, swapTx, [mockWallet.payer]);
