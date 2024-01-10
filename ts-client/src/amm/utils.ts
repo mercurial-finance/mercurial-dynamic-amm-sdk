@@ -36,6 +36,7 @@ import {
   PERMISSIONLESS_AMP,
   STABLE_SWAP_DEFAULT_TRADE_FEE_BPS,
   CONSTANT_PRODUCT_DEFAULT_TRADE_FEE_BPS,
+  METAPLEX_PROGRAM,
 } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
@@ -561,6 +562,13 @@ export async function getTokensMintFromPoolAddress(
     tokenAMint: poolAccount.tokenAMint,
     tokenBMint: poolAccount.tokenBMint,
   };
+}
+
+export function deriveMintMetadata(lpMint: PublicKey) {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from('metadata'), METAPLEX_PROGRAM.toBuffer(), lpMint.toBuffer()],
+    METAPLEX_PROGRAM,
+  );
 }
 
 export function derivePoolAddress(
