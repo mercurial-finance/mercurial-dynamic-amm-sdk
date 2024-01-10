@@ -1,59 +1,79 @@
 {
   "version": "0.4.12",
   "name": "amm",
-  "docs": ["Program for AMM"],
+  "docs": [
+    "Program for AMM"
+  ],
   "instructions": [
     {
       "name": "initializePermissionedPool",
-      "docs": ["Initialize a new permissioned pool."],
+      "docs": [
+        "Initialize a new permissioned pool."
+      ],
       "accounts": [
         {
           "name": "pool",
           "isMut": true,
           "isSigner": true,
-          "docs": ["Pool account (arbitrary address)"]
+          "docs": [
+            "Pool account (arbitrary address)"
+          ]
         },
         {
           "name": "lpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of the pool"]
+          "docs": [
+            "LP token mint of the pool"
+          ]
         },
         {
           "name": "tokenAMint",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token A mint of the pool. Eg: USDT"]
+          "docs": [
+            "Token A mint of the pool. Eg: USDT"
+          ]
         },
         {
           "name": "tokenBMint",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token B mint of the pool. Eg: USDC"]
+          "docs": [
+            "Token B mint of the pool. Eg: USDC"
+          ]
         },
         {
           "name": "aVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "bVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "aVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault A"]
+          "docs": [
+            "LP token mint of vault A"
+          ]
         },
         {
           "name": "bVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault B"]
+          "docs": [
+            "LP token mint of vault B"
+          ]
         },
         {
           "name": "aVaultLp",
@@ -67,19 +87,25 @@
           "name": "bVaultLp",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault."]
+          "docs": [
+            "LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault."
+          ]
         },
         {
           "name": "adminTokenA",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Admin token account for pool token A mint. Used to bootstrap the pool with initial liquidity."]
+          "docs": [
+            "Admin token account for pool token A mint. Used to bootstrap the pool with initial liquidity."
+          ]
         },
         {
           "name": "adminTokenB",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity."]
+          "docs": [
+            "Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity."
+          ]
         },
         {
           "name": "adminPoolLp",
@@ -94,13 +120,17 @@
           "name": "adminTokenAFee",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Admin fee token account for token A. Used to receive trading fee."]
+          "docs": [
+            "Admin fee token account for token A. Used to receive trading fee."
+          ]
         },
         {
           "name": "adminTokenBFee",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Admin fee token account for token B. Used to receive trading fee."]
+          "docs": [
+            "Admin fee token account for token B. Used to receive trading fee."
+          ]
         },
         {
           "name": "admin",
@@ -119,31 +149,51 @@
           "name": "rent",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Rent account."]
+          "docs": [
+            "Rent account."
+          ]
+        },
+        {
+          "name": "mintMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "metadataProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "vaultProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Vault program. The pool will deposit/withdraw liquidity from the vault."]
+          "docs": [
+            "Vault program. The pool will deposit/withdraw liquidity from the vault."
+          ]
         },
         {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token program."]
+          "docs": [
+            "Token program."
+          ]
         },
         {
           "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Associated token program."]
+          "docs": [
+            "Associated token program."
+          ]
         },
         {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["System program."]
+          "docs": [
+            "System program."
+          ]
         }
       ],
       "args": [
@@ -157,67 +207,89 @@
     },
     {
       "name": "initializePermissionlessPool",
-      "docs": ["Initialize a new permissionless pool."],
+      "docs": [
+        "Initialize a new permissionless pool."
+      ],
       "accounts": [
         {
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account (PDA address)"]
+          "docs": [
+            "Pool account (PDA address)"
+          ]
         },
         {
           "name": "lpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of the pool"]
+          "docs": [
+            "LP token mint of the pool"
+          ]
         },
         {
           "name": "tokenAMint",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token A mint of the pool. Eg: USDT"]
+          "docs": [
+            "Token A mint of the pool. Eg: USDT"
+          ]
         },
         {
           "name": "tokenBMint",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token B mint of the pool. Eg: USDC"]
+          "docs": [
+            "Token B mint of the pool. Eg: USDC"
+          ]
         },
         {
           "name": "aVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "bVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "aTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault A"]
+          "docs": [
+            "Token vault account of vault A"
+          ]
         },
         {
           "name": "bTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault B"]
+          "docs": [
+            "Token vault account of vault B"
+          ]
         },
         {
           "name": "aVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault A"]
+          "docs": [
+            "LP token mint of vault A"
+          ]
         },
         {
           "name": "bVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault B"]
+          "docs": [
+            "LP token mint of vault B"
+          ]
         },
         {
           "name": "aVaultLp",
@@ -231,19 +303,25 @@
           "name": "bVaultLp",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault."]
+          "docs": [
+            "LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault."
+          ]
         },
         {
           "name": "payerTokenA",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Payer token account for pool token A mint. Used to bootstrap the pool with initial liquidity."]
+          "docs": [
+            "Payer token account for pool token A mint. Used to bootstrap the pool with initial liquidity."
+          ]
         },
         {
           "name": "payerTokenB",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity."]
+          "docs": [
+            "Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity."
+          ]
         },
         {
           "name": "payerPoolLp",
@@ -254,13 +332,17 @@
           "name": "adminTokenAFee",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Admin fee token account for token A. Used to receive trading fee."]
+          "docs": [
+            "Admin fee token account for token A. Used to receive trading fee."
+          ]
         },
         {
           "name": "adminTokenBFee",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Admin fee token account for token B. Used to receive trading fee."]
+          "docs": [
+            "Admin fee token account for token B. Used to receive trading fee."
+          ]
         },
         {
           "name": "payer",
@@ -279,31 +361,51 @@
           "name": "rent",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Rent account."]
+          "docs": [
+            "Rent account."
+          ]
+        },
+        {
+          "name": "mintMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "metadataProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "vaultProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Vault program. The pool will deposit/withdraw liquidity from the vault."]
+          "docs": [
+            "Vault program. The pool will deposit/withdraw liquidity from the vault."
+          ]
         },
         {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token program."]
+          "docs": [
+            "Token program."
+          ]
         },
         {
           "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Associated token program."]
+          "docs": [
+            "Associated token program."
+          ]
         },
         {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["System program."]
+          "docs": [
+            "System program."
+          ]
         }
       ],
       "args": [
@@ -325,67 +427,89 @@
     },
     {
       "name": "initializePermissionlessPoolWithFeeTier",
-      "docs": ["Initialize a new permissionless pool with customized fee tier"],
+      "docs": [
+        "Initialize a new permissionless pool with customized fee tier"
+      ],
       "accounts": [
         {
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account (PDA address)"]
+          "docs": [
+            "Pool account (PDA address)"
+          ]
         },
         {
           "name": "lpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of the pool"]
+          "docs": [
+            "LP token mint of the pool"
+          ]
         },
         {
           "name": "tokenAMint",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token A mint of the pool. Eg: USDT"]
+          "docs": [
+            "Token A mint of the pool. Eg: USDT"
+          ]
         },
         {
           "name": "tokenBMint",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token B mint of the pool. Eg: USDC"]
+          "docs": [
+            "Token B mint of the pool. Eg: USDC"
+          ]
         },
         {
           "name": "aVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "bVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "aTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault A"]
+          "docs": [
+            "Token vault account of vault A"
+          ]
         },
         {
           "name": "bTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault B"]
+          "docs": [
+            "Token vault account of vault B"
+          ]
         },
         {
           "name": "aVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault A"]
+          "docs": [
+            "LP token mint of vault A"
+          ]
         },
         {
           "name": "bVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault B"]
+          "docs": [
+            "LP token mint of vault B"
+          ]
         },
         {
           "name": "aVaultLp",
@@ -399,19 +523,25 @@
           "name": "bVaultLp",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault."]
+          "docs": [
+            "LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault."
+          ]
         },
         {
           "name": "payerTokenA",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Payer token account for pool token A mint. Used to bootstrap the pool with initial liquidity."]
+          "docs": [
+            "Payer token account for pool token A mint. Used to bootstrap the pool with initial liquidity."
+          ]
         },
         {
           "name": "payerTokenB",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity."]
+          "docs": [
+            "Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity."
+          ]
         },
         {
           "name": "payerPoolLp",
@@ -422,13 +552,17 @@
           "name": "adminTokenAFee",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Admin fee token account for token A. Used to receive trading fee."]
+          "docs": [
+            "Admin fee token account for token A. Used to receive trading fee."
+          ]
         },
         {
           "name": "adminTokenBFee",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Admin fee token account for token B. Used to receive trading fee."]
+          "docs": [
+            "Admin fee token account for token B. Used to receive trading fee."
+          ]
         },
         {
           "name": "payer",
@@ -447,31 +581,51 @@
           "name": "rent",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Rent account."]
+          "docs": [
+            "Rent account."
+          ]
+        },
+        {
+          "name": "mintMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "metadataProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "vaultProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Vault program. The pool will deposit/withdraw liquidity from the vault."]
+          "docs": [
+            "Vault program. The pool will deposit/withdraw liquidity from the vault."
+          ]
         },
         {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token program."]
+          "docs": [
+            "Token program."
+          ]
         },
         {
           "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Associated token program."]
+          "docs": [
+            "Associated token program."
+          ]
         },
         {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["System program."]
+          "docs": [
+            "System program."
+          ]
         }
       ],
       "args": [
@@ -497,19 +651,25 @@
     },
     {
       "name": "enableOrDisablePool",
-      "docs": ["Enable or disable a pool. A disabled pool allow only remove balanced liquidity operation."],
+      "docs": [
+        "Enable or disable a pool. A disabled pool allow only remove balanced liquidity operation."
+      ],
       "accounts": [
         {
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account (PDA)"]
+          "docs": [
+            "Pool account (PDA)"
+          ]
         },
         {
           "name": "admin",
           "isMut": false,
           "isSigner": true,
-          "docs": ["Admin account. Must be owner of the pool."]
+          "docs": [
+            "Admin account. Must be owner of the pool."
+          ]
         }
       ],
       "args": [
@@ -529,7 +689,9 @@
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account (PDA)"]
+          "docs": [
+            "Pool account (PDA)"
+          ]
         },
         {
           "name": "userSourceToken",
@@ -543,43 +705,57 @@
           "name": "userDestinationToken",
           "isMut": true,
           "isSigner": false,
-          "docs": ["User token account. The exchanged token will be transfer into this account from the pool."]
+          "docs": [
+            "User token account. The exchanged token will be transfer into this account from the pool."
+          ]
         },
         {
           "name": "aVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token a. token a of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token a. token a of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "bVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token b. token b of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token b. token b of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "aTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault A"]
+          "docs": [
+            "Token vault account of vault A"
+          ]
         },
         {
           "name": "bTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault B"]
+          "docs": [
+            "Token vault account of vault B"
+          ]
         },
         {
           "name": "aVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Lp token mint of vault a"]
+          "docs": [
+            "Lp token mint of vault a"
+          ]
         },
         {
           "name": "bVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Lp token mint of vault b"]
+          "docs": [
+            "Lp token mint of vault b"
+          ]
         },
         {
           "name": "aVaultLp",
@@ -609,19 +785,25 @@
           "name": "user",
           "isMut": false,
           "isSigner": true,
-          "docs": ["User account. Must be owner of user_source_token."]
+          "docs": [
+            "User account. Must be owner of user_source_token."
+          ]
         },
         {
           "name": "vaultProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Vault program. the pool will deposit/withdraw liquidity from the vault."]
+          "docs": [
+            "Vault program. the pool will deposit/withdraw liquidity from the vault."
+          ]
         },
         {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token program."]
+          "docs": [
+            "Token program."
+          ]
         }
       ],
       "args": [
@@ -637,25 +819,33 @@
     },
     {
       "name": "removeLiquiditySingleSide",
-      "docs": ["Withdraw only single token from the pool. Only supported by pool with stable swap curve."],
+      "docs": [
+        "Withdraw only single token from the pool. Only supported by pool with stable swap curve."
+      ],
       "accounts": [
         {
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account (PDA)"]
+          "docs": [
+            "Pool account (PDA)"
+          ]
         },
         {
           "name": "lpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of the pool"]
+          "docs": [
+            "LP token mint of the pool"
+          ]
         },
         {
           "name": "userPoolLp",
           "isMut": true,
           "isSigner": false,
-          "docs": ["User pool lp token account. LP will be burned from this account upon success liquidity removal."]
+          "docs": [
+            "User pool lp token account. LP will be burned from this account upon success liquidity removal."
+          ]
         },
         {
           "name": "aVaultLp",
@@ -677,61 +867,81 @@
           "name": "aVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "bVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "aVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault A"]
+          "docs": [
+            "LP token mint of vault A"
+          ]
         },
         {
           "name": "bVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault B"]
+          "docs": [
+            "LP token mint of vault B"
+          ]
         },
         {
           "name": "aTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault A"]
+          "docs": [
+            "Token vault account of vault A"
+          ]
         },
         {
           "name": "bTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault B"]
+          "docs": [
+            "Token vault account of vault B"
+          ]
         },
         {
           "name": "userDestinationToken",
           "isMut": true,
           "isSigner": false,
-          "docs": ["User token account to receive token upon success liquidity removal."]
+          "docs": [
+            "User token account to receive token upon success liquidity removal."
+          ]
         },
         {
           "name": "user",
           "isMut": false,
           "isSigner": true,
-          "docs": ["User account. Must be owner of the user_pool_lp account."]
+          "docs": [
+            "User account. Must be owner of the user_pool_lp account."
+          ]
         },
         {
           "name": "vaultProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Vault program. The pool will deposit/withdraw liquidity from the vault."]
+          "docs": [
+            "Vault program. The pool will deposit/withdraw liquidity from the vault."
+          ]
         },
         {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token program."]
+          "docs": [
+            "Token program."
+          ]
         }
       ],
       "args": [
@@ -747,25 +957,33 @@
     },
     {
       "name": "addImbalanceLiquidity",
-      "docs": ["Deposit tokens to the pool in an imbalance ratio. Only supported by pool with stable swap curve."],
+      "docs": [
+        "Deposit tokens to the pool in an imbalance ratio. Only supported by pool with stable swap curve."
+      ],
       "accounts": [
         {
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account (PDA)"]
+          "docs": [
+            "Pool account (PDA)"
+          ]
         },
         {
           "name": "lpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of the pool"]
+          "docs": [
+            "LP token mint of the pool"
+          ]
         },
         {
           "name": "userPoolLp",
           "isMut": true,
           "isSigner": false,
-          "docs": ["user pool lp token account. lp will be burned from this account upon success liquidity removal."]
+          "docs": [
+            "user pool lp token account. lp will be burned from this account upon success liquidity removal."
+          ]
         },
         {
           "name": "aVaultLp",
@@ -787,37 +1005,49 @@
           "name": "aVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token a. token a of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token a. token a of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "bVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token b. token b of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token b. token b of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "aVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault a"]
+          "docs": [
+            "LP token mint of vault a"
+          ]
         },
         {
           "name": "bVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault b"]
+          "docs": [
+            "LP token mint of vault b"
+          ]
         },
         {
           "name": "aTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault A"]
+          "docs": [
+            "Token vault account of vault A"
+          ]
         },
         {
           "name": "bTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault B"]
+          "docs": [
+            "Token vault account of vault B"
+          ]
         },
         {
           "name": "userAToken",
@@ -839,19 +1069,25 @@
           "name": "user",
           "isMut": false,
           "isSigner": true,
-          "docs": ["User account. Must be owner of user_a_token, and user_b_token."]
+          "docs": [
+            "User account. Must be owner of user_a_token, and user_b_token."
+          ]
         },
         {
           "name": "vaultProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Vault program. the pool will deposit/withdraw liquidity from the vault."]
+          "docs": [
+            "Vault program. the pool will deposit/withdraw liquidity from the vault."
+          ]
         },
         {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token program."]
+          "docs": [
+            "Token program."
+          ]
         }
       ],
       "args": [
@@ -879,19 +1115,25 @@
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account (PDA)"]
+          "docs": [
+            "Pool account (PDA)"
+          ]
         },
         {
           "name": "lpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of the pool"]
+          "docs": [
+            "LP token mint of the pool"
+          ]
         },
         {
           "name": "userPoolLp",
           "isMut": true,
           "isSigner": false,
-          "docs": ["user pool lp token account. lp will be burned from this account upon success liquidity removal."]
+          "docs": [
+            "user pool lp token account. lp will be burned from this account upon success liquidity removal."
+          ]
         },
         {
           "name": "aVaultLp",
@@ -913,37 +1155,49 @@
           "name": "aVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token a. token a of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token a. token a of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "bVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token b. token b of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token b. token b of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "aVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault a"]
+          "docs": [
+            "LP token mint of vault a"
+          ]
         },
         {
           "name": "bVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault b"]
+          "docs": [
+            "LP token mint of vault b"
+          ]
         },
         {
           "name": "aTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault A"]
+          "docs": [
+            "Token vault account of vault A"
+          ]
         },
         {
           "name": "bTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault B"]
+          "docs": [
+            "Token vault account of vault B"
+          ]
         },
         {
           "name": "userAToken",
@@ -965,19 +1219,25 @@
           "name": "user",
           "isMut": false,
           "isSigner": true,
-          "docs": ["User account. Must be owner of user_a_token, and user_b_token."]
+          "docs": [
+            "User account. Must be owner of user_a_token, and user_b_token."
+          ]
         },
         {
           "name": "vaultProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Vault program. the pool will deposit/withdraw liquidity from the vault."]
+          "docs": [
+            "Vault program. the pool will deposit/withdraw liquidity from the vault."
+          ]
         },
         {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token program."]
+          "docs": [
+            "Token program."
+          ]
         }
       ],
       "args": [
@@ -997,25 +1257,33 @@
     },
     {
       "name": "addBalanceLiquidity",
-      "docs": ["Deposit tokens to the pool in a balanced ratio."],
+      "docs": [
+        "Deposit tokens to the pool in a balanced ratio."
+      ],
       "accounts": [
         {
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account (PDA)"]
+          "docs": [
+            "Pool account (PDA)"
+          ]
         },
         {
           "name": "lpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of the pool"]
+          "docs": [
+            "LP token mint of the pool"
+          ]
         },
         {
           "name": "userPoolLp",
           "isMut": true,
           "isSigner": false,
-          "docs": ["user pool lp token account. lp will be burned from this account upon success liquidity removal."]
+          "docs": [
+            "user pool lp token account. lp will be burned from this account upon success liquidity removal."
+          ]
         },
         {
           "name": "aVaultLp",
@@ -1037,37 +1305,49 @@
           "name": "aVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token a. token a of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token a. token a of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "bVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token b. token b of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token b. token b of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "aVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault a"]
+          "docs": [
+            "LP token mint of vault a"
+          ]
         },
         {
           "name": "bVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault b"]
+          "docs": [
+            "LP token mint of vault b"
+          ]
         },
         {
           "name": "aTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault A"]
+          "docs": [
+            "Token vault account of vault A"
+          ]
         },
         {
           "name": "bTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault B"]
+          "docs": [
+            "Token vault account of vault B"
+          ]
         },
         {
           "name": "userAToken",
@@ -1089,19 +1369,25 @@
           "name": "user",
           "isMut": false,
           "isSigner": true,
-          "docs": ["User account. Must be owner of user_a_token, and user_b_token."]
+          "docs": [
+            "User account. Must be owner of user_a_token, and user_b_token."
+          ]
         },
         {
           "name": "vaultProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Vault program. the pool will deposit/withdraw liquidity from the vault."]
+          "docs": [
+            "Vault program. the pool will deposit/withdraw liquidity from the vault."
+          ]
         },
         {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token program."]
+          "docs": [
+            "Token program."
+          ]
         }
       ],
       "args": [
@@ -1121,19 +1407,25 @@
     },
     {
       "name": "setPoolFees",
-      "docs": ["Update trading fee charged for liquidity provider, and admin."],
+      "docs": [
+        "Update trading fee charged for liquidity provider, and admin."
+      ],
       "accounts": [
         {
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account (PDA)"]
+          "docs": [
+            "Pool account (PDA)"
+          ]
         },
         {
           "name": "admin",
           "isMut": false,
           "isSigner": true,
-          "docs": ["Admin account. Must be owner of the pool."]
+          "docs": [
+            "Admin account. Must be owner of the pool."
+          ]
         }
       ],
       "args": [
@@ -1156,13 +1448,17 @@
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account (PDA)"]
+          "docs": [
+            "Pool account (PDA)"
+          ]
         },
         {
           "name": "admin",
           "isMut": false,
           "isSigner": true,
-          "docs": ["Admin account. Must be owner of the pool."]
+          "docs": [
+            "Admin account. Must be owner of the pool."
+          ]
         }
       ],
       "args": [
@@ -1176,44 +1472,58 @@
     },
     {
       "name": "transferAdmin",
-      "docs": ["Transfer the admin of the pool to new admin."],
+      "docs": [
+        "Transfer the admin of the pool to new admin."
+      ],
       "accounts": [
         {
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account (PDA)"]
+          "docs": [
+            "Pool account (PDA)"
+          ]
         },
         {
           "name": "admin",
           "isMut": false,
           "isSigner": true,
-          "docs": ["Admin account. Must be owner of the pool."]
+          "docs": [
+            "Admin account. Must be owner of the pool."
+          ]
         },
         {
           "name": "newAdmin",
           "isMut": false,
           "isSigner": true,
-          "docs": ["New admin account."]
+          "docs": [
+            "New admin account."
+          ]
         }
       ],
       "args": []
     },
     {
       "name": "getPoolInfo",
-      "docs": ["Get the general information of the pool."],
+      "docs": [
+        "Get the general information of the pool."
+      ],
       "accounts": [
         {
           "name": "pool",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Pool account (PDA)"]
+          "docs": [
+            "Pool account (PDA)"
+          ]
         },
         {
           "name": "lpMint",
           "isMut": false,
           "isSigner": false,
-          "docs": ["LP token mint of the pool"]
+          "docs": [
+            "LP token mint of the pool"
+          ]
         },
         {
           "name": "aVaultLp",
@@ -1235,50 +1545,66 @@
           "name": "aVault",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Vault account for token a. token a of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token a. token a of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "bVault",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Vault account for token b. token b of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token b. token b of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "aVaultLpMint",
           "isMut": false,
           "isSigner": false,
-          "docs": ["LP token mint of vault a"]
+          "docs": [
+            "LP token mint of vault a"
+          ]
         },
         {
           "name": "bVaultLpMint",
           "isMut": false,
           "isSigner": false,
-          "docs": ["LP token mint of vault b"]
+          "docs": [
+            "LP token mint of vault b"
+          ]
         }
       ],
       "args": []
     },
     {
       "name": "bootstrapLiquidity",
-      "docs": ["Bootstrap the pool when liquidity is depleted."],
+      "docs": [
+        "Bootstrap the pool when liquidity is depleted."
+      ],
       "accounts": [
         {
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account (PDA)"]
+          "docs": [
+            "Pool account (PDA)"
+          ]
         },
         {
           "name": "lpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of the pool"]
+          "docs": [
+            "LP token mint of the pool"
+          ]
         },
         {
           "name": "userPoolLp",
           "isMut": true,
           "isSigner": false,
-          "docs": ["user pool lp token account. lp will be burned from this account upon success liquidity removal."]
+          "docs": [
+            "user pool lp token account. lp will be burned from this account upon success liquidity removal."
+          ]
         },
         {
           "name": "aVaultLp",
@@ -1300,37 +1626,49 @@
           "name": "aVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token a. token a of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token a. token a of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "bVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Vault account for token b. token b of the pool will be deposit / withdraw from this vault account."]
+          "docs": [
+            "Vault account for token b. token b of the pool will be deposit / withdraw from this vault account."
+          ]
         },
         {
           "name": "aVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault a"]
+          "docs": [
+            "LP token mint of vault a"
+          ]
         },
         {
           "name": "bVaultLpMint",
           "isMut": true,
           "isSigner": false,
-          "docs": ["LP token mint of vault b"]
+          "docs": [
+            "LP token mint of vault b"
+          ]
         },
         {
           "name": "aTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault A"]
+          "docs": [
+            "Token vault account of vault A"
+          ]
         },
         {
           "name": "bTokenVault",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token vault account of vault B"]
+          "docs": [
+            "Token vault account of vault B"
+          ]
         },
         {
           "name": "userAToken",
@@ -1352,19 +1690,25 @@
           "name": "user",
           "isMut": false,
           "isSigner": true,
-          "docs": ["User account. Must be owner of user_a_token, and user_b_token."]
+          "docs": [
+            "User account. Must be owner of user_a_token, and user_b_token."
+          ]
         },
         {
           "name": "vaultProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Vault program. the pool will deposit/withdraw liquidity from the vault."]
+          "docs": [
+            "Vault program. the pool will deposit/withdraw liquidity from the vault."
+          ]
         },
         {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token program."]
+          "docs": [
+            "Token program."
+          ]
         }
       ],
       "args": [
@@ -1380,91 +1724,180 @@
     },
     {
       "name": "migrateFeeAccount",
-      "docs": ["Migrate old token fee owner to PDA"],
+      "docs": [
+        "Migrate old token fee owner to PDA"
+      ],
       "accounts": [
         {
           "name": "pool",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Pool account"]
+          "docs": [
+            "Pool account"
+          ]
         },
         {
           "name": "aVaultLp",
           "isMut": false,
           "isSigner": false,
-          "docs": ["A vault LP token account of the pool."]
+          "docs": [
+            "A vault LP token account of the pool."
+          ]
         },
         {
           "name": "adminTokenAFee",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Admin fee token account for token A. Used to receive trading fee."]
+          "docs": [
+            "Admin fee token account for token A. Used to receive trading fee."
+          ]
         },
         {
           "name": "adminTokenBFee",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Admin fee token account for token B. Used to receive trading fee."]
+          "docs": [
+            "Admin fee token account for token B. Used to receive trading fee."
+          ]
         },
         {
           "name": "tokenAMint",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token A mint"]
+          "docs": [
+            "Token A mint"
+          ]
         },
         {
           "name": "tokenBMint",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token B mint"]
+          "docs": [
+            "Token B mint"
+          ]
         },
         {
           "name": "newAdminTokenAFee",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token fee account. Controlled by pool a_vault_lp PDA."]
+          "docs": [
+            "Token fee account. Controlled by pool a_vault_lp PDA."
+          ]
         },
         {
           "name": "newAdminTokenBFee",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Token fee account. Controlled by pool a_vault_lp PDA."]
+          "docs": [
+            "Token fee account. Controlled by pool a_vault_lp PDA."
+          ]
         },
         {
           "name": "admin",
           "isMut": true,
           "isSigner": true,
-          "docs": ["Admin account. Must be owner of the pool."]
+          "docs": [
+            "Admin account. Must be owner of the pool."
+          ]
         },
         {
           "name": "treasuryTokenAFee",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Treasury token a fee ATA."]
+          "docs": [
+            "Treasury token a fee ATA."
+          ]
         },
         {
           "name": "treasuryTokenBFee",
           "isMut": true,
           "isSigner": false,
-          "docs": ["Treasury token b fee ATA."]
+          "docs": [
+            "Treasury token b fee ATA."
+          ]
         },
         {
           "name": "treasury",
           "isMut": false,
           "isSigner": true,
-          "docs": ["Treasury signer"]
+          "docs": [
+            "Treasury signer"
+          ]
         },
         {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["Token program."]
+          "docs": [
+            "Token program."
+          ]
         },
         {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["System program."]
+          "docs": [
+            "System program."
+          ]
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "createMintMetadata",
+      "docs": [
+        "Create mint metadata account for old pools"
+      ],
+      "accounts": [
+        {
+          "name": "pool",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Pool account"
+          ]
+        },
+        {
+          "name": "lpMint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "LP mint account of the pool"
+          ]
+        },
+        {
+          "name": "aVaultLp",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Vault A LP account of the pool"
+          ]
+        },
+        {
+          "name": "mintMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "metadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program."
+          ]
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Payer"
+          ]
         }
       ],
       "args": []
@@ -1473,23 +1906,31 @@
   "accounts": [
     {
       "name": "Pool",
-      "docs": ["State of pool account"],
+      "docs": [
+        "State of pool account"
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "lpMint",
-            "docs": ["LP token mint of the pool"],
+            "docs": [
+              "LP token mint of the pool"
+            ],
             "type": "publicKey"
           },
           {
             "name": "tokenAMint",
-            "docs": ["Token A mint of the pool. Eg: USDT"],
+            "docs": [
+              "Token A mint of the pool. Eg: USDT"
+            ],
             "type": "publicKey"
           },
           {
             "name": "tokenBMint",
-            "docs": ["Token B mint of the pool. Eg: USDC"],
+            "docs": [
+              "Token B mint of the pool. Eg: USDC"
+            ],
             "type": "publicKey"
           },
           {
@@ -1522,58 +1963,78 @@
           },
           {
             "name": "aVaultLpBump",
-            "docs": ["\"A\" vault lp bump. Used to create signer seeds."],
+            "docs": [
+              "\"A\" vault lp bump. Used to create signer seeds."
+            ],
             "type": "u8"
           },
           {
             "name": "enabled",
-            "docs": ["Flag to determine whether the pool is enabled, or disabled."],
+            "docs": [
+              "Flag to determine whether the pool is enabled, or disabled."
+            ],
             "type": "bool"
           },
           {
             "name": "adminTokenAFee",
-            "docs": ["Admin fee token account for token A. Used to receive trading fee."],
+            "docs": [
+              "Admin fee token account for token A. Used to receive trading fee."
+            ],
             "type": "publicKey"
           },
           {
             "name": "adminTokenBFee",
-            "docs": ["Admin fee token account for token B. Used to receive trading fee."],
+            "docs": [
+              "Admin fee token account for token B. Used to receive trading fee."
+            ],
             "type": "publicKey"
           },
           {
             "name": "admin",
-            "docs": ["Owner of the pool."],
+            "docs": [
+              "Owner of the pool."
+            ],
             "type": "publicKey"
           },
           {
             "name": "fees",
-            "docs": ["Store the fee charges setting."],
+            "docs": [
+              "Store the fee charges setting."
+            ],
             "type": {
               "defined": "PoolFees"
             }
           },
           {
             "name": "poolType",
-            "docs": ["Pool type"],
+            "docs": [
+              "Pool type"
+            ],
             "type": {
               "defined": "PoolType"
             }
           },
           {
             "name": "stake",
-            "docs": ["Stake pubkey of SPL stake pool"],
+            "docs": [
+              "Stake pubkey of SPL stake pool"
+            ],
             "type": "publicKey"
           },
           {
             "name": "padding",
-            "docs": ["Padding for future pool field"],
+            "docs": [
+              "Padding for future pool field"
+            ],
             "type": {
               "defined": "Padding"
             }
           },
           {
             "name": "curveType",
-            "docs": ["The type of the swap curve supported by the pool."],
+            "docs": [
+              "The type of the swap curve supported by the pool."
+            ],
             "type": {
               "defined": "CurveType"
             }
@@ -1593,12 +2054,16 @@
         "fields": [
           {
             "name": "tokenAMultiplier",
-            "docs": ["Multiplier for token A of the pool."],
+            "docs": [
+              "Multiplier for token A of the pool."
+            ],
             "type": "u64"
           },
           {
             "name": "tokenBMultiplier",
-            "docs": ["Multiplier for token B of the pool."],
+            "docs": [
+              "Multiplier for token B of the pool."
+            ],
             "type": "u64"
           },
           {
@@ -1613,7 +2078,9 @@
     },
     {
       "name": "PoolFees",
-      "docs": ["Information regarding fee charges"],
+      "docs": [
+        "Information regarding fee charges"
+      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -1628,7 +2095,9 @@
           },
           {
             "name": "tradeFeeDenominator",
-            "docs": ["Trade fee denominator"],
+            "docs": [
+              "Trade fee denominator"
+            ],
             "type": "u64"
           },
           {
@@ -1643,7 +2112,9 @@
           },
           {
             "name": "ownerTradeFeeDenominator",
-            "docs": ["Owner trade fee denominator"],
+            "docs": [
+              "Owner trade fee denominator"
+            ],
             "type": "u64"
           }
         ]
@@ -1651,23 +2122,31 @@
     },
     {
       "name": "Depeg",
-      "docs": ["Contains information for depeg pool"],
+      "docs": [
+        "Contains information for depeg pool"
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "baseVirtualPrice",
-            "docs": ["The virtual price of staking / interest bearing token"],
+            "docs": [
+              "The virtual price of staking / interest bearing token"
+            ],
             "type": "u64"
           },
           {
             "name": "baseCacheUpdated",
-            "docs": ["The virtual price of staking / interest bearing token"],
+            "docs": [
+              "The virtual price of staking / interest bearing token"
+            ],
             "type": "u64"
           },
           {
             "name": "depegType",
-            "docs": ["Type of the depeg pool"],
+            "docs": [
+              "Type of the depeg pool"
+            ],
             "type": {
               "defined": "DepegType"
             }
@@ -1677,22 +2156,34 @@
     },
     {
       "name": "Padding",
-      "docs": ["Padding for future pool fields"],
+      "docs": [
+        "Padding for future pool fields"
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "padding0",
-            "docs": ["Padding 0"],
+            "docs": [
+              "Padding 0"
+            ],
             "type": {
-              "array": ["u8", 15]
+              "array": [
+                "u8",
+                15
+              ]
             }
           },
           {
             "name": "padding",
-            "docs": ["Padding 1"],
+            "docs": [
+              "Padding 1"
+            ],
             "type": {
-              "array": ["u128", 29]
+              "array": [
+                "u128",
+                29
+              ]
             }
           }
         ]
@@ -1700,7 +2191,9 @@
     },
     {
       "name": "RoundDirection",
-      "docs": ["Rounding direction"],
+      "docs": [
+        "Rounding direction"
+      ],
       "type": {
         "kind": "enum",
         "variants": [
@@ -1715,7 +2208,9 @@
     },
     {
       "name": "TradeDirection",
-      "docs": ["Trade (swap) direction"],
+      "docs": [
+        "Trade (swap) direction"
+      ],
       "type": {
         "kind": "enum",
         "variants": [
@@ -1730,7 +2225,9 @@
     },
     {
       "name": "NewCurveType",
-      "docs": ["Type of the swap curve"],
+      "docs": [
+        "Type of the swap curve"
+      ],
       "type": {
         "kind": "enum",
         "variants": [
@@ -1742,7 +2239,9 @@
             "fields": [
               {
                 "name": "amp",
-                "docs": ["Amplification coefficient"],
+                "docs": [
+                  "Amplification coefficient"
+                ],
                 "type": "u64"
               },
               {
@@ -1790,7 +2289,9 @@
     },
     {
       "name": "CurveType",
-      "docs": ["Type of the swap curve"],
+      "docs": [
+        "Type of the swap curve"
+      ],
       "type": {
         "kind": "enum",
         "variants": [
@@ -1802,7 +2303,9 @@
             "fields": [
               {
                 "name": "amp",
-                "docs": ["Amplification coefficient"],
+                "docs": [
+                  "Amplification coefficient"
+                ],
                 "type": "u64"
               },
               {
@@ -1837,7 +2340,9 @@
     },
     {
       "name": "DepegType",
-      "docs": ["Type of depeg pool"],
+      "docs": [
+        "Type of depeg pool"
+      ],
       "type": {
         "kind": "enum",
         "variants": [
@@ -1858,7 +2363,9 @@
     },
     {
       "name": "PoolType",
-      "docs": ["Pool type"],
+      "docs": [
+        "Pool type"
+      ],
       "type": {
         "kind": "enum",
         "variants": [
@@ -1909,6 +2416,31 @@
         {
           "name": "tokenBOutAmount",
           "type": "u64",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "BootstrapLiquidity",
+      "fields": [
+        {
+          "name": "lpMintAmount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "tokenAAmount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "tokenBAmount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "pool",
+          "type": "publicKey",
           "index": false
         }
       ]
@@ -1965,6 +2497,11 @@
           "name": "ownerTradeFeeDenominator",
           "type": "u64",
           "index": false
+        },
+        {
+          "name": "pool",
+          "type": "publicKey",
+          "index": false
         }
       ]
     },
@@ -2003,6 +2540,11 @@
         },
         {
           "name": "newAdmin",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "pool",
           "type": "publicKey",
           "index": false
         }
@@ -2045,17 +2587,17 @@
           "name": "updatedTimestamp",
           "type": "u64",
           "index": false
+        },
+        {
+          "name": "pool",
+          "type": "publicKey",
+          "index": false
         }
       ]
     },
     {
       "name": "PoolCreated",
       "fields": [
-        {
-          "name": "pool",
-          "type": "publicKey",
-          "index": false
-        },
         {
           "name": "lpMint",
           "type": "publicKey",
@@ -2076,6 +2618,56 @@
           "type": {
             "defined": "PoolType"
           },
+          "index": false
+        },
+        {
+          "name": "pool",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "PoolEnabled",
+      "fields": [
+        {
+          "name": "pool",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "enabled",
+          "type": "bool",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "MigrateFeeAccount",
+      "fields": [
+        {
+          "name": "pool",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "newAdminTokenAFee",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "newAdminTokenBFee",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "tokenAAmount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "tokenBAmount",
+          "type": "u64",
           "index": false
         }
       ]
@@ -2292,8 +2884,5 @@
       "name": "AmountNotPeg",
       "msg": "Token amount is not 1:1"
     }
-  ],
-  "metadata": {
-    "address": "Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB"
-  }
+  ]
 }
