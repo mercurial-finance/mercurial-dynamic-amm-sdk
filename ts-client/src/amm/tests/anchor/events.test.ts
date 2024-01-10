@@ -1,6 +1,6 @@
 import { AnchorProvider, BN, getProvider, Program } from '@coral-xyz/anchor';
-import { airDropSol, createAndMintTo, DEVNET, getOrCreateATA, LOCALNET, mockWallet } from './utils';
-import { FEE_OWNER, VAULT_BASE_KEY } from '../constants';
+import { airDropSol, createAndMintTo, DEVNET, getOrCreateATA, LOCALNET, mockWallet } from '../utils';
+import { FEE_OWNER, VAULT_BASE_KEY } from '../../constants';
 import {
   Cluster,
   ComputeBudgetProgram,
@@ -11,18 +11,18 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
 } from '@solana/web3.js';
-import AmmImpl from '../index';
-import { AmmProgram, ConstantProductCurve, CurveType, VaultProgram } from '../types';
+import AmmImpl from '../../index';
+import { AmmProgram, ConstantProductCurve, CurveType, VaultProgram } from '../../types';
 import { IdlEvents } from '@coral-xyz/anchor';
-import { Amm } from '../idl';
-import { createProgramWithWallet, encodeCurveType, getFirstKey, getSecondKey, getTradeFeeBpsBuffer } from '../utils';
-import { USDC_TOKEN_DECIMAL, WSOL_TOKEN_DECIMAL } from './constants';
+import { Amm } from '../../idl';
+import { createProgramWithWallet, encodeCurveType, getFirstKey, getSecondKey, getTradeFeeBpsBuffer } from '../../utils';
+import { USDC_TOKEN_DECIMAL, WSOL_TOKEN_DECIMAL } from '../constants';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { expect } from 'chai';
-import { simulateInitializePermissionlessPoolWithFeeTier } from './utils/pool';
-import { setupVault, depositVault } from './utils/vault';
-import { createUsdcTokenInfo, createWethTokenInfo } from './utils/mock_token_info';
+import { simulateInitializePermissionlessPoolWithFeeTier } from '../utils/pool';
+import { setupVault, depositVault } from '../utils/vault';
+import { createUsdcTokenInfo, createWethTokenInfo } from '../utils/mock_token_info';
 
 describe('Events', () => {
   const provider = getProvider();

@@ -14,5 +14,5 @@ address = "Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB"
 program = "fixtures/amm.so"
 
 [scripts]
-#test = "yarn run ts-mocha -t 1000000 -p ./tsconfig.json src/amm/tests/events.test.ts"
-test = "yarn run ts-mocha -t 1000000 -p ./tsconfig.json src/amm/tests/pool.test.ts"
+#test = "yarn run ts-mocha -t 1000000 -p ./tsconfig.json src/amm/tests/anchor/events.test.ts"
+test = "yarn run ts-mocha -t 1000000 -p ./tsconfig.json src/amm/tests/anchor/pool.test.ts"

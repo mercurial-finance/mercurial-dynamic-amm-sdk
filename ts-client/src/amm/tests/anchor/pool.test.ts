@@ -1,16 +1,16 @@
 import { BN, getProvider } from '@coral-xyz/anchor';
 import { PublicKey, sendAndConfirmTransaction } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
-import AmmImpl from '../index';
-import { AmmProgram, CurveType, PoolState, VaultProgram } from '../types';
-import { airDropSol, createAndMintTo, mockWallet } from './utils';
-import { USDC_TOKEN_DECIMAL, WSOL_TOKEN_DECIMAL } from './constants';
-import { createProgramWithWallet } from '../utils';
-import { createUsdcTokenInfo, createWethTokenInfo } from './utils/mock_token_info';
-import { depositVault, setupVault } from './utils/vault';
-import { initializePermissionlessPoolWithFeeTier } from './utils/pool';
+import AmmImpl from '../../index';
+import { AmmProgram, CurveType, PoolState, VaultProgram } from '../../types';
+import { airDropSol, createAndMintTo, mockWallet } from '../utils';
+import { USDC_TOKEN_DECIMAL, WSOL_TOKEN_DECIMAL } from '../constants';
+import { createProgramWithWallet } from '../../utils';
+import { createUsdcTokenInfo, createWethTokenInfo } from '../utils/mock_token_info';
+import { depositVault, setupVault } from '../utils/vault';
+import { initializePermissionlessPoolWithFeeTier } from '../utils/pool';
 import { Token } from '@solana/spl-token';
-import { DEFAULT_SLIPPAGE } from '../constants';
+import { DEFAULT_SLIPPAGE } from '../../constants';
 
 describe('Pool', () => {
   const provider = getProvider();
