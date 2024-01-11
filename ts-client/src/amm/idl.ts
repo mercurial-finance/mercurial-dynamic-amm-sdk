@@ -1,5 +1,5 @@
 export type Amm = {
-  version: '0.4.8';
+  version: '0.4.12';
   name: 'amm';
   docs: ['Program for AMM'];
   instructions: [
@@ -42,18 +42,6 @@ export type Amm = {
           isMut: true;
           isSigner: false;
           docs: ['Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.'];
-        },
-        {
-          name: 'aTokenVault';
-          isMut: true;
-          isSigner: false;
-          docs: ['Token vault account of vault A'];
-        },
-        {
-          name: 'bTokenVault';
-          isMut: true;
-          isSigner: false;
-          docs: ['Token vault account of vault B'];
         },
         {
           name: 'aVaultLpMint';
@@ -134,6 +122,16 @@ export type Amm = {
           docs: ['Rent account.'];
         },
         {
+          name: 'mintMetadata';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'metadataProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
           name: 'vaultProgram';
           isMut: false;
           isSigner: false;
@@ -164,14 +162,6 @@ export type Amm = {
           type: {
             defined: 'CurveType';
           };
-        },
-        {
-          name: 'tokenAAmount';
-          type: 'u64';
-        },
-        {
-          name: 'tokenBAmount';
-          type: 'u64';
         },
       ];
     },
@@ -300,6 +290,16 @@ export type Amm = {
           isMut: false;
           isSigner: false;
           docs: ['Rent account.'];
+        },
+        {
+          name: 'mintMetadata';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'metadataProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
           name: 'vaultProgram';
@@ -468,6 +468,16 @@ export type Amm = {
           isMut: false;
           isSigner: false;
           docs: ['Rent account.'];
+        },
+        {
+          name: 'mintMetadata';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'metadataProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
           name: 'vaultProgram';
@@ -1220,37 +1230,6 @@ export type Amm = {
       args: [];
     },
     {
-      name: 'setAdminFeeAccount';
-      docs: ['Update fee token account of the pool admin.'];
-      accounts: [
-        {
-          name: 'pool';
-          isMut: true;
-          isSigner: false;
-          docs: ['Pool account (PDA)'];
-        },
-        {
-          name: 'newAdminTokenAFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['New admin fee token account for pool token A. Used to receive trading fee.'];
-        },
-        {
-          name: 'newAdminTokenBFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['New admin fee token account for pool token B. Used to receive trading fee.'];
-        },
-        {
-          name: 'admin';
-          isMut: false;
-          isSigner: true;
-          docs: ['Admin account. Must be owner of the pool.'];
-        },
-      ];
-      args: [];
-    },
-    {
       name: 'getPoolInfo';
       docs: ['Get the general information of the pool.'];
       accounts: [
@@ -1428,6 +1407,144 @@ export type Amm = {
           type: 'u64';
         },
       ];
+    },
+    {
+      name: 'migrateFeeAccount';
+      docs: ['Migrate old token fee owner to PDA'];
+      accounts: [
+        {
+          name: 'pool';
+          isMut: true;
+          isSigner: false;
+          docs: ['Pool account'];
+        },
+        {
+          name: 'aVaultLp';
+          isMut: false;
+          isSigner: false;
+          docs: ['A vault LP token account of the pool.'];
+        },
+        {
+          name: 'adminTokenAFee';
+          isMut: true;
+          isSigner: false;
+          docs: ['Admin fee token account for token A. Used to receive trading fee.'];
+        },
+        {
+          name: 'adminTokenBFee';
+          isMut: true;
+          isSigner: false;
+          docs: ['Admin fee token account for token B. Used to receive trading fee.'];
+        },
+        {
+          name: 'tokenAMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token A mint'];
+        },
+        {
+          name: 'tokenBMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token B mint'];
+        },
+        {
+          name: 'newAdminTokenAFee';
+          isMut: true;
+          isSigner: false;
+          docs: ['Token fee account. Controlled by pool a_vault_lp PDA.'];
+        },
+        {
+          name: 'newAdminTokenBFee';
+          isMut: true;
+          isSigner: false;
+          docs: ['Token fee account. Controlled by pool a_vault_lp PDA.'];
+        },
+        {
+          name: 'admin';
+          isMut: true;
+          isSigner: true;
+          docs: ['Admin account. Must be owner of the pool.'];
+        },
+        {
+          name: 'treasuryTokenAFee';
+          isMut: true;
+          isSigner: false;
+          docs: ['Treasury token a fee ATA.'];
+        },
+        {
+          name: 'treasuryTokenBFee';
+          isMut: true;
+          isSigner: false;
+          docs: ['Treasury token b fee ATA.'];
+        },
+        {
+          name: 'treasury';
+          isMut: false;
+          isSigner: true;
+          docs: ['Treasury signer'];
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token program.'];
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['System program.'];
+        },
+      ];
+      args: [];
+    },
+    {
+      name: 'createMintMetadata';
+      docs: ['Create mint metadata account for old pools'];
+      accounts: [
+        {
+          name: 'pool';
+          isMut: false;
+          isSigner: false;
+          docs: ['Pool account'];
+        },
+        {
+          name: 'lpMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['LP mint account of the pool'];
+        },
+        {
+          name: 'aVaultLp';
+          isMut: false;
+          isSigner: false;
+          docs: ['Vault A LP account of the pool'];
+        },
+        {
+          name: 'mintMetadata';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'metadataProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['System program.'];
+        },
+        {
+          name: 'payer';
+          isMut: true;
+          isSigner: true;
+          docs: ['Payer'];
+        },
+      ];
+      args: [];
     },
   ];
   accounts: [
@@ -2222,7 +2339,7 @@ export type Amm = {
 };
 
 export const IDL: Amm = {
-  version: '0.4.8',
+  version: '0.4.12',
   name: 'amm',
   docs: ['Program for AMM'],
   instructions: [
@@ -2265,18 +2382,6 @@ export const IDL: Amm = {
           isMut: true,
           isSigner: false,
           docs: ['Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.'],
-        },
-        {
-          name: 'aTokenVault',
-          isMut: true,
-          isSigner: false,
-          docs: ['Token vault account of vault A'],
-        },
-        {
-          name: 'bTokenVault',
-          isMut: true,
-          isSigner: false,
-          docs: ['Token vault account of vault B'],
         },
         {
           name: 'aVaultLpMint',
@@ -2357,6 +2462,16 @@ export const IDL: Amm = {
           docs: ['Rent account.'],
         },
         {
+          name: 'mintMetadata',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'metadataProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
           name: 'vaultProgram',
           isMut: false,
           isSigner: false,
@@ -2387,14 +2502,6 @@ export const IDL: Amm = {
           type: {
             defined: 'CurveType',
           },
-        },
-        {
-          name: 'tokenAAmount',
-          type: 'u64',
-        },
-        {
-          name: 'tokenBAmount',
-          type: 'u64',
         },
       ],
     },
@@ -2523,6 +2630,16 @@ export const IDL: Amm = {
           isMut: false,
           isSigner: false,
           docs: ['Rent account.'],
+        },
+        {
+          name: 'mintMetadata',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'metadataProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
           name: 'vaultProgram',
@@ -2691,6 +2808,16 @@ export const IDL: Amm = {
           isMut: false,
           isSigner: false,
           docs: ['Rent account.'],
+        },
+        {
+          name: 'mintMetadata',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'metadataProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
           name: 'vaultProgram',
@@ -3443,37 +3570,6 @@ export const IDL: Amm = {
       args: [],
     },
     {
-      name: 'setAdminFeeAccount',
-      docs: ['Update fee token account of the pool admin.'],
-      accounts: [
-        {
-          name: 'pool',
-          isMut: true,
-          isSigner: false,
-          docs: ['Pool account (PDA)'],
-        },
-        {
-          name: 'newAdminTokenAFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['New admin fee token account for pool token A. Used to receive trading fee.'],
-        },
-        {
-          name: 'newAdminTokenBFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['New admin fee token account for pool token B. Used to receive trading fee.'],
-        },
-        {
-          name: 'admin',
-          isMut: false,
-          isSigner: true,
-          docs: ['Admin account. Must be owner of the pool.'],
-        },
-      ],
-      args: [],
-    },
-    {
       name: 'getPoolInfo',
       docs: ['Get the general information of the pool.'],
       accounts: [
@@ -3651,6 +3747,144 @@ export const IDL: Amm = {
           type: 'u64',
         },
       ],
+    },
+    {
+      name: 'migrateFeeAccount',
+      docs: ['Migrate old token fee owner to PDA'],
+      accounts: [
+        {
+          name: 'pool',
+          isMut: true,
+          isSigner: false,
+          docs: ['Pool account'],
+        },
+        {
+          name: 'aVaultLp',
+          isMut: false,
+          isSigner: false,
+          docs: ['A vault LP token account of the pool.'],
+        },
+        {
+          name: 'adminTokenAFee',
+          isMut: true,
+          isSigner: false,
+          docs: ['Admin fee token account for token A. Used to receive trading fee.'],
+        },
+        {
+          name: 'adminTokenBFee',
+          isMut: true,
+          isSigner: false,
+          docs: ['Admin fee token account for token B. Used to receive trading fee.'],
+        },
+        {
+          name: 'tokenAMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token A mint'],
+        },
+        {
+          name: 'tokenBMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token B mint'],
+        },
+        {
+          name: 'newAdminTokenAFee',
+          isMut: true,
+          isSigner: false,
+          docs: ['Token fee account. Controlled by pool a_vault_lp PDA.'],
+        },
+        {
+          name: 'newAdminTokenBFee',
+          isMut: true,
+          isSigner: false,
+          docs: ['Token fee account. Controlled by pool a_vault_lp PDA.'],
+        },
+        {
+          name: 'admin',
+          isMut: true,
+          isSigner: true,
+          docs: ['Admin account. Must be owner of the pool.'],
+        },
+        {
+          name: 'treasuryTokenAFee',
+          isMut: true,
+          isSigner: false,
+          docs: ['Treasury token a fee ATA.'],
+        },
+        {
+          name: 'treasuryTokenBFee',
+          isMut: true,
+          isSigner: false,
+          docs: ['Treasury token b fee ATA.'],
+        },
+        {
+          name: 'treasury',
+          isMut: false,
+          isSigner: true,
+          docs: ['Treasury signer'],
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token program.'],
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['System program.'],
+        },
+      ],
+      args: [],
+    },
+    {
+      name: 'createMintMetadata',
+      docs: ['Create mint metadata account for old pools'],
+      accounts: [
+        {
+          name: 'pool',
+          isMut: false,
+          isSigner: false,
+          docs: ['Pool account'],
+        },
+        {
+          name: 'lpMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['LP mint account of the pool'],
+        },
+        {
+          name: 'aVaultLp',
+          isMut: false,
+          isSigner: false,
+          docs: ['Vault A LP account of the pool'],
+        },
+        {
+          name: 'mintMetadata',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'metadataProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['System program.'],
+        },
+        {
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
+          docs: ['Payer'],
+        },
+      ],
+      args: [],
     },
   ],
   accounts: [

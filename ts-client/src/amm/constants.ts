@@ -123,3 +123,5 @@ export const CONSTANT_PRODUCT_ALLOWED_TRADE_FEE_BPS = [25, 100, 400, 600];
 export const STABLE_SWAP_DEFAULT_TRADE_FEE_BPS = 1;
 
 export const STABLE_SWAP_ALLOWED_TRADE_FEE_BPS = [1, 4, 10, 100];
+
+export const METAPLEX_PROGRAM = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
