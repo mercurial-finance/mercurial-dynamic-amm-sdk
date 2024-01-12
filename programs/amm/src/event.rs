@@ -2,6 +2,7 @@
 use crate::curve::curve_type::CurveType;
 use crate::curve::fees::PoolFees;
 use anchor_lang::prelude::*;
+use crate::state::PoolType;
 
 /// Add liquidity event
 #[event]
