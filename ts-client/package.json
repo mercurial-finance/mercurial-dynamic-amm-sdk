@@ -9,6 +9,7 @@
     "test": "jest ./src/amm/tests/*.test.ts --runInBand --setupFiles dotenv/config",
     "test-snapshot": "jest ./src/amm/tests/snapshot.test.ts --runInBand",
     "anchor-test": "anchor test",
+    "generate": "pnpm anchor-client-gen ./src/amm/idl/amm.json ./src/amm/generated/",
     "fmt": "pnpm prettier --write src/'**/*'.{ts,json}"
   },
   "files": [
@@ -39,6 +40,7 @@
     "@types/invariant": "^2.2.35",
     "@types/jest": "^27.5.1",
     "@types/mocha": "^9.1.1",
+    "anchor-client-gen": "^0.28.1",
     "chai": "^4.3.6",
     "jest": "^28.1.0",
     "mocha": "^10.0.0",
