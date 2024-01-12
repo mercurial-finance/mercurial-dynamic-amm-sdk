@@ -57,7 +57,7 @@ export const MAINNET = {
 };
 
 export const DEVNET = {
-  connection: new Connection('https://api.devnet.solana.com/', {
+  connection: new Connection((process.env.DEVNET_RPC_ENDPOINT as string) || 'https://api.devnet.solana.com/', {
     commitment: 'confirmed',
   }),
   cluster: 'devnet',
