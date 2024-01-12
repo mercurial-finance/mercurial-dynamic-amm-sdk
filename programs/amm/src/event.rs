@@ -1,8 +1,6 @@
 //! Event module includes information about events of the program
-use crate::curve::curve_type::CurveType;
-use crate::curve::fees::PoolFees;
-use anchor_lang::prelude::*;
 use crate::state::PoolType;
+use anchor_lang::prelude::*;
 
 /// Add liquidity event
 #[event]
