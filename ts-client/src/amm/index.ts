@@ -12,7 +12,6 @@ import {
   SystemProgram,
   ComputeBudgetProgram,
 } from '@solana/web3.js';
-import { TokenInfo } from '@solana/spl-token-registry';
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -31,6 +30,7 @@ import {
   DepositQuote,
   PoolInformation,
   PoolState,
+  TokenInfo,
   VaultProgram,
   WithdrawQuote,
 } from './types';

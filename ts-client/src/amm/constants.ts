@@ -1,6 +1,6 @@
-import { ENV, TokenInfo } from '@solana/spl-token-registry';
 import { PublicKey } from '@solana/web3.js';
 import { BN } from 'bn.js';
+import { TokenInfo } from './types';
 
 export const ERROR = {
   POOL_NOT_LOAD: 'Pool not loaded',
@@ -12,7 +12,7 @@ export const PROGRAM_ID = 'Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB';
 
 export const DEVNET_COIN: Array<TokenInfo> = [
   {
-    chainId: ENV.Devnet,
+    chainId: 103,
     address: 'So11111111111111111111111111111111111111112',
     decimals: 9,
     name: 'Wrapped SOL',
@@ -27,7 +27,7 @@ export const DEVNET_COIN: Array<TokenInfo> = [
     },
   },
   {
-    chainId: ENV.Devnet,
+    chainId: 103,
     address: 'zVzi5VAf4qMEwzv7NXECVx5v2pQ7xnqVVjCXZwS9XzA',
     decimals: 6,
     name: 'USD Coin',
@@ -41,7 +41,7 @@ export const DEVNET_COIN: Array<TokenInfo> = [
     },
   },
   {
-    chainId: ENV.Devnet,
+    chainId: 103,
     address: '9NGDi2tZtNmCCp8SVLKNuGjuWAVwNF3Vap5tT8km5er9',
     decimals: 9,
     name: 'USDT',
@@ -56,7 +56,7 @@ export const DEVNET_COIN: Array<TokenInfo> = [
     },
   },
   {
-    chainId: ENV.Devnet,
+    chainId: 103,
     address: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',
     decimals: 9,
     symbol: 'mSOL',

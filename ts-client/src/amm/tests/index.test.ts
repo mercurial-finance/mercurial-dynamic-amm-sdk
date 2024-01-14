@@ -1,11 +1,11 @@
 import { AnchorProvider, BN } from '@project-serum/anchor';
-import { TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
 import { Cluster, Keypair, PublicKey } from '@solana/web3.js';
 import { DEFAULT_SLIPPAGE, DEVNET_COIN, DEVNET_POOL, MAINNET_POOL } from '../constants';
 import AmmImpl from '../index';
 import { calculateSwapQuote, getOnchainTime } from '../utils';
-import { DEVNET, MAINNET, airDropSol, getOrCreateATA, mockWallet } from './utils';
+import { DEVNET, MAINNET, airDropSol, getOrCreateATA, getValidatedTokens, mockWallet } from './utils';
 import { NATIVE_MINT } from '@solana/spl-token';
+import { TokenInfo } from '../types';
 
 describe('Interact with Devnet pool', () => {
   const provider = new AnchorProvider(DEVNET.connection, mockWallet, {
@@ -676,10 +676,9 @@ describe('Staging pool', () => {
   const jitoSolDepegPool = new PublicKey('HcHN59j1xArjLuqfCMJ96yJ2CKatxHMFABEZWvcfPrYZ');
 
   beforeAll(async () => {
-    const tokenMap = await new TokenListProvider().resolve().then((tokens) => {
-      return tokens.filterByClusterSlug('mainnet-beta').getList();
-    });
-    const SOL = tokenMap.find((token) => token.address === 'So11111111111111111111111111111111111111112');
+    const tokenList = await getValidatedTokens();
+
+    const SOL = tokenList.find((token) => token.address === 'So11111111111111111111111111111111111111112');
     const jitoSOL: TokenInfo = {
       chainId: SOL!.chainId,
       address: 'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn',
@@ -724,13 +723,12 @@ describe('Interact with Mainnet pool', () => {
   let depegPool: AmmImpl;
 
   beforeAll(async () => {
-    const tokenListContainer = await new TokenListProvider().resolve();
-    const tokenMap = tokenListContainer.filterByClusterSlug(MAINNET.cluster).getList();
+    const tokenList = await getValidatedTokens();
 
-    const USDT = tokenMap.find((token) => token.address === 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
-    const USDC = tokenMap.find((token) => token.address === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
-    const SOL = tokenMap.find((token) => token.address === 'So11111111111111111111111111111111111111112');
-    const STSOL = tokenMap.find((token) => token.address === '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj');
+    const USDT = tokenList.find((token) => token.address === 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
+    const USDC = tokenList.find((token) => token.address === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+    const SOL = tokenList.find((token) => token.address === 'So11111111111111111111111111111111111111112');
+    const STSOL = tokenList.find((token) => token.address === '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj');
 
     const pools = [
       { pool: MAINNET_POOL.USDC_SOL, tokenInfoA: USDC!, tokenInfoB: SOL! },

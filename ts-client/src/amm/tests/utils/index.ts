@@ -2,6 +2,7 @@ import { Wallet } from '@project-serum/anchor';
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 import { TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { TokenInfo } from '../../types';
 
 export const airDropSol = async (connection: Connection, publicKey: PublicKey, amount = 1) => {
   try {
@@ -39,4 +40,18 @@ export const DEVNET = {
     commitment: 'confirmed',
   }),
   cluster: 'devnet',
+};
+
+export async function getValidatedTokens(): Promise<TokenInfo[]> {
+  try {
+    const tokensList: TokenInfo[] = [];
+    const data = await fetch(`https://token.jup.ag/strict`)
+    const tokens = await data.json()
+    tokens.forEach((token: TokenInfo) => {
+      tokensList.push(token);
+    });
+    return tokensList;
+  } catch (error: any) {
+    throw new Error("Failed to fetch validated tokens");
+  }
 };
