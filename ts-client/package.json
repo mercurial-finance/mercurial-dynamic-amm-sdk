@@ -19,7 +19,7 @@
     "@saberhq/anchor-contrib": "1.13.32",
     "@saberhq/stableswap-sdk": "1.13.32",
     "@saberhq/token-utils": "1.13.32",
-    "@solana/spl-token": "^0.3.0",
+    "@solana/spl-token": "0.1.8",
     "@solana/buffer-layout": "^4.0.0",
     "@solana/spl-token-registry": "0.2.1105",
     "@solana/web3.js": "^1.42.0",
