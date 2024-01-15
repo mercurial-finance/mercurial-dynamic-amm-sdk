@@ -13,6 +13,10 @@ program = "fixtures/mercurial_vault.so"
 address = "Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB"
 program = "fixtures/amm.so"
 
+[[test.genesis]]
+address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+program = "fixtures/metaplex.so"
+
 [scripts]
 #test = "yarn run ts-mocha -t 1000000 -p ./tsconfig.json src/amm/tests/anchor/events.test.ts"
-test = "yarn run ts-mocha -t 1000000 -p ./tsconfig.json src/amm/tests/anchor/pool.test.ts"
+test = "pnpm ts-mocha -t 1000000 -p ./tsconfig.json --full-trace true src/amm/tests/anchor/*.test.ts "

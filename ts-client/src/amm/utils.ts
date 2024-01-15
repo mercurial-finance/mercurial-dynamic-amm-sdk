@@ -579,13 +579,6 @@ export function deriveMintMetadata(lpMint: PublicKey) {
   );
 }
 
-export const deriveMetadataPda = (mint: PublicKey) => {
-  return PublicKey.findProgramAddressSync(
-    [Buffer.from("metadata"), METAPLEX_PROGRAM.toBuffer(), mint.toBuffer()],
-    METAPLEX_PROGRAM
-  );
-};
-
 export function derivePoolAddress(
   connection: Connection,
   tokenInfoA: TokenInfo,

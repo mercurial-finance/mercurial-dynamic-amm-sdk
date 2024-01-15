@@ -9,7 +9,6 @@ import {
 import { AmmProgram, CurveType, PoolCreatedSimulation, VaultProgram } from '../../types';
 import { BN, Program } from '@project-serum/anchor';
 import {
-  deriveMetadataPda,
   deriveMintMetadata,
   encodeCurveType,
   getFirstKey,
@@ -147,7 +146,7 @@ export const initializePermissionlessPoolWithFeeTierInstruction = async (
     ammProgram,
   );
 
-  const [mintMetadata, _mintMetadataBump] = deriveMetadataPda(poolLpMint);
+  const [mintMetadata, _mintMetadataBump] = deriveMintMetadata(poolLpMint);
 
   let instruction = ammProgram.methods
     .initializePermissionlessPoolWithFeeTier(curve as any, tradeFeeBps, aDepositAmount, bDepositAmount)
