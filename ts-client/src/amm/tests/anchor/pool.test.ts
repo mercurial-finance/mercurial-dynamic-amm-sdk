@@ -1,4 +1,4 @@
-import { BN, getProvider } from '@coral-xyz/anchor';
+import { BN, getProvider } from '@project-serum/anchor';
 import { PublicKey, sendAndConfirmTransaction } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
 import AmmImpl from '../../index';

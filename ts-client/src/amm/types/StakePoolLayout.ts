@@ -1,4 +1,4 @@
-import { option, publicKey, struct, u64, u8 } from '@coral-xyz/borsh';
+import { option, publicKey, struct, u64, u8 } from '@project-serum/borsh';
 
 const feeFields = [u64('denominator'), u64('numerator')];
 

@@ -1,4 +1,4 @@
-import { Program } from '@coral-xyz/anchor';
+import { Program } from '@project-serum/anchor';
 import { Amm as AmmIdl } from '../idl';
 import { VaultIdl } from '@mercurial-finance/vault-sdk';
 

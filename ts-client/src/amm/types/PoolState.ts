@@ -1,4 +1,4 @@
-import { IdlAccounts } from '@coral-xyz/anchor';
+import { IdlAccounts } from '@project-serum/anchor';
 import { Amm as AmmIdl } from '../idl';
 import { PoolFees, PoolType, CurveType } from './index';
 

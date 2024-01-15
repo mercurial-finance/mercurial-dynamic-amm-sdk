@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { BN } from '@coral-xyz/anchor';
+import { BN } from '@project-serum/anchor';
 import Decimal from 'decimal.js';
 import { Depeg, PoolFees } from '../types';
 

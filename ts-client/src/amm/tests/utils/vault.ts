@@ -2,7 +2,7 @@ import { Connection, Keypair, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } fro
 import { VaultProgram } from '../../types';
 import { VAULT_BASE_KEY } from '../../constants';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { BN } from '@coral-xyz/anchor';
+import { BN } from '@project-serum/anchor';
 import { getOrCreateATA } from './index';
 
 /** Setup new vault */

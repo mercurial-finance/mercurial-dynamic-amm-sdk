@@ -7,7 +7,7 @@ import {
   SYSVAR_RENT_PUBKEY,
 } from '@solana/web3.js';
 import { AmmProgram, CurveType, PoolCreatedSimulation, VaultProgram } from '../../types';
-import { BN, Program } from '@coral-xyz/anchor';
+import { BN, Program } from '@project-serum/anchor';
 import { encodeCurveType, getFirstKey, getSecondKey, getTradeFeeBpsBuffer } from '../../utils';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { getOrCreateATA } from './index';

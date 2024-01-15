@@ -1,4 +1,4 @@
-import { BN, BorshCoder, Idl } from '@coral-xyz/anchor';
+import { BN, BorshCoder, Idl } from '@project-serum/anchor';
 import { Fees, computeD, computeY, normalizedTradeFee } from '@saberhq/stableswap-sdk';
 import { Fraction, Percent, ZERO } from '@saberhq/token-utils';
 import { AccountInfo, PublicKey } from '@solana/web3.js';

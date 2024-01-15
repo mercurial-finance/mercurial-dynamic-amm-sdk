@@ -1,4 +1,4 @@
-import { AnchorProvider, BN, getProvider, Program } from '@coral-xyz/anchor';
+import { AnchorProvider, BN, getProvider, Program } from '@project-serum/anchor';
 import { airDropSol, createAndMintTo, DEVNET, getOrCreateATA, LOCALNET, mockWallet } from '../utils';
 import { FEE_OWNER, VAULT_BASE_KEY } from '../../constants';
 import {
@@ -13,7 +13,7 @@ import {
 } from '@solana/web3.js';
 import AmmImpl from '../../index';
 import { AmmProgram, ConstantProductCurve, CurveType, VaultProgram } from '../../types';
-import { IdlEvents } from '@coral-xyz/anchor';
+import { IdlEvents } from '@project-serum/anchor';
 import { Amm } from '../../idl';
 import { createProgramWithWallet, encodeCurveType, getFirstKey, getSecondKey, getTradeFeeBpsBuffer } from '../../utils';
 import { USDC_TOKEN_DECIMAL, WSOL_TOKEN_DECIMAL } from '../constants';

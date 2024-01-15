@@ -1,4 +1,4 @@
-import { IdlTypes } from '@coral-xyz/anchor';
+import { IdlTypes } from '@project-serum/anchor';
 import { Amm } from '../idl';
 
 export type DepegNone = {
