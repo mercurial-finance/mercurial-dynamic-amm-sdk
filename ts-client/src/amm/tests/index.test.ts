@@ -1,6 +1,6 @@
 import { AnchorProvider, BN } from '@project-serum/anchor';
 import { TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
-import { Cluster, Keypair, PublicKey } from '@solana/web3.js';
+import { Cluster, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { DEFAULT_SLIPPAGE, DEVNET_COIN, DEVNET_POOL, MAINNET_POOL } from '../constants';
 import AmmImpl from '../index';
 import { calculateSwapQuote, getOnchainTime } from '../utils';
@@ -21,7 +21,11 @@ describe('Interact with Devnet pool', () => {
   let referrer = Keypair.generate();
 
   beforeAll(async () => {
-    await airDropSol(DEVNET.connection, mockWallet.publicKey);
+    let currentBalance = await provider.connection.getBalance(mockWallet.publicKey);
+    if (currentBalance < 2 * LAMPORTS_PER_SOL) {
+        await airDropSol(DEVNET.connection, mockWallet.publicKey);
+    }
+    console.log("Using mock wallet: ",mockWallet.publicKey.toBase58());
 
     const USDT = DEVNET_COIN.find((token) => token.address === '9NGDi2tZtNmCCp8SVLKNuGjuWAVwNF3Vap5tT8km5er9');
     const USDC = DEVNET_COIN.find((token) => token.address === 'zVzi5VAf4qMEwzv7NXECVx5v2pQ7xnqVVjCXZwS9XzA');
