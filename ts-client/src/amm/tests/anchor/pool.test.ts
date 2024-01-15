@@ -5,7 +5,7 @@ import AmmImpl from '../../index';
 import { AmmProgram, CurveType, PoolState, VaultProgram } from '../../types';
 import { airDropSol, createAndMintTo, mockWallet } from '../utils';
 import { USDC_TOKEN_DECIMAL, WSOL_TOKEN_DECIMAL } from '../constants';
-import { createProgramWithWallet } from '../../utils';
+import { createProgramWithWallet, deriveMintMetadata, derivePoolAddress } from '../../utils';
 import { createUsdcTokenInfo, createWethTokenInfo } from '../utils/mock_token_info';
 import { depositVault, setupVault } from '../utils/vault';
 import { initializePermissionlessPoolWithFeeTier } from '../utils/pool';
@@ -86,20 +86,27 @@ describe('Pool', () => {
       constantProduct: {},
     };
 
-    const { pool: _pool } = await initializePermissionlessPoolWithFeeTier(
-      provider.connection,
-      wsolVault,
-      usdcVault,
-      ammProgram,
-      vaultProgram,
-      mockWallet.payer,
-      curveType,
-      tokenAAmount,
-      tokenBAmount,
-      tradeFeeBps,
-    );
+    let poolPubkey = derivePoolAddress(provider.connection, wsolTokenInfo, usdcTokenInfo, false, tradeFeeBps);
 
-    pool = await AmmImpl.create(provider.connection, _pool, wsolTokenInfo, usdcTokenInfo);
+    const tx = await AmmImpl.createPermissionlessPool(provider.connection, mockWallet.publicKey, wsolTokenInfo, usdcTokenInfo, tokenAAmount, tokenBAmount, false, tradeFeeBps);
+    await sendAndConfirmTransaction(provider.connection, tx, [mockWallet.payer]);
+
+    pool = await AmmImpl.create(provider.connection, poolPubkey, wsolTokenInfo, usdcTokenInfo);
+
+    // const { pool: _pool } = await initializePermissionlessPoolWithFeeTier(
+    //   provider.connection,
+    //   wsolVault,
+    //   usdcVault,
+    //   ammProgram,
+    //   vaultProgram,
+    //   mockWallet.payer,
+    //   curveType,
+    //   tokenAAmount,
+    //   tokenBAmount,
+    //   tradeFeeBps,
+    // );
+    //
+    // pool = await AmmImpl.create(provider.connection, _pool, wsolTokenInfo, usdcTokenInfo);
   });
 
   it('should able to subscribe reserve changes', async () => {

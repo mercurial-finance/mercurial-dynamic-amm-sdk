@@ -4,14 +4,21 @@ import {
   Keypair,
   PublicKey,
   SystemProgram,
-  SYSVAR_RENT_PUBKEY,
+  SYSVAR_RENT_PUBKEY, TransactionInstruction,
 } from '@solana/web3.js';
 import { AmmProgram, CurveType, PoolCreatedSimulation, VaultProgram } from '../../types';
 import { BN, Program } from '@project-serum/anchor';
-import { encodeCurveType, getFirstKey, getSecondKey, getTradeFeeBpsBuffer } from '../../utils';
+import {
+  deriveMetadataPda,
+  deriveMintMetadata,
+  encodeCurveType,
+  getFirstKey,
+  getSecondKey,
+  getTradeFeeBpsBuffer,
+} from '../../utils';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { getOrCreateATA } from './index';
-import { FEE_OWNER } from '../../constants';
+import { FEE_OWNER, METAPLEX_PROGRAM } from '../../constants';
 import { expect } from 'chai';
 import { Amm } from '../../idl';
 
@@ -98,6 +105,12 @@ export const initializePermissionlessPoolWithFeeTierInstruction = async (
     vaultProgram.account.vault.fetch(bVault),
   ]);
 
+  let preInstructions: Array<TransactionInstruction> = [];
+  const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+    units: 1_400_000,
+  });
+  preInstructions.push(setComputeUnitLimitIx);
+
   const [poolPubkey, _poolPubkeyBump] = PublicKey.findProgramAddressSync(
     [
       Buffer.from([encodeCurveType(curve)]),
@@ -134,9 +147,7 @@ export const initializePermissionlessPoolWithFeeTierInstruction = async (
     ammProgram,
   );
 
-  const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
-    units: 1_400_000,
-  });
+  const [mintMetadata, _mintMetadataBump] = deriveMetadataPda(poolLpMint);
 
   let instruction = ammProgram.methods
     .initializePermissionlessPoolWithFeeTier(curve as any, tradeFeeBps, aDepositAmount, bDepositAmount)
@@ -160,13 +171,15 @@ export const initializePermissionlessPoolWithFeeTierInstruction = async (
       bTokenVault: bVaultAccount.tokenVault,
       feeOwner: FEE_OWNER,
       payer: userKeypair.publicKey,
+      mintMetadata,
+      metadataProgram: METAPLEX_PROGRAM,
       rent: SYSVAR_RENT_PUBKEY,
       vaultProgram: vaultProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
     })
-    .preInstructions([setComputeUnitLimitIx])
+    .preInstructions(preInstructions)
     .signers([userKeypair]);
 
   return {
