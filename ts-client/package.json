@@ -9,7 +9,6 @@
     "test": "jest ./src/amm/tests/*.test.ts --runInBand --setupFiles dotenv/config",
     "test-snapshot": "jest ./src/amm/tests/snapshot.test.ts --runInBand",
     "anchor-test": "anchor test",
-    "generate": "pnpm anchor-client-gen ./src/amm/idl/amm.json ./src/amm/generated/",
     "fmt": "pnpm prettier --write src/'**/*'.{ts,json}"
   },
   "files": [
