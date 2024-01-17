@@ -7,7 +7,7 @@ import {
   VaultIdl,
   PROGRAM_ID as VAULT_PROGRAM_ID,
 } from '@mercurial-finance/vault-sdk';
-import { AnchorProvider, BN, Program } from '@project-serum/anchor';
+import { AnchorProvider, BN, Program, Wallet } from '@project-serum/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
@@ -42,6 +42,7 @@ import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './cu
 import {
   AmmProgram,
   ConstantProductCurve,
+  CurveType,
   DepegLido,
   DepegMarinade,
   DepegNone,
@@ -65,6 +66,13 @@ export const createProgram = (connection: Connection, programId?: string) => {
   return { provider, ammProgram, vaultProgram };
 };
 
+export const createProgramWithWallet = (connection: Connection, wallet: Wallet, programId?: string) => {
+  const provider = new AnchorProvider(connection, wallet, AnchorProvider.defaultOptions());
+  const ammProgram = new Program<AmmIdl>(AmmIDL, programId ?? PROGRAM_ID, provider);
+  const vaultProgram = new Program<VaultIdl>(VaultIDL, VAULT_PROGRAM_ID, provider);
+
+  return { provider, ammProgram, vaultProgram };
+};
 /**
  * It takes an amount and a slippage rate, and returns the maximum amount that can be received with
  * that slippage rate
@@ -724,13 +732,14 @@ export const DepegType = {
   },
 };
 
-export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, isStable: boolean) {
+export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, isStable: boolean): CurveType {
   return isStable
     ? {
         stable: {
           amp: PERMISSIONLESS_AMP,
           tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
           depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType: DepegType.none() },
+          lastAmpUpdatedTimestamp: new BN(0),
         },
       }
     : { constantProduct: {} };

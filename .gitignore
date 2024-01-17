@@ -1,4 +1,4 @@
-
+.idea
 .anchor
 .DS_Store
 target
@@ -9,5 +9,5 @@ test-ledger
 
 ts-client/dist/
 ts-client/package-lock.json
-
 ts-client/.env
+ts-client/.anchor

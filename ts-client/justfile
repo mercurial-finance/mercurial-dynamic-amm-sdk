@@ -1,0 +1,8 @@
+generate-new-amm-fixture: build-amm-program-fixture
+    cp ../../mercurial-dynamic-amm/target/deploy/amm.so ./fixtures/amm.so
+
+build-amm-program-fixture:
+    cd ../../mercurial-dynamic-amm/ && anchor build
+
+copy-amm-idl:
+    cp ../../mercurial-dynamic-amm/target/types/amm.ts ./src/amm/idl.ts
