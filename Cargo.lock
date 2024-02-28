@@ -2287,6 +2287,7 @@ dependencies = [
  "bincode",
  "mercurial-vault",
  "meteora-marinade-sdk",
+ "mpl-token-metadata",
  "serde",
  "serde_json",
  "solana-account-decoder",
@@ -2384,6 +2385,19 @@ dependencies = [
  "proc-macro2 1.0.67",
  "quote 1.0.33",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "mpl-token-metadata"
+version = "3.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba8ee05284d79b367ae8966d558e1a305a781fc80c9df51f37775169117ba64f"
+dependencies = [
+ "borsh 0.10.3",
+ "num-derive 0.3.3",
+ "num-traits",
+ "solana-program",
+ "thiserror",
 ]
 
 [[package]]
@@ -4948,8 +4962,8 @@ dependencies = [
 
 [[package]]
 name = "stable-swap-client"
-version = "1.8.1"
-source = "git+https://github.com/mercurial-finance/stable-swap?rev=f49a9166fd1b7afd14dded3cdd600fb19b4c6982#f49a9166fd1b7afd14dded3cdd600fb19b4c6982"
+version = "1.8.2"
+source = "git+https://github.com/mercurial-finance/stable-swap?rev=140c2e0d366765d49edc9a175ed12b1ad10c3b66#140c2e0d366765d49edc9a175ed12b1ad10c3b66"
 dependencies = [
  "arrayref",
  "num-derive 0.3.3",
@@ -4960,8 +4974,8 @@ dependencies = [
 
 [[package]]
 name = "stable-swap-math"
-version = "1.8.1"
-source = "git+https://github.com/mercurial-finance/stable-swap?rev=f49a9166fd1b7afd14dded3cdd600fb19b4c6982#f49a9166fd1b7afd14dded3cdd600fb19b4c6982"
+version = "1.8.2"
+source = "git+https://github.com/mercurial-finance/stable-swap?rev=140c2e0d366765d49edc9a175ed12b1ad10c3b66#140c2e0d366765d49edc9a175ed12b1ad10c3b66"
 dependencies = [
  "borsh 0.9.3",
  "num-traits",

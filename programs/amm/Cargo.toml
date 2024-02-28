@@ -31,8 +31,8 @@ mercurial-vault = { git = "https://github.com/mercurial-finance/mercurial_sdk", 
     "no-entrypoint",
 ], rev = "c590d6ba19ecb58d80dbe8b33fa8056a1ddbff43" }
 spl-token-swap = { version = "3.0.0", features = ["no-entrypoint"] }
-meteora-stable-swap-math = { git = "https://github.com/mercurial-finance/stable-swap", rev = "f49a9166fd1b7afd14dded3cdd600fb19b4c6982", package = "stable-swap-math" }
-meteora-stable-swap-client = { git = "https://github.com/mercurial-finance/stable-swap", rev = "f49a9166fd1b7afd14dded3cdd600fb19b4c6982", package = "stable-swap-client" }
+meteora-stable-swap-math = { git = "https://github.com/mercurial-finance/stable-swap", rev = "140c2e0d366765d49edc9a175ed12b1ad10c3b66", package = "stable-swap-math" }
+meteora-stable-swap-client = { git = "https://github.com/mercurial-finance/stable-swap", rev = "140c2e0d366765d49edc9a175ed12b1ad10c3b66", package = "stable-swap-client" }
 meteora-marinade-sdk = { version = "0.1.0", features = ["cpi"] }
 spl-stake-pool = { git = "https://github.com/solana-labs/solana-program-library", rev = "cd79bba17331235ab489bae56600043ea853c70b", features = [
     "no-entrypoint",
