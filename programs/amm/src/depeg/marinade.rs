@@ -2,6 +2,7 @@ use crate::constants::depeg;
 use anchor_lang::prelude::*;
 use marinade_sdk::state::State;
 use std::convert::TryInto;
+use borsh::de::BorshDeserialize;
 
 pub fn get_virtual_price(bytes: &[u8]) -> Option<u64> {
     let stake_state = State::deserialize(&mut &bytes[8..]).ok()?;
