@@ -38,7 +38,7 @@ spl-stake-pool = { git = "https://github.com/solana-labs/solana-program-library"
     "no-entrypoint",
 ] }
 anyhow = "1.0.71"
-mpl-token-metadata = "3.2.3"
+mpl-token-metadata = "3.0.1"
 
 [dev-dependencies]
 solana-program-test = "1.16.12"
