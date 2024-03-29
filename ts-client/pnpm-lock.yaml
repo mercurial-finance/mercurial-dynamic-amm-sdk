@@ -23,6 +23,9 @@ dependencies:
   '@saberhq/token-utils':
     specifier: 1.13.32
     version: 1.13.32(@solana/web3.js@1.75.0)(bn.js@5.2.1)(jsbi@4.3.0)
+  '@solana/buffer-layout':
+    specifier: 4.0.0
+    version: 4.0.0
   '@solana/spl-token':
     specifier: 0.1.8
     version: 0.1.8
@@ -52,9 +55,6 @@ dependencies:
     version: 4.3.0
 
 devDependencies:
-  '@solana/buffer-layout':
-    specifier: 4.0.0
-    version: 4.0.0
   '@tsconfig/recommended':
     specifier: ^1.0.1
     version: 1.0.2
@@ -1683,6 +1683,7 @@ packages:
     engines: {node: '>=5.10'}
     dependencies:
       buffer: 6.0.3
+    dev: false
 
   /@solana/spl-token-registry@0.2.1105:
     resolution: {integrity: sha512-s9MIUoTAtqYsg1RaXIHXq7DhsUVS9VckvrwYuJBFn68YCZNSMUEquqaimbaHi88OVduFsApVAbKRmsGnJ9abIw==}
@@ -2370,6 +2371,7 @@ packages:
 
   /base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
+    dev: false
 
   /big.js@6.2.1:
     resolution: {integrity: sha512-bCtHMwL9LeDIozFn+oNhhFoq+yQ3BNdnsLSASUxLciOb1vgvpHsIO1dsENiGMgbb4SkP5TrzWzRiLddn8ahVOQ==}
@@ -2518,6 +2520,7 @@ packages:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1
+    dev: false
 
   /bufferutil@4.0.7:
     resolution: {integrity: sha512-kukuqc39WOHtdxtw4UScxF/WVnMFVSQVKhtx3AjZJzhd0RGZZldcrfSEbVsWWe6KNH253574cq5F+wpv0G9pJw==}
@@ -3225,6 +3228,7 @@ packages:
 
   /ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
+    dev: false
 
   /import-local@3.1.0:
     resolution: {integrity: sha512-ASB07uLtnDs1o6EHjKpX34BKYDSqnFerfTOJL2HvMqF70LnxpjkzDB8J44oT9pu4AMPkQwf8jl6szgvNd2tRIg==}
