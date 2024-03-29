@@ -56,6 +56,7 @@ import {
 } from './types';
 import { Amm as AmmIdl, IDL as AmmIDL } from './idl';
 import { TokenInfo } from '@solana/spl-token-registry';
+import Decimal from 'decimal.js';
 
 export const createProgram = (connection: Connection, programId?: string) => {
   const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
@@ -265,7 +266,7 @@ export const calculatePoolInfo = (
 
   const d = swapCurve.computeD(tokenAAmount, tokenBAmount);
   const virtualPriceBigNum = poolLpSupply.isZero() ? new BN(0) : d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
-  const virtualPrice = virtualPriceBigNum.toNumber() / VIRTUAL_PRICE_PRECISION.toNumber();
+  const virtualPrice = new Decimal(virtualPriceBigNum.toString()).div(VIRTUAL_PRICE_PRECISION.toString()).toNumber();
 
   const poolInformation: PoolInformation = {
     tokenAAmount,
