@@ -89,6 +89,4 @@ pub struct PartialPool {
     pub a_vault_lp: Pubkey, //32
     /// LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
     pub b_vault_lp: Pubkey, //32
-    /// "A" vault lp bump. Used to create signer seeds.
-    pub a_vault_lp_bump: u8, //1
 }
