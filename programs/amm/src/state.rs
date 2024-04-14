@@ -70,3 +70,25 @@ pub struct Pool {
     // Leaving curve_type as last field give us the flexibility to add specific curve information / new curve type
     pub curve_type: CurveType, //9
 }
+
+#[account]
+#[derive(Default, Debug)]
+/// State of pool account
+pub struct PartialPool {
+    /// LP token mint of the pool
+    pub lp_mint: Pubkey, //32
+    /// Token A mint of the pool. Eg: USDT
+    pub token_a_mint: Pubkey, //32
+    /// Token B mint of the pool. Eg: USDC
+    pub token_b_mint: Pubkey, //32
+    /// Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.
+    pub a_vault: Pubkey, //32
+    /// Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.
+    pub b_vault: Pubkey, //32
+    /// LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
+    pub a_vault_lp: Pubkey, //32
+    /// LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
+    pub b_vault_lp: Pubkey, //32
+    /// "A" vault lp bump. Used to create signer seeds.
+    pub a_vault_lp_bump: u8, //1
+}
