@@ -143,6 +143,9 @@ export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType' | 'fees' |
   fees: PoolFees;
   poolType: PoolType;
 };
+
+export type LockEscrow = IdlAccounts<AmmIdl>['lockEscrow'];
+
 export type Depeg = Omit<IdlTypes<AmmIdl>['Depeg'], 'depegType'> & { depegType: DepegType };
 export type PoolFees = IdlTypes<AmmIdl>['PoolFees'];
 
@@ -150,6 +153,7 @@ export type PoolInformation = {
   tokenAAmount: BN;
   tokenBAmount: BN;
   virtualPrice: number;
+  virtualPriceRaw: BN,
 };
 
 export type AccountsInfo = {

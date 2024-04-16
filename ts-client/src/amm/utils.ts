@@ -19,7 +19,6 @@ import {
 } from '@solana/spl-token';
 import {
   AccountInfo,
-  Cluster,
   Connection,
   ParsedAccountData,
   PublicKey,
@@ -46,6 +45,7 @@ import {
   DepegMarinade,
   DepegNone,
   DepegSplStake,
+  LockEscrow,
   ParsedClockState,
   PoolInformation,
   PoolState,
@@ -267,15 +267,28 @@ export const calculatePoolInfo = (
   const d = swapCurve.computeD(tokenAAmount, tokenBAmount);
   const virtualPriceBigNum = poolLpSupply.isZero() ? new BN(0) : d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
   const virtualPrice = new Decimal(virtualPriceBigNum.toString()).div(VIRTUAL_PRICE_PRECISION.toString()).toNumber();
+  const virtualPriceRaw = poolLpSupply.isZero() ? new BN(0) : new BN(1).shln(64).mul(d).div(poolLpSupply);
 
   const poolInformation: PoolInformation = {
     tokenAAmount,
     tokenBAmount,
     virtualPrice,
+    virtualPriceRaw
   };
 
   return poolInformation;
 };
+
+export const calculateUnclaimedFee = (
+  lockEscrow: LockEscrow,
+  currentVirtualPrice: BN,
+) => {
+  if (currentVirtualPrice.isZero()) {
+    return new BN(0);
+  }
+  let newFee = lockEscrow.totalLockedAmount.mul(currentVirtualPrice.sub(lockEscrow.lpPerToken)).div(currentVirtualPrice);
+  return newFee.add(lockEscrow.unclaimedFeePending)
+}
 
 export const calculateAdminTradingFee = (amount: BN, poolState: PoolState) => {
   const { ownerTradeFeeDenominator, ownerTradeFeeNumerator } = poolState.fees;
@@ -432,7 +445,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
     swapDestinationVaultLpSupply,
     tradeDirection,
   ] = isFromAToB
-    ? [
+      ? [
         inAmountLamport,
         poolVaultALp,
         tokenAAmount,
@@ -443,7 +456,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
         vaultBLpSupply,
         TradeDirection.AToB,
       ]
-    : [
+      : [
         inAmountLamport,
         poolVaultBLp,
         tokenBAmount,
@@ -728,11 +741,11 @@ export const DepegType = {
 export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, isStable: boolean) {
   return isStable
     ? {
-        stable: {
-          amp: PERMISSIONLESS_AMP,
-          tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
-          depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType: DepegType.none() },
-        },
-      }
+      stable: {
+        amp: PERMISSIONLESS_AMP,
+        tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
+        depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType: DepegType.none() },
+      },
+    }
     : { constantProduct: {} };
 }
