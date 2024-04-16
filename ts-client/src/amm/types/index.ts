@@ -30,6 +30,24 @@ export interface AmmImplementation {
     tokenAOutAmount: BN,
     tokenBOutAmount: BN,
   ) => Promise<Transaction>;
+  getUserLockEscrow: (owner: PublicKey) => Promise<LockEscrow | null>;
+}
+
+type Fees = {
+  tokenAFee: BN;
+  tokenBFee: BN;
+};
+
+export interface LockEscrow {
+  address: PublicKey;
+  amount: BN;
+  tokenAMint: PublicKey;
+  tokenBMint: PublicKey;
+  fee: {
+    claimed: Fees;
+    toBeClaim: Fees;
+    total: Fees;
+  };
 }
 
 export type SwapQuote = {

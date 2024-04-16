@@ -1546,6 +1546,270 @@ export type Amm = {
       ];
       args: [];
     },
+    {
+      name: 'createLockEscrow';
+      docs: ['Create lock account'];
+      accounts: [
+        {
+          name: 'pool';
+          isMut: false;
+          isSigner: false;
+          docs: ['Pool account'];
+        },
+        {
+          name: 'lockEscrow';
+          isMut: true;
+          isSigner: false;
+          docs: ['Lock account'];
+        },
+        {
+          name: 'owner';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'lpMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['LP token mint of the pool'];
+        },
+        {
+          name: 'payer';
+          isMut: true;
+          isSigner: true;
+          docs: ['Payer account'];
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['System program.'];
+        },
+      ];
+      args: [];
+    },
+    {
+      name: 'lock';
+      docs: ['Lock Lp token'];
+      accounts: [
+        {
+          name: 'pool';
+          isMut: true;
+          isSigner: false;
+          docs: ['Pool account'];
+        },
+        {
+          name: 'lpMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['LP token mint of the pool'];
+        },
+        {
+          name: 'lockEscrow';
+          isMut: true;
+          isSigner: false;
+          docs: ['Lock account'];
+        },
+        {
+          name: 'owner';
+          isMut: true;
+          isSigner: true;
+          docs: ['Owner of lock account'];
+        },
+        {
+          name: 'sourceTokens';
+          isMut: true;
+          isSigner: false;
+          docs: ['owner lp token account'];
+        },
+        {
+          name: 'escrowVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Escrow vault'];
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token program.'];
+        },
+        {
+          name: 'aVault';
+          isMut: false;
+          isSigner: false;
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'];
+        },
+        {
+          name: 'bVault';
+          isMut: false;
+          isSigner: false;
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'];
+        },
+        {
+          name: 'aVaultLp';
+          isMut: false;
+          isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
+        },
+        {
+          name: 'bVaultLp';
+          isMut: false;
+          isSigner: false;
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
+        },
+        {
+          name: 'aVaultLpMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['LP token mint of vault a'];
+        },
+        {
+          name: 'bVaultLpMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['LP token mint of vault b'];
+        },
+      ];
+      args: [
+        {
+          name: 'amount';
+          type: 'u64';
+        },
+      ];
+    },
+    {
+      name: 'claimFee';
+      docs: ['Claim fee'];
+      accounts: [
+        {
+          name: 'pool';
+          isMut: true;
+          isSigner: false;
+          docs: ['Pool account'];
+        },
+        {
+          name: 'lpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of the pool'];
+        },
+        {
+          name: 'lockEscrow';
+          isMut: true;
+          isSigner: false;
+          docs: ['Lock account'];
+        },
+        {
+          name: 'owner';
+          isMut: true;
+          isSigner: true;
+          docs: ['Owner of lock account'];
+        },
+        {
+          name: 'sourceTokens';
+          isMut: true;
+          isSigner: false;
+          docs: ['owner lp token account'];
+        },
+        {
+          name: 'escrowVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Escrow vault'];
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token program.'];
+        },
+        {
+          name: 'aTokenVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Token vault account of vault A'];
+        },
+        {
+          name: 'bTokenVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Token vault account of vault B'];
+        },
+        {
+          name: 'aVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'];
+        },
+        {
+          name: 'bVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'];
+        },
+        {
+          name: 'aVaultLp';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
+        },
+        {
+          name: 'bVaultLp';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
+        },
+        {
+          name: 'aVaultLpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of vault a'];
+        },
+        {
+          name: 'bVaultLpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of vault b'];
+        },
+        {
+          name: 'userAToken';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ];
+        },
+        {
+          name: 'userBToken';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ];
+        },
+        {
+          name: 'vaultProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Vault program. the pool will deposit/withdraw liquidity from the vault.'];
+        },
+      ];
+      args: [
+        {
+          name: 'maxAmount';
+          type: 'u64';
+        },
+      ];
+    },
   ];
   accounts: [
     {
@@ -1642,6 +1906,11 @@ export type Amm = {
             type: 'publicKey';
           },
           {
+            name: 'totalLockedLp';
+            docs: ['Total locked lp token'];
+            type: 'u64';
+          },
+          {
             name: 'padding';
             docs: ['Padding for future pool field'];
             type: {
@@ -1654,6 +1923,60 @@ export type Amm = {
             type: {
               defined: 'CurveType';
             };
+          },
+        ];
+      };
+    },
+    {
+      name: 'lockEscrow';
+      docs: ['State of lock escrow account'];
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'pool';
+            docs: ['Pool address'];
+            type: 'publicKey';
+          },
+          {
+            name: 'owner';
+            docs: ['Owner address'];
+            type: 'publicKey';
+          },
+          {
+            name: 'escrowVault';
+            docs: ['Vault address, store the lock user lock'];
+            type: 'publicKey';
+          },
+          {
+            name: 'bump';
+            docs: ['bump, used to sign'];
+            type: 'u8';
+          },
+          {
+            name: 'totalLockedAmount';
+            docs: ['Total locked amount'];
+            type: 'u64';
+          },
+          {
+            name: 'lpPerToken';
+            docs: ['Lp per token, virtual price of lp token'];
+            type: 'u128';
+          },
+          {
+            name: 'unclaimedFeePending';
+            docs: ['Unclaimed fee pending'];
+            type: 'u64';
+          },
+          {
+            name: 'aFee';
+            docs: ['Total a fee claimed so far'];
+            type: 'u64';
+          },
+          {
+            name: 'bFee';
+            docs: ['Total b fee claimed so far'];
+            type: 'u64';
           },
         ];
       };
@@ -1760,7 +2083,7 @@ export type Amm = {
             name: 'padding0';
             docs: ['Padding 0'];
             type: {
-              array: ['u8', 15];
+              array: ['u8', 7];
             };
           },
           {
@@ -1932,6 +2255,21 @@ export type Amm = {
       };
     },
     {
+      name: 'Rounding';
+      docs: ['Round up, down'];
+      type: {
+        kind: 'enum';
+        variants: [
+          {
+            name: 'Up';
+          },
+          {
+            name: 'Down';
+          },
+        ];
+      };
+    },
+    {
       name: 'PoolType';
       docs: ['Pool type'];
       type: {
@@ -1989,6 +2327,31 @@ export type Amm = {
       ];
     },
     {
+      name: 'BootstrapLiquidity';
+      fields: [
+        {
+          name: 'lpMintAmount';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'tokenAAmount';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'tokenBAmount';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'pool';
+          type: 'publicKey';
+          index: false;
+        },
+      ];
+    },
+    {
       name: 'Swap';
       fields: [
         {
@@ -2041,6 +2404,11 @@ export type Amm = {
           type: 'u64';
           index: false;
         },
+        {
+          name: 'pool';
+          type: 'publicKey';
+          index: false;
+        },
       ];
     },
     {
@@ -2081,6 +2449,11 @@ export type Amm = {
           type: 'publicKey';
           index: false;
         },
+        {
+          name: 'pool';
+          type: 'publicKey';
+          index: false;
+        },
       ];
     },
     {
@@ -2118,6 +2491,153 @@ export type Amm = {
         },
         {
           name: 'updatedTimestamp';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'pool';
+          type: 'publicKey';
+          index: false;
+        },
+      ];
+    },
+    {
+      name: 'PoolCreated';
+      fields: [
+        {
+          name: 'lpMint';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'tokenAMint';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'tokenBMint';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'poolType';
+          type: {
+            defined: 'PoolType';
+          };
+          index: false;
+        },
+        {
+          name: 'pool';
+          type: 'publicKey';
+          index: false;
+        },
+      ];
+    },
+    {
+      name: 'PoolEnabled';
+      fields: [
+        {
+          name: 'pool';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'enabled';
+          type: 'bool';
+          index: false;
+        },
+      ];
+    },
+    {
+      name: 'MigrateFeeAccount';
+      fields: [
+        {
+          name: 'pool';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'newAdminTokenAFee';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'newAdminTokenBFee';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'tokenAAmount';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'tokenBAmount';
+          type: 'u64';
+          index: false;
+        },
+      ];
+    },
+    {
+      name: 'CreateLockEscrow';
+      fields: [
+        {
+          name: 'pool';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'owner';
+          type: 'publicKey';
+          index: false;
+        },
+      ];
+    },
+    {
+      name: 'Lock';
+      fields: [
+        {
+          name: 'pool';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'owner';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'amount';
+          type: 'u64';
+          index: false;
+        },
+      ];
+    },
+    {
+      name: 'ClaimFee';
+      fields: [
+        {
+          name: 'pool';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'owner';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'amount';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'aFee';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'bFee';
           type: 'u64';
           index: false;
         },
@@ -2334,6 +2854,21 @@ export type Amm = {
       code: 6041;
       name: 'AmountNotPeg';
       msg: 'Token amount is not 1:1';
+    },
+    {
+      code: 6042;
+      name: 'AmountIsZero';
+      msg: 'Amount is zero';
+    },
+    {
+      code: 6043;
+      name: 'TypeCastFailed';
+      msg: 'Type cast error';
+    },
+    {
+      code: 6044;
+      name: 'AmountIsNotEnough';
+      msg: 'Amount is not enough';
     },
   ];
 };
@@ -3886,6 +4421,270 @@ export const IDL: Amm = {
       ],
       args: [],
     },
+    {
+      name: 'createLockEscrow',
+      docs: ['Create lock account'],
+      accounts: [
+        {
+          name: 'pool',
+          isMut: false,
+          isSigner: false,
+          docs: ['Pool account'],
+        },
+        {
+          name: 'lockEscrow',
+          isMut: true,
+          isSigner: false,
+          docs: ['Lock account'],
+        },
+        {
+          name: 'owner',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'lpMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['LP token mint of the pool'],
+        },
+        {
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
+          docs: ['Payer account'],
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['System program.'],
+        },
+      ],
+      args: [],
+    },
+    {
+      name: 'lock',
+      docs: ['Lock Lp token'],
+      accounts: [
+        {
+          name: 'pool',
+          isMut: true,
+          isSigner: false,
+          docs: ['Pool account'],
+        },
+        {
+          name: 'lpMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['LP token mint of the pool'],
+        },
+        {
+          name: 'lockEscrow',
+          isMut: true,
+          isSigner: false,
+          docs: ['Lock account'],
+        },
+        {
+          name: 'owner',
+          isMut: true,
+          isSigner: true,
+          docs: ['Owner of lock account'],
+        },
+        {
+          name: 'sourceTokens',
+          isMut: true,
+          isSigner: false,
+          docs: ['owner lp token account'],
+        },
+        {
+          name: 'escrowVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Escrow vault'],
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token program.'],
+        },
+        {
+          name: 'aVault',
+          isMut: false,
+          isSigner: false,
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'],
+        },
+        {
+          name: 'bVault',
+          isMut: false,
+          isSigner: false,
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'],
+        },
+        {
+          name: 'aVaultLp',
+          isMut: false,
+          isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
+        },
+        {
+          name: 'bVaultLp',
+          isMut: false,
+          isSigner: false,
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
+        },
+        {
+          name: 'aVaultLpMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['LP token mint of vault a'],
+        },
+        {
+          name: 'bVaultLpMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['LP token mint of vault b'],
+        },
+      ],
+      args: [
+        {
+          name: 'amount',
+          type: 'u64',
+        },
+      ],
+    },
+    {
+      name: 'claimFee',
+      docs: ['Claim fee'],
+      accounts: [
+        {
+          name: 'pool',
+          isMut: true,
+          isSigner: false,
+          docs: ['Pool account'],
+        },
+        {
+          name: 'lpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of the pool'],
+        },
+        {
+          name: 'lockEscrow',
+          isMut: true,
+          isSigner: false,
+          docs: ['Lock account'],
+        },
+        {
+          name: 'owner',
+          isMut: true,
+          isSigner: true,
+          docs: ['Owner of lock account'],
+        },
+        {
+          name: 'sourceTokens',
+          isMut: true,
+          isSigner: false,
+          docs: ['owner lp token account'],
+        },
+        {
+          name: 'escrowVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Escrow vault'],
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token program.'],
+        },
+        {
+          name: 'aTokenVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Token vault account of vault A'],
+        },
+        {
+          name: 'bTokenVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Token vault account of vault B'],
+        },
+        {
+          name: 'aVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.'],
+        },
+        {
+          name: 'bVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.'],
+        },
+        {
+          name: 'aVaultLp',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
+        },
+        {
+          name: 'bVaultLp',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
+        },
+        {
+          name: 'aVaultLpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of vault a'],
+        },
+        {
+          name: 'bVaultLpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of vault b'],
+        },
+        {
+          name: 'userAToken',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ],
+        },
+        {
+          name: 'userBToken',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.',
+          ],
+        },
+        {
+          name: 'vaultProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Vault program. the pool will deposit/withdraw liquidity from the vault.'],
+        },
+      ],
+      args: [
+        {
+          name: 'maxAmount',
+          type: 'u64',
+        },
+      ],
+    },
   ],
   accounts: [
     {
@@ -3982,6 +4781,11 @@ export const IDL: Amm = {
             type: 'publicKey',
           },
           {
+            name: 'totalLockedLp',
+            docs: ['Total locked lp token'],
+            type: 'u64',
+          },
+          {
             name: 'padding',
             docs: ['Padding for future pool field'],
             type: {
@@ -3994,6 +4798,60 @@ export const IDL: Amm = {
             type: {
               defined: 'CurveType',
             },
+          },
+        ],
+      },
+    },
+    {
+      name: 'lockEscrow',
+      docs: ['State of lock escrow account'],
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'pool',
+            docs: ['Pool address'],
+            type: 'publicKey',
+          },
+          {
+            name: 'owner',
+            docs: ['Owner address'],
+            type: 'publicKey',
+          },
+          {
+            name: 'escrowVault',
+            docs: ['Vault address, store the lock user lock'],
+            type: 'publicKey',
+          },
+          {
+            name: 'bump',
+            docs: ['bump, used to sign'],
+            type: 'u8',
+          },
+          {
+            name: 'totalLockedAmount',
+            docs: ['Total locked amount'],
+            type: 'u64',
+          },
+          {
+            name: 'lpPerToken',
+            docs: ['Lp per token, virtual price of lp token'],
+            type: 'u128',
+          },
+          {
+            name: 'unclaimedFeePending',
+            docs: ['Unclaimed fee pending'],
+            type: 'u64',
+          },
+          {
+            name: 'aFee',
+            docs: ['Total a fee claimed so far'],
+            type: 'u64',
+          },
+          {
+            name: 'bFee',
+            docs: ['Total b fee claimed so far'],
+            type: 'u64',
           },
         ],
       },
@@ -4100,7 +4958,7 @@ export const IDL: Amm = {
             name: 'padding0',
             docs: ['Padding 0'],
             type: {
-              array: ['u8', 15],
+              array: ['u8', 7],
             },
           },
           {
@@ -4272,6 +5130,21 @@ export const IDL: Amm = {
       },
     },
     {
+      name: 'Rounding',
+      docs: ['Round up, down'],
+      type: {
+        kind: 'enum',
+        variants: [
+          {
+            name: 'Up',
+          },
+          {
+            name: 'Down',
+          },
+        ],
+      },
+    },
+    {
       name: 'PoolType',
       docs: ['Pool type'],
       type: {
@@ -4329,6 +5202,31 @@ export const IDL: Amm = {
       ],
     },
     {
+      name: 'BootstrapLiquidity',
+      fields: [
+        {
+          name: 'lpMintAmount',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'tokenAAmount',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'tokenBAmount',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'pool',
+          type: 'publicKey',
+          index: false,
+        },
+      ],
+    },
+    {
       name: 'Swap',
       fields: [
         {
@@ -4381,6 +5279,11 @@ export const IDL: Amm = {
           type: 'u64',
           index: false,
         },
+        {
+          name: 'pool',
+          type: 'publicKey',
+          index: false,
+        },
       ],
     },
     {
@@ -4421,6 +5324,11 @@ export const IDL: Amm = {
           type: 'publicKey',
           index: false,
         },
+        {
+          name: 'pool',
+          type: 'publicKey',
+          index: false,
+        },
       ],
     },
     {
@@ -4458,6 +5366,153 @@ export const IDL: Amm = {
         },
         {
           name: 'updatedTimestamp',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'pool',
+          type: 'publicKey',
+          index: false,
+        },
+      ],
+    },
+    {
+      name: 'PoolCreated',
+      fields: [
+        {
+          name: 'lpMint',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'tokenAMint',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'tokenBMint',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'poolType',
+          type: {
+            defined: 'PoolType',
+          },
+          index: false,
+        },
+        {
+          name: 'pool',
+          type: 'publicKey',
+          index: false,
+        },
+      ],
+    },
+    {
+      name: 'PoolEnabled',
+      fields: [
+        {
+          name: 'pool',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'enabled',
+          type: 'bool',
+          index: false,
+        },
+      ],
+    },
+    {
+      name: 'MigrateFeeAccount',
+      fields: [
+        {
+          name: 'pool',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'newAdminTokenAFee',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'newAdminTokenBFee',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'tokenAAmount',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'tokenBAmount',
+          type: 'u64',
+          index: false,
+        },
+      ],
+    },
+    {
+      name: 'CreateLockEscrow',
+      fields: [
+        {
+          name: 'pool',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'owner',
+          type: 'publicKey',
+          index: false,
+        },
+      ],
+    },
+    {
+      name: 'Lock',
+      fields: [
+        {
+          name: 'pool',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'owner',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'amount',
+          type: 'u64',
+          index: false,
+        },
+      ],
+    },
+    {
+      name: 'ClaimFee',
+      fields: [
+        {
+          name: 'pool',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'owner',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'amount',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'aFee',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'bFee',
           type: 'u64',
           index: false,
         },
@@ -4674,6 +5729,21 @@ export const IDL: Amm = {
       code: 6041,
       name: 'AmountNotPeg',
       msg: 'Token amount is not 1:1',
+    },
+    {
+      code: 6042,
+      name: 'AmountIsZero',
+      msg: 'Amount is zero',
+    },
+    {
+      code: 6043,
+      name: 'TypeCastFailed',
+      msg: 'Type cast error',
+    },
+    {
+      code: 6044,
+      name: 'AmountIsNotEnough',
+      msg: 'Amount is not enough',
     },
   ],
 };

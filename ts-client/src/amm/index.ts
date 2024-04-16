@@ -29,6 +29,7 @@ import {
   AmmImplementation,
   AmmProgram,
   DepositQuote,
+  LockEscrow,
   PoolInformation,
   PoolState,
   VaultProgram,
@@ -56,13 +57,18 @@ import {
   derivePoolAddress,
   chunkedFetchMultiplePoolAccount,
   deriveMintMetadata,
+  deriveLockEscrowPda,
 } from './utils';
+import { get } from 'http';
 
 type Opt = {
   cluster: Cluster;
 };
 
-const getAllPoolState = async (poolMints: Array<PublicKey>, program: AmmProgram) => {
+const getAllPoolState = async (
+  poolMints: Array<PublicKey>,
+  program: AmmProgram,
+): Promise<Array<PoolState & { lpSupply: BN }>> => {
   const poolStates = (await chunkedFetchMultiplePoolAccount(program, poolMints)) as Array<PoolState>;
   invariant(poolStates.length === poolMints.length, 'Some of the pool state not found');
 
@@ -315,7 +321,7 @@ export default class AmmImpl implements AmmImplementation {
       }
     >();
 
-    const poolsState = await getAllPoolState(
+    const poolsState: Array<PoolState & { lpSupply: BN }> = await getAllPoolState(
       poolList.map(({ pool }) => pool),
       ammProgram,
     );
@@ -383,7 +389,7 @@ export default class AmmImpl implements AmmImplementation {
     const accountsInfoMap = deserializeAccountsBuffer(accountsBufferMap);
     const depegAccounts = await getDepegAccounts(ammProgram.provider.connection, poolsState);
 
-    const ammImpls = await Promise.all(
+    const ammImpls: AmmImpl[] = await Promise.all(
       accountsToFetch.map(async (accounts) => {
         const [tokenAVault, tokenBVault, vaultALp, vaultBLp, poolVaultA, poolVaultB, poolLpMint] = accounts; // must follow order
         const currentTime = accountsInfoMap.get(SYSVAR_CLOCK_PUBKEY.toBase58()) as BN;
@@ -653,6 +659,20 @@ export default class AmmImpl implements AmmImplementation {
     return null;
   }
 
+  private async getLockedAtaAmount(): Promise<BN> {
+    try {
+      const poolLpAta = await getAssociatedTokenAccount(this.poolState.lpMint, this.address);
+      const info = await this.program.provider.connection.getTokenAccountBalance(poolLpAta);
+      return new BN(info.value.amount);
+    } catch (e) {
+      return new BN(0);
+    }
+  }
+
+  public async getLockedLpAmount(): Promise<BN> {
+    return (await this.getLockedAtaAmount()).add(this.poolState.totalLockedLp);
+  }
+
   /**
    * It updates the state of the pool
    */
@@ -867,7 +887,7 @@ export default class AmmImpl implements AmmImplementation {
     inAmountLamport: BN,
     outAmountLamport: BN,
     referrerToken?: PublicKey,
-  ) {
+  ): Promise<Transaction> {
     const [sourceToken, destinationToken] =
       this.tokenA.address === inTokenMint.toBase58()
         ? [this.poolState.tokenAMint, this.poolState.tokenBMint]
@@ -1266,7 +1286,12 @@ export default class AmmImpl implements AmmImplementation {
    * @param {BN} tokenBOutAmount - The amount of token B you want to withdraw,
    * @returns A transaction object
    */
-  public async withdraw(owner: PublicKey, lpTokenAmount: BN, tokenAOutAmount: BN, tokenBOutAmount: BN) {
+  public async withdraw(
+    owner: PublicKey,
+    lpTokenAmount: BN,
+    tokenAOutAmount: BN,
+    tokenBOutAmount: BN,
+  ): Promise<Transaction> {
     const preInstructions: Array<TransactionInstruction> = [];
     const [[userAToken, createUserAIx], [userBToken, createUserBIx], [userPoolLp, createLpTokenIx]] = await Promise.all(
       [this.poolState.tokenAMint, this.poolState.tokenBMint, this.poolState.lpMint].map((key) =>
@@ -1332,6 +1357,131 @@ export default class AmmImpl implements AmmImplementation {
       feePayer: owner,
       ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
     }).add(withdrawTx);
+  }
+
+  public async getUserLockEscrow(owner: PublicKey): Promise<LockEscrow | null> {
+    const [lockEscrow, _lockEscrowBump] = deriveLockEscrowPda(this.address, owner, this.program.programId);
+    const lockEscrowAccount = await this.program.account.lockEscrow.fetchNullable(lockEscrow);
+    if (!lockEscrowAccount) return null;
+    return {
+      address: lockEscrow,
+      amount: lockEscrowAccount.totalLockedAmount || new BN(0),
+      tokenAMint: lockEscrowAccount.tokenAMint,
+      tokenBMint: lockEscrowAccount.tokenBMint,
+      fee: {
+        claimed: {
+          tokenAFee: lockEscrowAccount.aFee || new BN(0),
+          tokenBFee: lockEscrowAccount.bFee || new BN(0),
+        },
+        toBeClaim: {
+          tokenAFee: new BN(0), // todo: wait for Andrew support this
+          tokenBFee: new BN(0),
+        },
+        total: {
+          tokenAFee: new BN(0), // todo: wait for Andrew support this
+          tokenBFee: new BN(0),
+        },
+      },
+    };
+  }
+
+  public async lockLiquidity(owner: PublicKey, amount: BN): Promise<Transaction> {
+    const [lockEscrowPK] = deriveLockEscrowPda(this.address, owner, this.program.programId);
+
+    const preInstructions: TransactionInstruction[] = [];
+
+    const lockEscrow = await this.getUserLockEscrow(owner);
+    if (!lockEscrow) {
+      const createLockEscrowIx = await this.program.methods.createLockEscrow().accounts({
+        pool: this.address,
+        lockEscrow: lockEscrowPK,
+        owner,
+        lpMint: this.poolState.lpMint,
+        payer: owner,
+        systemProgram: SystemProgram.programId,
+      });
+      preInstructions.push(await createLockEscrowIx.instruction());
+    }
+
+    const [[userAta, createUserAtaIx], [escrowAta, createEscrowAtaIx]] = await Promise.all([
+      getOrCreateATAInstruction(this.poolState.lpMint, owner, this.program.provider.connection),
+      getOrCreateATAInstruction(this.poolState.lpMint, lockEscrowPK, this.program.provider.connection),
+    ]);
+
+    createUserAtaIx && preInstructions.push(createUserAtaIx);
+    createEscrowAtaIx && preInstructions.push(createEscrowAtaIx);
+
+    const lockTx = await this.program.methods
+      .lock(amount)
+      .accounts({
+        pool: this.address,
+        lockEscrow: lockEscrowPK,
+        owner,
+        lpMint: this.poolState.lpMint,
+        sourceTokens: userAta,
+        escrowVault: escrowAta,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        aVault: this.poolState.aVault,
+        bVault: this.poolState.bVault,
+        aVaultLp: this.poolState.aVaultLp,
+        bVaultLp: this.poolState.bVaultLp,
+        aVaultLpMint: this.vaultA.vaultState.lpMint,
+        bVaultLpMint: this.vaultB.vaultState.lpMint,
+      })
+      .preInstructions(preInstructions)
+      .transaction();
+
+    return new Transaction({
+      feePayer: owner,
+      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
+    }).add(lockTx);
+  }
+
+  public async claimLockFee(owner: PublicKey, maxAmount: BN): Promise<Transaction> {
+    const [lockEscrowPK] = deriveLockEscrowPda(this.address, owner, this.program.programId);
+
+    const preInstructions: TransactionInstruction[] = [];
+    const [
+      [userAta, createUserAtaIx],
+      [escrowAta, createEscrowAtaIx],
+      [tokenAAta, createTokenAAtaIx],
+      [tokenBAta, createTokenBAtaIx],
+    ] = await Promise.all([
+      getOrCreateATAInstruction(this.poolState.lpMint, owner, this.program.provider.connection),
+      getOrCreateATAInstruction(this.poolState.lpMint, lockEscrowPK, this.program.provider.connection),
+      getOrCreateATAInstruction(this.poolState.tokenAMint, owner, this.program.provider.connection),
+      getOrCreateATAInstruction(this.poolState.tokenBMint, owner, this.program.provider.connection),
+    ]);
+    createUserAtaIx && preInstructions.push(createUserAtaIx);
+    createEscrowAtaIx && preInstructions.push(createEscrowAtaIx);
+    createTokenAAtaIx && preInstructions.push(createTokenAAtaIx);
+    createTokenBAtaIx && preInstructions.push(createTokenBAtaIx);
+
+    const tx = await this.program.methods
+      .claimFee(maxAmount)
+      .accounts({
+        pool: this.address,
+        lockEscrow: lockEscrowPK,
+        owner,
+        lpMint: this.poolState.lpMint,
+        sourceTokens: userAta,
+        escrowVault: escrowAta,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        aVault: this.poolState.aVault,
+        bVault: this.poolState.bVault,
+        aVaultLp: this.poolState.aVaultLp,
+        bVaultLp: this.poolState.bVaultLp,
+        aVaultLpMint: this.vaultA.vaultState.lpMint,
+        bVaultLpMint: this.vaultB.vaultState.lpMint,
+        vaultProgram: this.vaultProgram.programId,
+        aTokenVault: this.vaultA.vaultState.tokenVault,
+        bTokenVault: this.vaultB.vaultState.tokenVault,
+        userAToken: tokenAAta,
+        userBToken: tokenBAta,
+      })
+      .preInstructions(preInstructions)
+      .transaction();
+    return tx;
   }
 
   private async createATAPreInstructions(owner: PublicKey, mintList: Array<PublicKey>) {

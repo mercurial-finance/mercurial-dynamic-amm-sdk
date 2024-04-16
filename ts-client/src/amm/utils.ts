@@ -123,6 +123,10 @@ export const getOrCreateATAInstruction = async (
   }
 };
 
+export const deriveLockEscrowPda = (pool: PublicKey, owner: PublicKey, ammProgram: PublicKey) => {
+  return PublicKey.findProgramAddressSync([Buffer.from('lock_escrow'), pool.toBuffer(), owner.toBuffer()], ammProgram);
+};
+
 export const wrapSOLInstruction = (from: PublicKey, to: PublicKey, amount: bigint): TransactionInstruction[] => {
   return [
     SystemProgram.transfer({
