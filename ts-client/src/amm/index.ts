@@ -58,8 +58,8 @@ import {
   chunkedFetchMultiplePoolAccount,
   deriveMintMetadata,
   deriveLockEscrowPda,
+  calculateUnclaimedLockEscrowFee,
 } from './utils';
-import { get } from 'http';
 
 type Opt = {
   cluster: Cluster;
@@ -1363,23 +1363,27 @@ export default class AmmImpl implements AmmImplementation {
     const [lockEscrow, _lockEscrowBump] = deriveLockEscrowPda(this.address, owner, this.program.programId);
     const lockEscrowAccount = await this.program.account.lockEscrow.fetchNullable(lockEscrow);
     if (!lockEscrowAccount) return null;
+    const unClaimedFee = calculateUnclaimedLockEscrowFee(
+      lockEscrowAccount.totalLockedAmount,
+      lockEscrowAccount.lpPerToken,
+      lockEscrowAccount.unclaimedFeePending,
+      this.poolInfo.virtualPriceRaw,
+    );
+
+    const { tokenAOutAmount, tokenBOutAmount } = this.getWithdrawQuote(unClaimedFee, 0);
     return {
       address: lockEscrow,
       amount: lockEscrowAccount.totalLockedAmount || new BN(0),
-      tokenAMint: lockEscrowAccount.tokenAMint,
-      tokenBMint: lockEscrowAccount.tokenBMint,
       fee: {
+        tokenAMint: lockEscrowAccount.tokenAMint,
+        tokenBMint: lockEscrowAccount.tokenBMint,
         claimed: {
           tokenAFee: lockEscrowAccount.aFee || new BN(0),
           tokenBFee: lockEscrowAccount.bFee || new BN(0),
         },
-        toBeClaim: {
-          tokenAFee: new BN(0), // todo: wait for Andrew support this
-          tokenBFee: new BN(0),
-        },
-        total: {
-          tokenAFee: new BN(0), // todo: wait for Andrew support this
-          tokenBFee: new BN(0),
+        unClaimed: {
+          tokenAFee: tokenAOutAmount,
+          tokenBFee: tokenBOutAmount,
         },
       },
     };

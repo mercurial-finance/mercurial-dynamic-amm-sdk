@@ -272,24 +272,39 @@ export const calculatePoolInfo = (
   const d = swapCurve.computeD(tokenAAmount, tokenBAmount);
   const virtualPriceBigNum = poolLpSupply.isZero() ? new BN(0) : d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
   const virtualPrice = new Decimal(virtualPriceBigNum.toString()).div(VIRTUAL_PRICE_PRECISION.toString()).toNumber();
+  const virtualPriceRaw = poolLpSupply.isZero() ? new BN(0) : new BN(1).shln(64).mul(d).div(poolLpSupply);
 
   const poolInformation: PoolInformation = {
     tokenAAmount,
     tokenBAmount,
     virtualPrice,
+    virtualPriceRaw,
   };
 
   return poolInformation;
 };
 
-export const calculateAdminTradingFee = (amount: BN, poolState: PoolState) => {
+export const calculateAdminTradingFee = (amount: BN, poolState: PoolState): BN => {
   const { ownerTradeFeeDenominator, ownerTradeFeeNumerator } = poolState.fees;
   return amount.mul(ownerTradeFeeNumerator).div(ownerTradeFeeDenominator);
 };
 
-export const calculateTradingFee = (amount: BN, poolState: PoolState) => {
+export const calculateTradingFee = (amount: BN, poolState: PoolState): BN => {
   const { tradeFeeDenominator, tradeFeeNumerator } = poolState.fees;
   return amount.mul(tradeFeeNumerator).div(tradeFeeDenominator);
+};
+
+export const calculateUnclaimedLockEscrowFee = (
+  totalLockedAmount: BN,
+  lpPerToken: BN,
+  unclaimedFeePending: BN,
+  currentVirtualPrice: BN,
+): BN => {
+  if (currentVirtualPrice.isZero()) {
+    return new BN(0);
+  }
+  let newFee = totalLockedAmount.mul(currentVirtualPrice.sub(lpPerToken)).div(currentVirtualPrice);
+  return newFee.add(unclaimedFeePending);
 };
 
 /**

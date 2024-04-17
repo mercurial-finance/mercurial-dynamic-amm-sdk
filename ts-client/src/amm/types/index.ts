@@ -41,12 +41,11 @@ type Fees = {
 export interface LockEscrow {
   address: PublicKey;
   amount: BN;
-  tokenAMint: PublicKey;
-  tokenBMint: PublicKey;
   fee: {
+    tokenAMint: PublicKey;
+    tokenBMint: PublicKey;
     claimed: Fees;
-    toBeClaim: Fees;
-    total: Fees;
+    unClaimed: Fees;
   };
 }
 
@@ -168,6 +167,7 @@ export type PoolInformation = {
   tokenAAmount: BN;
   tokenBAmount: BN;
   virtualPrice: number;
+  virtualPriceRaw: BN;
 };
 
 export type AccountsInfo = {

@@ -1,5 +1,5 @@
 export type Amm = {
-  version: '0.4.12';
+  version: '0.5.0';
   name: 'amm';
   docs: ['Program for AMM'];
   instructions: [
@@ -2874,7 +2874,7 @@ export type Amm = {
 };
 
 export const IDL: Amm = {
-  version: '0.4.12',
+  version: '0.5.0',
   name: 'amm',
   docs: ['Program for AMM'],
   instructions: [
