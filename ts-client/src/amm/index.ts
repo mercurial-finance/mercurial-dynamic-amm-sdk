@@ -1382,8 +1382,8 @@ export default class AmmImpl implements AmmImplementation {
           tokenB: lockEscrowAccount.bFee || new BN(0),
         },
         unClaimed: {
-          tokenA: tokenAOutAmount,
-          tokenB: tokenBOutAmount,
+          tokenA: tokenAOutAmount || new BN(0),
+          tokenB: tokenBOutAmount || new BN(0),
         },
       },
     };
