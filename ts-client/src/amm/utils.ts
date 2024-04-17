@@ -99,6 +99,7 @@ export const getOrCreateATAInstruction = async (
   tokenMint: PublicKey,
   owner: PublicKey,
   connection: Connection,
+  payer?: PublicKey,
 ): Promise<[PublicKey, TransactionInstruction?]> => {
   let toAccount;
   try {
@@ -111,7 +112,7 @@ export const getOrCreateATAInstruction = async (
         tokenMint,
         toAccount,
         owner,
-        owner,
+        payer || owner,
       );
       return [toAccount, ix];
     }

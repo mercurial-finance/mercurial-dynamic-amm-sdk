@@ -1404,8 +1404,8 @@ export default class AmmImpl implements AmmImplementation {
     }
 
     const [[userAta, createUserAtaIx], [escrowAta, createEscrowAtaIx]] = await Promise.all([
-      getOrCreateATAInstruction(this.poolState.lpMint, owner, this.program.provider.connection),
-      getOrCreateATAInstruction(this.poolState.lpMint, lockEscrowPK, this.program.provider.connection),
+      getOrCreateATAInstruction(this.poolState.lpMint, owner, this.program.provider.connection, owner),
+      getOrCreateATAInstruction(this.poolState.lpMint, lockEscrowPK, this.program.provider.connection, owner),
     ]);
 
     createUserAtaIx && preInstructions.push(createUserAtaIx);
