@@ -1378,12 +1378,12 @@ export default class AmmImpl implements AmmImplementation {
         tokenAMint: lockEscrowAccount.tokenAMint,
         tokenBMint: lockEscrowAccount.tokenBMint,
         claimed: {
-          tokenAFee: lockEscrowAccount.aFee || new BN(0),
-          tokenBFee: lockEscrowAccount.bFee || new BN(0),
+          tokenA: lockEscrowAccount.aFee || new BN(0),
+          tokenB: lockEscrowAccount.bFee || new BN(0),
         },
         unClaimed: {
-          tokenAFee: tokenAOutAmount,
-          tokenBFee: tokenBOutAmount,
+          tokenA: tokenAOutAmount,
+          tokenB: tokenBOutAmount,
         },
       },
     };
@@ -1485,7 +1485,10 @@ export default class AmmImpl implements AmmImplementation {
       })
       .preInstructions(preInstructions)
       .transaction();
-    return tx;
+    return new Transaction({
+      feePayer: owner,
+      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
+    }).add(tx);
   }
 
   private async createATAPreInstructions(owner: PublicKey, mintList: Array<PublicKey>) {

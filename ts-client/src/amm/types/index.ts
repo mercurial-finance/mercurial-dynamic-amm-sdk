@@ -34,8 +34,8 @@ export interface AmmImplementation {
 }
 
 type Fees = {
-  tokenAFee: BN;
-  tokenBFee: BN;
+  tokenA: BN;
+  tokenB: BN;
 };
 
 export interface LockEscrow {
