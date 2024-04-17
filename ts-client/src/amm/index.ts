@@ -1461,6 +1461,12 @@ export default class AmmImpl implements AmmImplementation {
     createTokenAAtaIx && preInstructions.push(createTokenAAtaIx);
     createTokenBAtaIx && preInstructions.push(createTokenBAtaIx);
 
+    const postInstructions: Array<TransactionInstruction> = [];
+    if ([this.poolState.tokenAMint.toBase58(), this.poolState.tokenBMint.toBase58()].includes(NATIVE_MINT.toBase58())) {
+      const closeWrappedSOLIx = await unwrapSOLInstruction(owner);
+      closeWrappedSOLIx && postInstructions.push(closeWrappedSOLIx);
+    }
+
     const tx = await this.program.methods
       .claimFee(maxAmount)
       .accounts({
@@ -1484,6 +1490,7 @@ export default class AmmImpl implements AmmImplementation {
         userBToken: tokenBAta,
       })
       .preInstructions(preInstructions)
+      .postInstructions(postInstructions)
       .transaction();
     return new Transaction({
       feePayer: owner,
