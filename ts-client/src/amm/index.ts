@@ -1375,8 +1375,6 @@ export default class AmmImpl implements AmmImplementation {
       address: lockEscrow,
       amount: lockEscrowAccount.totalLockedAmount || new BN(0),
       fee: {
-        tokenAMint: lockEscrowAccount.tokenAMint,
-        tokenBMint: lockEscrowAccount.tokenBMint,
         claimed: {
           tokenA: lockEscrowAccount.aFee || new BN(0),
           tokenB: lockEscrowAccount.bFee || new BN(0),

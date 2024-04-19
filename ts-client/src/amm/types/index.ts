@@ -42,8 +42,6 @@ export interface LockEscrow {
   address: PublicKey;
   amount: BN;
   fee: {
-    tokenAMint: PublicKey;
-    tokenBMint: PublicKey;
     claimed: Fees;
     unClaimed: Fees;
   };
