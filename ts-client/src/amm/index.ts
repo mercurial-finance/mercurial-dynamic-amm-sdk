@@ -297,7 +297,7 @@ export default class AmmImpl implements AmmImplementation {
 
     return new Transaction({
       feePayer: payer,
-      ...(await ammProgram.provider.connection.getLatestBlockhash('finalized')),
+      ...(await ammProgram.provider.connection.getLatestBlockhash(ammProgram.provider.connection.commitment)),
     }).add(createPermissionlessPoolTx);
   }
 
@@ -950,7 +950,7 @@ export default class AmmImpl implements AmmImplementation {
 
     return new Transaction({
       feePayer: owner,
-      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
+      ...(await this.program.provider.connection.getLatestBlockhash(this.program.provider.connection.commitment)),
     }).add(swapTx);
   }
 
@@ -1185,7 +1185,7 @@ export default class AmmImpl implements AmmImplementation {
 
     return new Transaction({
       feePayer: owner,
-      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
+      ...(await this.program.provider.connection.getLatestBlockhash(this.program.provider.connection.commitment)),
     }).add(depositTx);
   }
 
@@ -1355,7 +1355,7 @@ export default class AmmImpl implements AmmImplementation {
 
     return new Transaction({
       feePayer: owner,
-      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
+      ...(await this.program.provider.connection.getLatestBlockhash(this.program.provider.connection.commitment)),
     }).add(withdrawTx);
   }
 
@@ -1437,7 +1437,7 @@ export default class AmmImpl implements AmmImplementation {
 
     return new Transaction({
       feePayer: owner,
-      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
+      ...(await this.program.provider.connection.getLatestBlockhash(this.program.provider.connection.commitment)),
     }).add(lockTx);
   }
 
@@ -1494,7 +1494,7 @@ export default class AmmImpl implements AmmImplementation {
       .transaction();
     return new Transaction({
       feePayer: owner,
-      ...(await this.program.provider.connection.getLatestBlockhash('finalized')),
+      ...(await this.program.provider.connection.getLatestBlockhash(this.program.provider.connection.commitment)),
     }).add(tx);
   }
 
