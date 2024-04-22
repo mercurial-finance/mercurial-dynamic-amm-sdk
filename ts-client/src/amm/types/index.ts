@@ -9,7 +9,6 @@ import { publicKey, struct, u64, u8, option } from '@project-serum/borsh';
 
 export type AmmProgram = Program<AmmIdl>;
 export type VaultProgram = Program<VaultIdl>;
-export type LockEscrowProgram = IdlAccounts<AmmIdl>['lockEscrow'];
 
 export interface AmmImplementation {
   tokenA: TokenInfo;
@@ -35,6 +34,7 @@ export interface AmmImplementation {
 }
 
 type Fees = {
+  lp?: BN;
   tokenA: BN;
   tokenB: BN;
 };
@@ -161,6 +161,7 @@ export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType' | 'fees' |
 };
 export type Depeg = Omit<IdlTypes<AmmIdl>['Depeg'], 'depegType'> & { depegType: DepegType };
 export type PoolFees = IdlTypes<AmmIdl>['PoolFees'];
+export type LockEscrowAccount = IdlAccounts<AmmIdl>['lockEscrow'];
 
 export type PoolInformation = {
   tokenAAmount: BN;

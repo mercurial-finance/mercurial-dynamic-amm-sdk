@@ -30,7 +30,7 @@ import {
   AmmProgram,
   DepositQuote,
   LockEscrow,
-  LockEscrowProgram,
+  LockEscrowAccount,
   PoolInformation,
   PoolState,
   VaultProgram,
@@ -61,6 +61,7 @@ import {
   deriveLockEscrowPda,
   calculateUnclaimedLockEscrowFee,
 } from './utils';
+import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 
 type Opt = {
   cluster: Cluster;
@@ -478,6 +479,30 @@ export default class AmmImpl implements AmmImplementation {
     );
 
     return ammImpls;
+  }
+
+  public static async getLockedLpAmountByUser(
+    connection: Connection,
+    userPubKey: PublicKey,
+    opt?: {
+      programId?: string;
+      cluster?: Cluster;
+    },
+  ) {
+    const { ammProgram } = createProgram(connection, opt?.programId);
+
+    const lockEscrows = await ammProgram.account.lockEscrow.all([
+      {
+        memcmp: {
+          bytes: bs58.encode(userPubKey.toBuffer()),
+          offset: 8 + 32,
+        },
+      },
+    ]);
+
+    return lockEscrows.reduce((accMap, { account }) => {
+      return accMap.set(account.pool.toBase58(), account);
+    }, new Map<string, LockEscrowAccount>());
   }
 
   public static async fetchMultipleUserBalance(
@@ -1381,6 +1406,7 @@ export default class AmmImpl implements AmmImplementation {
           tokenB: lockEscrowAccount.bFee || new BN(0),
         },
         unClaimed: {
+          lp: unClaimedFee,
           tokenA: tokenAOutAmount || new BN(0),
           tokenB: tokenBOutAmount || new BN(0),
         },
