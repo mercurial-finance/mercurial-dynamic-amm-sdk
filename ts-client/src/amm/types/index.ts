@@ -9,6 +9,7 @@ import { publicKey, struct, u64, u8, option } from '@project-serum/borsh';
 
 export type AmmProgram = Program<AmmIdl>;
 export type VaultProgram = Program<VaultIdl>;
+export type LockEscrowProgram = IdlAccounts<AmmIdl>['lockEscrow'];
 
 export interface AmmImplementation {
   tokenA: TokenInfo;

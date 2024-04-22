@@ -30,6 +30,7 @@ import {
   AmmProgram,
   DepositQuote,
   LockEscrow,
+  LockEscrowProgram,
   PoolInformation,
   PoolState,
   VaultProgram,
@@ -1361,7 +1362,7 @@ export default class AmmImpl implements AmmImplementation {
 
   public async getUserLockEscrow(owner: PublicKey): Promise<LockEscrow | null> {
     const [lockEscrow, _lockEscrowBump] = deriveLockEscrowPda(this.address, owner, this.program.programId);
-    const lockEscrowAccount = await this.program.account.lockEscrow.fetchNullable(lockEscrow);
+    const lockEscrowAccount: LockEscrowProgram | null = await this.program.account.lockEscrow.fetchNullable(lockEscrow);
     if (!lockEscrowAccount) return null;
     const unClaimedFee = calculateUnclaimedLockEscrowFee(
       lockEscrowAccount.totalLockedAmount,
