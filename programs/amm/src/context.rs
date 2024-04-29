@@ -5,6 +5,7 @@ use std::str::FromStr;
 use crate::curve::curve_type::CurveType;
 use crate::curve::fees::to_bps;
 use crate::error::PoolError;
+use crate::state::LockEscrow;
 use crate::{state::Pool, vault_utils::MercurialVault};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
@@ -729,44 +730,177 @@ pub struct Swap<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-/// Accounts for set pool fees instruction
+/// Accounts for claim fee instruction
 #[derive(Accounts)]
 pub struct ClaimFee<'info> {
+    /// Pool account
     #[account(
+        mut,
+        has_one = a_vault @ PoolError::InvalidVaultAccount,
+        has_one = b_vault @ PoolError::InvalidVaultAccount,
         has_one = a_vault_lp @ PoolError::InvalidVaultLpAccount,
-        has_one = fee_claimer @ PoolError::InvalidFeeClaimerAccount,
-        constraint = pool.admin_token_a_fee == admin_token_fee.key() || pool.admin_token_b_fee == admin_token_fee.key() @ PoolError::InvalidAdminFeeAccount
+        has_one = b_vault_lp @ PoolError::InvalidVaultLpAccount,
+        has_one = lp_mint @ PoolError::InvalidPoolLpMintAccount,
+        constraint = a_vault_lp.mint == a_vault_lp_mint.key() @ PoolError::MismatchedLpMint,
+        constraint = b_vault_lp.mint == b_vault_lp_mint.key() @ PoolError::MismatchedLpMint,
     )]
-    /// Pool account (PDA)
     pub pool: Box<Account<'info, Pool>>,
 
-    /// admin token fee
+    /// LP token mint of the pool
     #[account(mut)]
-    pub admin_token_fee: Box<Account<'info, TokenAccount>>,
+    pub lp_mint: Account<'info, Mint>,
 
-    /// claimer token fee
+    /// Lock account
+    #[account(
+        mut,
+        has_one=pool,
+        has_one=owner,
+        has_one=escrow_vault,
+    )]
+    pub lock_escrow: Box<Account<'info, LockEscrow>>,
+
+    /// Owner of lock account
     #[account(mut)]
-    pub claimer_token_fee: Box<Account<'info, TokenAccount>>,
+    pub owner: Signer<'info>,
+
+    /// owner lp token account
+    #[account(mut)]
+    pub source_tokens: Account<'info, TokenAccount>,
+
+    /// Escrow vault
+    #[account(mut)]
+    pub escrow_vault: Account<'info, TokenAccount>,
 
     /// Token program.
     pub token_program: Program<'info, Token>,
 
-    /// A vault lp
-    pub a_vault_lp: Account<'info, TokenAccount>,
+    #[account(mut)]
+    /// Token vault account of vault A
+    pub a_token_vault: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    /// Token vault account of vault B
+    pub b_token_vault: Box<Account<'info, TokenAccount>>,
 
-    /// Admin account. Must be owner of the pool.
-    pub fee_claimer: Signer<'info>,
+    /// Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.
+    #[account(mut, constraint=a_vault.token_vault == a_token_vault.key() @ PoolError::InvalidVaultAccount)]
+    pub a_vault: Box<Account<'info, Vault>>,
+    /// Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.
+    #[account(mut, constraint=b_vault.token_vault == b_token_vault.key() @ PoolError::InvalidVaultAccount)]
+    pub b_vault: Box<Account<'info, Vault>>,
+    /// LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
+    #[account(mut)]
+    pub a_vault_lp: Box<Account<'info, TokenAccount>>,
+    /// LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
+    #[account(mut)]
+    pub b_vault_lp: Box<Account<'info, TokenAccount>>,
+    /// LP token mint of vault a
+    #[account(mut)]
+    pub a_vault_lp_mint: Box<Account<'info, Mint>>,
+    /// LP token mint of vault b
+    #[account(mut)]
+    pub b_vault_lp_mint: Box<Account<'info, Mint>>,
+
+    #[account(mut)]
+    /// User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.
+    pub user_a_token: Account<'info, TokenAccount>,
+    #[account(mut)]
+    /// User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.
+    pub user_b_token: Account<'info, TokenAccount>,
+
+    /// Vault program. the pool will deposit/withdraw liquidity from the vault.
+    pub vault_program: Program<'info, MercurialVault>,
 }
 
-/// Accounts for set pool fees instruction
+/// Accounts for create lock account instruction
 #[derive(Accounts)]
-pub struct SetFeeClaimer<'info> {
+pub struct CreateLockEscrow<'info> {
+    /// Pool account
+    #[account(
+        has_one=lp_mint,
+    )]
+    pub pool: Box<Account<'info, Pool>>,
+
+    /// Lock account
+    #[account(
+        init,
+        seeds = [
+            "lock_escrow".as_ref(),
+            pool.key().as_ref(),
+            owner.key().as_ref(),
+        ],
+        space = 8 + std::mem::size_of::<LockEscrow>(),
+        bump,
+        payer = payer,
+    )]
+    pub lock_escrow: Box<Account<'info, LockEscrow>>,
+
+    /// CHECK: Owner account
+    pub owner: UncheckedAccount<'info>,
+
+    /// LP token mint of the pool
+    pub lp_mint: Account<'info, Mint>,
+
+    /// Payer account
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    /// System program.
+    pub system_program: Program<'info, System>,
+}
+
+/// Accounts for lock instruction
+#[derive(Accounts)]
+pub struct Lock<'info> {
+    /// Pool account
     #[account(
         mut,
-        has_one = admin @ PoolError::InvalidAdminAccount,
+        has_one = a_vault @ PoolError::InvalidVaultAccount,
+        has_one = b_vault @ PoolError::InvalidVaultAccount,
+        has_one = a_vault_lp @ PoolError::InvalidVaultLpAccount,
+        has_one = b_vault_lp @ PoolError::InvalidVaultLpAccount,
+        has_one = lp_mint @ PoolError::InvalidPoolLpMintAccount,
+        constraint = a_vault_lp.mint == a_vault_lp_mint.key() @ PoolError::MismatchedLpMint,
+        constraint = b_vault_lp.mint == b_vault_lp_mint.key() @ PoolError::MismatchedLpMint,
     )]
-    /// Pool account (PDA)
     pub pool: Box<Account<'info, Pool>>,
-    /// Admin account. Must be owner of the pool.
-    pub admin: Signer<'info>,
+
+    /// LP token mint of the pool
+    pub lp_mint: Account<'info, Mint>,
+
+    /// Lock account
+    #[account(
+        mut,
+        has_one=pool,
+        has_one=owner,
+        has_one=escrow_vault,
+    )]
+    pub lock_escrow: Box<Account<'info, LockEscrow>>,
+
+    /// Owner of lock account
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
+    /// owner lp token account
+    #[account(mut)]
+    pub source_tokens: Account<'info, TokenAccount>,
+
+    /// Escrow vault
+    #[account(mut)]
+    pub escrow_vault: Account<'info, TokenAccount>,
+
+    /// Token program.
+    pub token_program: Program<'info, Token>,
+
+    /// Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.
+    pub a_vault: Box<Account<'info, Vault>>,
+    /// Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.
+    pub b_vault: Box<Account<'info, Vault>>,
+    /// LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
+    pub a_vault_lp: Box<Account<'info, TokenAccount>>,
+    /// LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
+    pub b_vault_lp: Box<Account<'info, TokenAccount>>,
+    /// LP token mint of vault a
+    pub a_vault_lp_mint: Box<Account<'info, Mint>>,
+    /// LP token mint of vault b
+    pub b_vault_lp_mint: Box<Account<'info, Mint>>,
 }
