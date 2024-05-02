@@ -30,6 +30,22 @@ export interface AmmImplementation {
     tokenAOutAmount: BN,
     tokenBOutAmount: BN,
   ) => Promise<Transaction>;
+  getUserLockEscrow: (owner: PublicKey) => Promise<LockEscrow | null>;
+}
+
+type Fees = {
+  lp?: BN;
+  tokenA: BN;
+  tokenB: BN;
+};
+
+export interface LockEscrow {
+  address: PublicKey;
+  amount: BN;
+  fee: {
+    claimed: Fees;
+    unClaimed: Fees;
+  };
 }
 
 export type SwapQuote = {
@@ -145,11 +161,13 @@ export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType' | 'fees' |
 };
 export type Depeg = Omit<IdlTypes<AmmIdl>['Depeg'], 'depegType'> & { depegType: DepegType };
 export type PoolFees = IdlTypes<AmmIdl>['PoolFees'];
+export type LockEscrowAccount = IdlAccounts<AmmIdl>['lockEscrow'];
 
 export type PoolInformation = {
   tokenAAmount: BN;
   tokenBAmount: BN;
   virtualPrice: number;
+  virtualPriceRaw: BN;
 };
 
 export type AccountsInfo = {

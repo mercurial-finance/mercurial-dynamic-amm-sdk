@@ -55,6 +55,7 @@ export type {
   WithdrawQuote,
   SwapQuote,
   PoolState,
+  LockEscrow,
   PoolInformation,
   ParsedClockState,
   ConstantProductCurve,

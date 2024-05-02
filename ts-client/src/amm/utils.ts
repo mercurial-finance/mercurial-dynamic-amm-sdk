@@ -37,6 +37,7 @@ import {
   STABLE_SWAP_DEFAULT_TRADE_FEE_BPS,
   CONSTANT_PRODUCT_DEFAULT_TRADE_FEE_BPS,
   METAPLEX_PROGRAM,
+  SEEDS,
 } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
@@ -99,6 +100,7 @@ export const getOrCreateATAInstruction = async (
   tokenMint: PublicKey,
   owner: PublicKey,
   connection: Connection,
+  payer?: PublicKey,
 ): Promise<[PublicKey, TransactionInstruction?]> => {
   let toAccount;
   try {
@@ -111,7 +113,7 @@ export const getOrCreateATAInstruction = async (
         tokenMint,
         toAccount,
         owner,
-        owner,
+        payer || owner,
       );
       return [toAccount, ix];
     }
@@ -121,6 +123,13 @@ export const getOrCreateATAInstruction = async (
     console.error('Error::getOrCreateATAInstruction', e);
     throw e;
   }
+};
+
+export const deriveLockEscrowPda = (pool: PublicKey, owner: PublicKey, ammProgram: PublicKey) => {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from(SEEDS.LOCK_ESCROW), pool.toBuffer(), owner.toBuffer()],
+    ammProgram,
+  );
 };
 
 export const wrapSOLInstruction = (from: PublicKey, to: PublicKey, amount: bigint): TransactionInstruction[] => {
@@ -267,24 +276,39 @@ export const calculatePoolInfo = (
   const d = swapCurve.computeD(tokenAAmount, tokenBAmount);
   const virtualPriceBigNum = poolLpSupply.isZero() ? new BN(0) : d.mul(VIRTUAL_PRICE_PRECISION).div(poolLpSupply);
   const virtualPrice = new Decimal(virtualPriceBigNum.toString()).div(VIRTUAL_PRICE_PRECISION.toString()).toNumber();
+  const virtualPriceRaw = poolLpSupply.isZero() ? new BN(0) : new BN(1).shln(64).mul(d).div(poolLpSupply);
 
   const poolInformation: PoolInformation = {
     tokenAAmount,
     tokenBAmount,
     virtualPrice,
+    virtualPriceRaw,
   };
 
   return poolInformation;
 };
 
-export const calculateAdminTradingFee = (amount: BN, poolState: PoolState) => {
+export const calculateAdminTradingFee = (amount: BN, poolState: PoolState): BN => {
   const { ownerTradeFeeDenominator, ownerTradeFeeNumerator } = poolState.fees;
   return amount.mul(ownerTradeFeeNumerator).div(ownerTradeFeeDenominator);
 };
 
-export const calculateTradingFee = (amount: BN, poolState: PoolState) => {
+export const calculateTradingFee = (amount: BN, poolState: PoolState): BN => {
   const { tradeFeeDenominator, tradeFeeNumerator } = poolState.fees;
   return amount.mul(tradeFeeNumerator).div(tradeFeeDenominator);
+};
+
+export const calculateUnclaimedLockEscrowFee = (
+  totalLockedAmount: BN,
+  lpPerToken: BN,
+  unclaimedFeePending: BN,
+  currentVirtualPrice: BN,
+): BN => {
+  if (currentVirtualPrice.isZero()) {
+    return new BN(0);
+  }
+  let newFee = totalLockedAmount.mul(currentVirtualPrice.sub(lpPerToken)).div(currentVirtualPrice);
+  return newFee.add(unclaimedFeePending);
 };
 
 /**

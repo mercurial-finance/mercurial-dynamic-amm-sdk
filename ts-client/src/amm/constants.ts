@@ -100,6 +100,7 @@ export const SEEDS = Object.freeze({
   APY: 'apy',
   FEE: 'fee',
   LP_MINT: 'lp_mint',
+  LOCK_ESCROW: 'lock_escrow',
 });
 
 export const VAULT_BASE_KEY = new PublicKey('HWzXGcGHy4tcpYfaRDCyLNzXqBTv3E6BttpCH2vJxArv');
