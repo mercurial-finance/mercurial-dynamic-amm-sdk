@@ -57,3 +57,38 @@ pub struct PoolInfo {
     /// Current unix timestamp
     pub current_timestamp: u64,
 }
+
+/// Create lock escrow
+#[event]
+pub struct CreateLockEscrow {
+    /// Pool address
+    pub pool: Pubkey,
+    /// Owner of lock escrow
+    pub owner: Pubkey,
+}
+
+/// Lock
+#[event]
+pub struct Lock {
+    /// Pool address
+    pub pool: Pubkey,
+    /// Owner of lock escrow
+    pub owner: Pubkey,
+    /// Locked amount
+    pub amount: u64,
+}
+
+/// Claim fee
+#[event]
+pub struct ClaimFee {
+    /// Pool address
+    pub pool: Pubkey,
+    /// Owner of lock escrow
+    pub owner: Pubkey,
+    /// Lp amount
+    pub amount: u64,
+    /// A fee
+    pub a_fee: u64,
+    /// B fee
+    pub b_fee: u64,
+}

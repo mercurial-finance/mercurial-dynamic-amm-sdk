@@ -108,13 +108,18 @@ pub mod amm {
         Ok(())
     }
 
-    /// Update fee claimer
-    pub fn set_fee_claimer(ctx: Context<SetFeeClaimer>, fee_claimer: Pubkey) -> Result<()> {
+    /// Create lock account
+    pub fn create_lock_escrow(ctx: Context<CreateLockEscrow>) -> Result<()> {
         Ok(())
     }
 
-    /// claim fee
-    pub fn claim_fee(ctx: Context<ClaimFee>, amount: u64) -> Result<()> {
+    /// Lock Lp token
+    pub fn lock(ctx: Context<Lock>, amount: u64) -> Result<()> {
+        Ok(())
+    }
+
+    /// Claim fee
+    pub fn claim_fee(ctx: Context<ClaimFee>, max_amount: u64) -> Result<()> {
         Ok(())
     }
 }
