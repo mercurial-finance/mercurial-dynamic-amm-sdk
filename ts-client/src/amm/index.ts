@@ -182,6 +182,7 @@ export default class AmmImpl implements AmmImplementation {
       cluster?: Cluster;
       programId?: string;
       vaultProgramId?: string;
+      skipAta?: boolean;
     },
   ) {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
@@ -233,8 +234,11 @@ export default class AmmImpl implements AmmImplementation {
       getOrCreateATAInstruction(tokenAMint, payer, connection),
       getOrCreateATAInstruction(tokenBMint, payer, connection),
     ]);
-    createPayerTokenAIx && preInstructions.push(createPayerTokenAIx);
-    createPayerTokenBIx && preInstructions.push(createPayerTokenBIx);
+
+    if (!opt?.skipAta) {
+      createPayerTokenAIx && preInstructions.push(createPayerTokenAIx);
+      createPayerTokenBIx && preInstructions.push(createPayerTokenBIx);
+    }
 
     const [[adminTokenAFee], [adminTokenBFee]] = [
       PublicKey.findProgramAddressSync(
