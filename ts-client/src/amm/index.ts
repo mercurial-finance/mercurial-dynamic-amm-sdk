@@ -237,8 +237,8 @@ export default class AmmImpl implements AmmImplementation {
 
     if (!opt?.skipAta) {
       createPayerTokenAIx && preInstructions.push(createPayerTokenAIx);
-      createPayerTokenBIx && preInstructions.push(createPayerTokenBIx);
     }
+    createPayerTokenBIx && preInstructions.push(createPayerTokenBIx);
 
     const [[adminTokenAFee], [adminTokenBFee]] = [
       PublicKey.findProgramAddressSync(
