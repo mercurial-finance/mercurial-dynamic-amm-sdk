@@ -60,6 +60,7 @@ import {
   deriveMintMetadata,
   deriveLockEscrowPda,
   calculateUnclaimedLockEscrowFee,
+  derivePoolLpMint,
 } from './utils';
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 
@@ -184,7 +185,7 @@ export default class AmmImpl implements AmmImplementation {
       vaultProgramId?: string;
       skipAta?: boolean;
     },
-  ) {
+  ): Promise<Transaction> {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
 
     const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
@@ -251,10 +252,7 @@ export default class AmmImpl implements AmmImplementation {
       ),
     ];
 
-    const [lpMint] = PublicKey.findProgramAddressSync(
-      [Buffer.from(SEEDS.LP_MINT), poolPubkey.toBuffer()],
-      ammProgram.programId,
-    );
+    const lpMint = derivePoolLpMint(poolPubkey, ammProgram.programId);
 
     const payerPoolLp = await getAssociatedTokenAccount(lpMint, payer);
 
@@ -305,6 +303,99 @@ export default class AmmImpl implements AmmImplementation {
       feePayer: payer,
       ...(await ammProgram.provider.connection.getLatestBlockhash(ammProgram.provider.connection.commitment)),
     }).add(createPermissionlessPoolTx);
+  }
+
+  public static async createAndDepositPermissionlessPool(
+    connection: Connection,
+    payer: PublicKey,
+    tokenInfoA: TokenInfo,
+    tokenInfoB: TokenInfo,
+    tokenAAmount: BN,
+    tokenBAmount: BN,
+    isStable: boolean,
+    tradeFeeBps: BN,
+    opt?: {
+      cluster?: Cluster;
+      programId?: string;
+      vaultProgramId?: string;
+      skipAta?: boolean;
+    },
+  ) {
+    const createPoolTx = await AmmImpl.createPermissionlessPool(
+      connection,
+      payer,
+      tokenInfoA,
+      tokenInfoB,
+      tokenAAmount,
+      tokenBAmount,
+      isStable,
+      tradeFeeBps,
+      opt,
+    );
+    const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
+
+    const [vaultA, vaultB] = await Promise.all([
+      VaultImpl.create(connection, tokenInfoA, { cluster: opt?.cluster }),
+      VaultImpl.create(connection, tokenInfoB, { cluster: opt?.cluster }),
+    ]);
+    const swapCurve = new ConstantProductSwap();
+    const poolMint = derivePoolAddress(connection, tokenInfoA, tokenInfoB, false, tradeFeeBps, {
+      programId: opt?.programId,
+    });
+
+    const lpMint = derivePoolLpMint(poolMint, ammProgram.programId);
+    const [{ vaultPda: aVault }, { vaultPda: bVault }] = [
+      getVaultPdas(new PublicKey(tokenInfoA.address), vaultProgram.programId),
+      getVaultPdas(new PublicKey(tokenInfoB.address), vaultProgram.programId),
+    ];
+    const [[aVaultLp], [bVaultLp]] = [
+      PublicKey.findProgramAddressSync([aVault.toBuffer(), poolMint.toBuffer()], ammProgram.programId),
+      PublicKey.findProgramAddressSync([bVault.toBuffer(), poolMint.toBuffer()], ammProgram.programId),
+    ];
+
+    const [userPoolLp, createLpMintIx] = await getOrCreateATAInstruction(lpMint, payer, connection);
+
+    let preInstructions: Array<TransactionInstruction> = [];
+    createLpMintIx && preInstructions.push(createLpMintIx);
+
+    const postInstructions: Array<TransactionInstruction> = [];
+    if ([tokenInfoA.address, tokenInfoB.address].includes(NATIVE_MINT.toBase58())) {
+      const closeWrappedSOLIx = await unwrapSOLInstruction(payer);
+      closeWrappedSOLIx && postInstructions.push(closeWrappedSOLIx);
+    }
+
+    const depositTx = await ammProgram.methods
+      .bootstrapLiquidity(tokenAAmount, tokenBAmount)
+      .accounts({
+        aTokenVault: vaultA.vaultState.tokenVault,
+        bTokenVault: vaultB.vaultState.tokenVault,
+        aVault,
+        bVault,
+        pool: poolMint,
+        user: payer,
+        userAToken: tokenInfoA.address,
+        userBToken: tokenInfoB.address,
+        aVaultLp,
+        bVaultLp,
+        aVaultLpMint: vaultA.vaultState.lpMint,
+        bVaultLpMint: vaultB.vaultState.lpMint,
+        lpMint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        vaultProgram: vaultProgram.programId,
+        userPoolLp,
+      })
+      .remainingAccounts(swapCurve.getRemainingAccounts())
+      .preInstructions(preInstructions)
+      .postInstructions(postInstructions)
+      .transaction();
+
+    return [
+      createPoolTx,
+      new Transaction({
+        feePayer: payer,
+        ...(await connection.getLatestBlockhash(connection.commitment)),
+      }).add(depositTx),
+    ];
   }
 
   public static async createMultiple(
