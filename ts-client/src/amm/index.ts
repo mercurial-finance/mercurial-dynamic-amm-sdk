@@ -332,6 +332,8 @@ export default class AmmImpl implements AmmImplementation {
       opt,
     );
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
+    const tokenAPk = new PublicKey(tokenInfoA.address);
+    const tokenBPk = new PublicKey(tokenInfoB.address);
 
     const swapCurve = new ConstantProductSwap();
     const poolMint = derivePoolAddress(connection, tokenInfoA, tokenInfoB, false, tradeFeeBps, {
@@ -342,16 +344,18 @@ export default class AmmImpl implements AmmImplementation {
     const [
       { vaultPda: aVault, tokenVaultPda: aTokenVaultPda, lpMintPda: aLpMintPda },
       { vaultPda: bVault, tokenVaultPda: bTokenVaultPda, lpMintPda: bLpMintPda },
-    ] = [
-      getVaultPdas(new PublicKey(tokenInfoA.address), vaultProgram.programId),
-      getVaultPdas(new PublicKey(tokenInfoB.address), vaultProgram.programId),
-    ];
+    ] = [getVaultPdas(tokenAPk, vaultProgram.programId), getVaultPdas(tokenBPk, vaultProgram.programId)];
+
     const [[aVaultLp], [bVaultLp]] = [
       PublicKey.findProgramAddressSync([aVault.toBuffer(), poolMint.toBuffer()], ammProgram.programId),
       PublicKey.findProgramAddressSync([bVault.toBuffer(), poolMint.toBuffer()], ammProgram.programId),
     ];
 
-    const [userPoolLp] = await getOrCreateATAInstruction(lpMint, payer, connection);
+    const [userAToken, userBToken, userPoolLp] = await Promise.all([
+      getAssociatedTokenAccount(tokenAPk, payer),
+      getAssociatedTokenAccount(tokenBPk, payer),
+      getAssociatedTokenAccount(lpMint, payer),
+    ]);
 
     const postInstructions: Array<TransactionInstruction> = [];
     if ([tokenInfoA.address, tokenInfoB.address].includes(NATIVE_MINT.toBase58())) {
@@ -381,8 +385,8 @@ export default class AmmImpl implements AmmImplementation {
         bVault,
         pool: poolMint,
         user: payer,
-        userAToken: tokenInfoA.address,
-        userBToken: tokenInfoB.address,
+        userAToken,
+        userBToken,
         aVaultLp,
         bVaultLp,
         aVaultLpMint,
