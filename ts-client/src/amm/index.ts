@@ -313,10 +313,13 @@ export default class AmmImpl implements AmmImplementation {
     isStable: boolean,
     tradeFeeBps: BN,
     opt?: {
+      cluster?: Cluster;
       programId?: string;
       skipAta?: boolean;
     },
   ) {
+    const cluster = opt?.cluster ?? 'mainnet-beta';
+
     const createPoolTx = await AmmImpl.createPermissionlessPool(
       connection,
       payer,
@@ -337,8 +340,8 @@ export default class AmmImpl implements AmmImplementation {
 
     const lpMint = derivePoolLpMint(poolMint, ammProgram.programId);
     const [
-      { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aLpMintPda },
-      { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bLpMintPda },
+      { vaultPda: aVault, tokenVaultPda: aTokenVaultPda, lpMintPda: aLpMintPda },
+      { vaultPda: bVault, tokenVaultPda: bTokenVaultPda, lpMintPda: bLpMintPda },
     ] = [
       getVaultPdas(new PublicKey(tokenInfoA.address), vaultProgram.programId),
       getVaultPdas(new PublicKey(tokenInfoB.address), vaultProgram.programId),
@@ -356,6 +359,19 @@ export default class AmmImpl implements AmmImplementation {
       closeWrappedSOLIx && postInstructions.push(closeWrappedSOLIx);
     }
 
+    const [vaultA, vaultB] = await Promise.allSettled([
+      VaultImpl.create(connection, tokenInfoA, { cluster }),
+      VaultImpl.create(connection, tokenInfoB, { cluster }),
+    ]);
+    const { aVaultLpMint, aTokenVault } =
+      vaultA.status === 'fulfilled'
+        ? { aVaultLpMint: vaultA.value.vaultState.lpMint, aTokenVault: vaultA.value.vaultState.tokenVault }
+        : { aVaultLpMint: aLpMintPda, aTokenVault: aTokenVaultPda };
+    const { bVaultLpMint, bTokenVault } =
+      vaultB.status === 'fulfilled'
+        ? { bVaultLpMint: vaultB.value.vaultState.lpMint, bTokenVault: vaultB.value.vaultState.tokenVault }
+        : { bVaultLpMint: bLpMintPda, bTokenVault: bTokenVaultPda };
+
     const depositTx = await ammProgram.methods
       .bootstrapLiquidity(tokenAAmount, tokenBAmount)
       .accounts({
@@ -369,8 +385,8 @@ export default class AmmImpl implements AmmImplementation {
         userBToken: tokenInfoB.address,
         aVaultLp,
         bVaultLp,
-        aVaultLpMint: aLpMintPda,
-        bVaultLpMint: bLpMintPda,
+        aVaultLpMint,
+        bVaultLpMint,
         lpMint,
         tokenProgram: TOKEN_PROGRAM_ID,
         vaultProgram: vaultProgram.programId,
@@ -387,7 +403,7 @@ export default class AmmImpl implements AmmImplementation {
       },
       func: {
         derivePoolLpMint,
-        findProgramAddressSync: PublicKey.findProgramAddressSync,
+        getAssociatedTokenAccount,
       },
       values: {
         ammProgram,
@@ -1339,6 +1355,14 @@ export default class AmmImpl implements AmmImplementation {
       .preInstructions(preInstructions)
       .postInstructions(postInstructions)
       .transaction();
+    console.log('namgold debug deposit', {
+      this: this,
+      poolState: this.poolState,
+      vaultA: this.vaultA,
+      vaultB: this.vaultB,
+      aVaultLpMint: this.vaultA.vaultState.lpMint,
+      bVaultLpMint: this.vaultB.vaultState.lpMint,
+    });
 
     return new Transaction({
       feePayer: owner,
