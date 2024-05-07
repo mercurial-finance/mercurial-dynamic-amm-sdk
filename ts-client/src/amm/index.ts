@@ -180,9 +180,7 @@ export default class AmmImpl implements AmmImplementation {
     isStable: boolean,
     tradeFeeBps: BN,
     opt?: {
-      cluster?: Cluster;
       programId?: string;
-      vaultProgramId?: string;
       skipAta?: boolean;
     },
   ): Promise<Transaction> {
@@ -315,9 +313,7 @@ export default class AmmImpl implements AmmImplementation {
     isStable: boolean,
     tradeFeeBps: BN,
     opt?: {
-      cluster?: Cluster;
       programId?: string;
-      vaultProgramId?: string;
       skipAta?: boolean;
     },
   ) {
@@ -352,10 +348,7 @@ export default class AmmImpl implements AmmImplementation {
       PublicKey.findProgramAddressSync([bVault.toBuffer(), poolMint.toBuffer()], ammProgram.programId),
     ];
 
-    const [userPoolLp, createLpMintIx] = await getOrCreateATAInstruction(lpMint, payer, connection);
-
-    let preInstructions: Array<TransactionInstruction> = [];
-    createLpMintIx && preInstructions.push(createLpMintIx);
+    const [userPoolLp] = await getOrCreateATAInstruction(lpMint, payer, connection);
 
     const postInstructions: Array<TransactionInstruction> = [];
     if ([tokenInfoA.address, tokenInfoB.address].includes(NATIVE_MINT.toBase58())) {
@@ -384,7 +377,6 @@ export default class AmmImpl implements AmmImplementation {
         userPoolLp,
       })
       .remainingAccounts(swapCurve.getRemainingAccounts())
-      .preInstructions(preInstructions)
       .postInstructions(postInstructions)
       .transaction();
 
