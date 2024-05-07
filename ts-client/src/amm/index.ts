@@ -380,6 +380,51 @@ export default class AmmImpl implements AmmImplementation {
       .postInstructions(postInstructions)
       .transaction();
 
+    console.log('namgold debug createAndDepositPermissionlessPool', {
+      result: {
+        createPoolTx,
+        depositTx,
+      },
+      func: {
+        derivePoolLpMint,
+        findProgramAddressSync: PublicKey.findProgramAddressSync,
+      },
+      values: {
+        ammProgram,
+        vaultProgram,
+        poolMint,
+      },
+      input: {
+        connection,
+        payer,
+        tokenInfoA,
+        tokenInfoB,
+        tokenAAmount,
+        tokenBAmount,
+        isStable,
+        tradeFeeBps,
+        opt,
+      },
+      accounts: {
+        aTokenVault,
+        bTokenVault,
+        aVault,
+        bVault,
+        pool: poolMint,
+        user: payer,
+        userAToken: tokenInfoA.address,
+        userBToken: tokenInfoB.address,
+        aVaultLp,
+        bVaultLp,
+        aVaultLpMint: aLpMintPda,
+        bVaultLpMint: bLpMintPda,
+        lpMint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        vaultProgram: vaultProgram.programId,
+        userPoolLp,
+      },
+    });
+
     return [
       createPoolTx,
       new Transaction({
