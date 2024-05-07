@@ -334,17 +334,16 @@ export default class AmmImpl implements AmmImplementation {
     );
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
 
-    const [vaultA, vaultB] = await Promise.all([
-      VaultImpl.create(connection, tokenInfoA, { cluster: opt?.cluster }),
-      VaultImpl.create(connection, tokenInfoB, { cluster: opt?.cluster }),
-    ]);
     const swapCurve = new ConstantProductSwap();
     const poolMint = derivePoolAddress(connection, tokenInfoA, tokenInfoB, false, tradeFeeBps, {
       programId: opt?.programId,
     });
 
     const lpMint = derivePoolLpMint(poolMint, ammProgram.programId);
-    const [{ vaultPda: aVault }, { vaultPda: bVault }] = [
+    const [
+      { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aLpMintPda },
+      { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bLpMintPda },
+    ] = [
       getVaultPdas(new PublicKey(tokenInfoA.address), vaultProgram.programId),
       getVaultPdas(new PublicKey(tokenInfoB.address), vaultProgram.programId),
     ];
@@ -367,8 +366,8 @@ export default class AmmImpl implements AmmImplementation {
     const depositTx = await ammProgram.methods
       .bootstrapLiquidity(tokenAAmount, tokenBAmount)
       .accounts({
-        aTokenVault: vaultA.vaultState.tokenVault,
-        bTokenVault: vaultB.vaultState.tokenVault,
+        aTokenVault,
+        bTokenVault,
         aVault,
         bVault,
         pool: poolMint,
@@ -377,8 +376,8 @@ export default class AmmImpl implements AmmImplementation {
         userBToken: tokenInfoB.address,
         aVaultLp,
         bVaultLp,
-        aVaultLpMint: vaultA.vaultState.lpMint,
-        bVaultLpMint: vaultB.vaultState.lpMint,
+        aVaultLpMint: aLpMintPda,
+        bVaultLpMint: bLpMintPda,
         lpMint,
         tokenProgram: TOKEN_PROGRAM_ID,
         vaultProgram: vaultProgram.programId,
