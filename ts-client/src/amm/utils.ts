@@ -624,12 +624,6 @@ export function derivePoolAddress(
   return poolPubkey;
 }
 
-export function derivePoolLpMint(poolPubkey: PublicKey, programId: PublicKey) {
-  const [lpMint] = PublicKey.findProgramAddressSync([Buffer.from(SEEDS.LP_MINT), poolPubkey.toBuffer()], programId);
-
-  return lpMint;
-}
-
 /**
  * It checks if a pool exists by checking if the pool account exists
  * @param {Connection} connection - Connection - the connection to the Solana cluster

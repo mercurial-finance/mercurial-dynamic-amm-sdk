@@ -60,7 +60,6 @@ import {
   deriveMintMetadata,
   deriveLockEscrowPda,
   calculateUnclaimedLockEscrowFee,
-  derivePoolLpMint,
 } from './utils';
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 
@@ -250,7 +249,10 @@ export default class AmmImpl implements AmmImplementation {
       ),
     ];
 
-    const lpMint = derivePoolLpMint(poolPubkey, ammProgram.programId);
+    const [lpMint] = PublicKey.findProgramAddressSync(
+      [Buffer.from(SEEDS.LP_MINT), poolPubkey.toBuffer()],
+      ammProgram.programId,
+    );
 
     const payerPoolLp = await getAssociatedTokenAccount(lpMint, payer);
 
@@ -1208,14 +1210,6 @@ export default class AmmImpl implements AmmImplementation {
       .preInstructions(preInstructions)
       .postInstructions(postInstructions)
       .transaction();
-    console.log('namgold debug deposit', {
-      this: this,
-      poolState: this.poolState,
-      vaultA: this.vaultA,
-      vaultB: this.vaultB,
-      aVaultLpMint: this.vaultA.vaultState.lpMint,
-      bVaultLpMint: this.vaultB.vaultState.lpMint,
-    });
 
     return new Transaction({
       feePayer: owner,
