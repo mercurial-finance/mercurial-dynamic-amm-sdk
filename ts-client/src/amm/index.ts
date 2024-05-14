@@ -1461,6 +1461,8 @@ export default class AmmImpl implements AmmImplementation {
       PublicKey.findProgramAddressSync([aVault.toBuffer(), poolAddress.toBuffer()], ammProgram.programId),
       PublicKey.findProgramAddressSync([bVault.toBuffer(), poolAddress.toBuffer()], ammProgram.programId),
     ];
+    const [, createBVaultLpMint] = await getOrCreateATAInstruction(bLpMintPda, owner, connection);
+    createBVaultLpMint && preInstructions.push(createBVaultLpMint);
 
     const lockTx = await ammProgram.methods
       .lock(amount)
