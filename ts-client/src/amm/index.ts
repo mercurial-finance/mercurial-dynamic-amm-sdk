@@ -1446,20 +1446,17 @@ export default class AmmImpl implements AmmImplementation {
       systemProgram: SystemProgram.programId,
     });
     preInstructions.push(await createLockEscrowIx.instruction());
-    const [[userAta, createUserAtaIx], [escrowAta, createEscrowAtaIx]] = await Promise.all([
-      getOrCreateATAInstruction(lpMint, owner, connection, owner),
-      getOrCreateATAInstruction(lpMint, lockEscrowPK, connection, owner),
-    ]);
+    const [escrowAta, createEscrowAtaIx] = await getOrCreateATAInstruction(lpMint, lockEscrowPK, connection, owner);
+    const userLpAta = await getAssociatedTokenAccount(lpMint, owner);
 
-    createUserAtaIx && preInstructions.push(createUserAtaIx);
     createEscrowAtaIx && preInstructions.push(createEscrowAtaIx);
 
     const tokenAMint = new PublicKey(tokenInfoA.address);
     const tokenBMint = new PublicKey(tokenInfoB.address);
-    const [
-      { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aLpMintPda },
-      { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bLpMintPda },
-    ] = [getVaultPdas(tokenAMint, vaultProgram.programId), getVaultPdas(tokenBMint, vaultProgram.programId)];
+    const [{ vaultPda: aVault, lpMintPda: aLpMintPda }, { vaultPda: bVault, lpMintPda: bLpMintPda }] = [
+      getVaultPdas(tokenAMint, vaultProgram.programId),
+      getVaultPdas(tokenBMint, vaultProgram.programId),
+    ];
     const [[aVaultLp], [bVaultLp]] = [
       PublicKey.findProgramAddressSync([aVault.toBuffer(), poolAddress.toBuffer()], ammProgram.programId),
       PublicKey.findProgramAddressSync([bVault.toBuffer(), poolAddress.toBuffer()], ammProgram.programId),
@@ -1472,7 +1469,7 @@ export default class AmmImpl implements AmmImplementation {
         lockEscrow: lockEscrowPK,
         owner,
         lpMint,
-        sourceTokens: userAta,
+        sourceTokens: userLpAta,
         escrowVault: escrowAta,
         tokenProgram: TOKEN_PROGRAM_ID,
         aVault,
