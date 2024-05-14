@@ -1416,6 +1416,81 @@ export default class AmmImpl implements AmmImplementation {
     };
   }
 
+  public static async lockLiquidityNewlyCreatedPool(
+    connection: Connection,
+    poolAddress: PublicKey,
+    owner: PublicKey,
+    amount: BN,
+    tokenInfoA: TokenInfo,
+    tokenInfoB: TokenInfo,
+    opt?: {
+      cluster?: Cluster;
+      programId?: string;
+    },
+  ): Promise<Transaction> {
+    const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
+
+    const [lpMint] = PublicKey.findProgramAddressSync(
+      [Buffer.from(SEEDS.LP_MINT), poolAddress.toBuffer()],
+      ammProgram.programId,
+    );
+
+    const [lockEscrowPK] = deriveLockEscrowPda(poolAddress, owner, ammProgram.programId);
+    const preInstructions: TransactionInstruction[] = [];
+    const createLockEscrowIx = await ammProgram.methods.createLockEscrow().accounts({
+      pool: poolAddress,
+      lockEscrow: lockEscrowPK,
+      owner,
+      lpMint,
+      payer: owner,
+      systemProgram: SystemProgram.programId,
+    });
+    preInstructions.push(await createLockEscrowIx.instruction());
+    const [[userAta, createUserAtaIx], [escrowAta, createEscrowAtaIx]] = await Promise.all([
+      getOrCreateATAInstruction(lpMint, owner, connection, owner),
+      getOrCreateATAInstruction(lpMint, lockEscrowPK, connection, owner),
+    ]);
+
+    createUserAtaIx && preInstructions.push(createUserAtaIx);
+    createEscrowAtaIx && preInstructions.push(createEscrowAtaIx);
+
+    const tokenAMint = new PublicKey(tokenInfoA.address);
+    const tokenBMint = new PublicKey(tokenInfoB.address);
+    const [
+      { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aLpMintPda },
+      { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bLpMintPda },
+    ] = [getVaultPdas(tokenAMint, vaultProgram.programId), getVaultPdas(tokenBMint, vaultProgram.programId)];
+    const [[aVaultLp], [bVaultLp]] = [
+      PublicKey.findProgramAddressSync([aVault.toBuffer(), poolAddress.toBuffer()], ammProgram.programId),
+      PublicKey.findProgramAddressSync([bVault.toBuffer(), poolAddress.toBuffer()], ammProgram.programId),
+    ];
+
+    const lockTx = await ammProgram.methods
+      .lock(amount)
+      .accounts({
+        pool: poolAddress,
+        lockEscrow: lockEscrowPK,
+        owner,
+        lpMint,
+        sourceTokens: userAta,
+        escrowVault: escrowAta,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        aVault,
+        bVault,
+        aVaultLp,
+        bVaultLp,
+        aVaultLpMint: aLpMintPda,
+        bVaultLpMint: bLpMintPda,
+      })
+      .preInstructions(preInstructions)
+      .transaction();
+
+    return new Transaction({
+      feePayer: owner,
+      ...(await connection.getLatestBlockhash(connection.commitment)),
+    }).add(lockTx);
+  }
+
   public async lockLiquidity(owner: PublicKey, amount: BN): Promise<Transaction> {
     const [lockEscrowPK] = deriveLockEscrowPda(this.address, owner, this.program.programId);
 
