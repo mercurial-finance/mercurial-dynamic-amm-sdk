@@ -200,7 +200,6 @@ export default class AmmImpl implements AmmImplementation {
 
     let aVaultLpMint = aLpMintPda;
     let bVaultLpMint = bLpMintPda;
-    console.log('namgold bVaultLpMint before', bVaultLpMint.toBase58());
     let preInstructions: Array<TransactionInstruction> = [];
     const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
       units: 1_400_000,
@@ -219,7 +218,6 @@ export default class AmmImpl implements AmmImplementation {
     } else {
       bVaultLpMint = bVaultAccount.lpMint; // Old vault doesn't have lp mint pda
     }
-    console.log('namgold bVaultLpMint after', bVaultLpMint.toBase58(), { bVaultAccount });
 
     const poolPubkey = derivePoolAddress(connection, tokenInfoA, tokenInfoB, isStable, tradeFeeBps, {
       programId: opt?.programId,
@@ -1467,12 +1465,6 @@ export default class AmmImpl implements AmmImplementation {
       PublicKey.findProgramAddressSync([aVault.toBuffer(), poolAddress.toBuffer()], ammProgram.programId),
       PublicKey.findProgramAddressSync([bVault.toBuffer(), poolAddress.toBuffer()], ammProgram.programId),
     ];
-
-    // const [, createBVaultLpMint] = await getOrCreateATAInstruction(bLpMintPda, owner, connection);
-    // createBVaultLpMint && preInstructions.push(createBVaultLpMint);
-
-    // token a -> memecoin
-    // token b -> SOL
 
     const lockTx = await ammProgram.methods
       .lock(amount)
