@@ -1459,6 +1459,10 @@ export default class AmmImpl implements AmmImplementation {
       getVaultPdas(tokenAMint, vaultProgram.programId),
       getVaultPdas(tokenBMint, vaultProgram.programId),
     ];
+
+    const bVaultAccount = await vaultProgram.account.vault.fetchNullable(bVault);
+    const bVaultLpMint = bVaultAccount?.lpMint || bLpMintPda;
+
     const [[aVaultLp], [bVaultLp]] = [
       PublicKey.findProgramAddressSync([aVault.toBuffer(), poolAddress.toBuffer()], ammProgram.programId),
       PublicKey.findProgramAddressSync([bVault.toBuffer(), poolAddress.toBuffer()], ammProgram.programId),
@@ -1485,7 +1489,7 @@ export default class AmmImpl implements AmmImplementation {
         aVaultLp,
         bVaultLp,
         aVaultLpMint: aLpMintPda,
-        bVaultLpMint: bLpMintPda,
+        bVaultLpMint,
       })
       .preInstructions(preInstructions)
       .transaction();
