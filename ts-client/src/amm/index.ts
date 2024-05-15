@@ -1453,7 +1453,7 @@ export default class AmmImpl implements AmmImplementation {
 
     const tokenAMint = new PublicKey(tokenInfoA.address);
     const tokenBMint = new PublicKey(tokenInfoB.address);
-    const [{ vaultPda: aVault, lpMintPda: aLpMintPda }, { vaultPda: bVault, lpMintPda: bLpMintPda }] = [
+    const [{ vaultPda: aVault, tokenVaultPda: aLpMintPda }, { vaultPda: bVault, tokenVaultPda: bLpMintPda }] = [
       getVaultPdas(tokenAMint, vaultProgram.programId),
       getVaultPdas(tokenBMint, vaultProgram.programId),
     ];
@@ -1462,8 +1462,11 @@ export default class AmmImpl implements AmmImplementation {
       PublicKey.findProgramAddressSync([bVault.toBuffer(), poolAddress.toBuffer()], ammProgram.programId),
     ];
 
-    const [, createBVaultLpMint] = await getOrCreateATAInstruction(bLpMintPda, owner, connection);
-    createBVaultLpMint && preInstructions.push(createBVaultLpMint);
+    // const [, createBVaultLpMint] = await getOrCreateATAInstruction(bLpMintPda, owner, connection);
+    // createBVaultLpMint && preInstructions.push(createBVaultLpMint);
+
+    // token a -> memecoin
+    // token b -> SOL
 
     const lockTx = await ammProgram.methods
       .lock(amount)
