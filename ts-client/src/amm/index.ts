@@ -1458,7 +1458,7 @@ export default class AmmImpl implements AmmImplementation {
       getVaultPdas(tokenBMint, vaultProgram.programId),
     ];
 
-    const aVaultAccount = await vaultProgram.account.vault.fetchNullable(bVault);
+    const aVaultAccount = await vaultProgram.account.vault.fetchNullable(aVault);
     const aVaultLpMint = aVaultAccount?.lpMint || aLpMintPda;
 
     const bVaultAccount = await vaultProgram.account.vault.fetchNullable(bVault);
