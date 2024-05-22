@@ -1,0 +1,20 @@
+[package]
+name = "dynamic-amm"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[features]
+default = ["cpi"]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+localnet = []
+staging = []
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "dynamic_amm"
+
+[dependencies]
+anchor-lang = { version="0.28.0", features = ["event-cpi"] }
+anchor-spl = "0.28.0"
