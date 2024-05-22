@@ -1,0 +1,19 @@
+[package]
+name = "dynamic-vault"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[features]
+default = ["cpi"]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+localnet = []
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "dynamic_vault"
+
+[dependencies]
+anchor-lang = { version="0.28.0", features = ["event-cpi"] }
+anchor-spl = "0.28.0"
