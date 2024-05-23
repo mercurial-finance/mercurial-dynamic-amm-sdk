@@ -158,6 +158,9 @@ fn main() {
             DynamicAmmCommands::Swap(sub_args) => {
                 dynamic_amm::process_swap_dynamic_pool(&args, sub_args)
             }
+            DynamicAmmCommands::Quote(sub_args) => {
+                dynamic_amm::process_quote_dynamic_pool(&args, sub_args)
+            }
         },
     }
 }

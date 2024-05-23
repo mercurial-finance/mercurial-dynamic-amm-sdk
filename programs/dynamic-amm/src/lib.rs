@@ -5,6 +5,7 @@
 #![warn(clippy::integer_arithmetic)]
 #![allow(warnings)]
 
+pub mod constants;
 pub mod event;
 pub mod instructions;
 pub mod state;

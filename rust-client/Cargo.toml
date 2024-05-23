@@ -21,3 +21,4 @@ mpl-token-metadata = "3.2.3"
 prog_dynamic_amm={path="../programs/dynamic-amm", package="dynamic-amm"}
 prog_dynamic_vault={path="../programs/dynamic-vault", package="dynamic-vault"}
 regex = "1"
+dynamic-amm-quote={path="../dynamic-amm-quote"}

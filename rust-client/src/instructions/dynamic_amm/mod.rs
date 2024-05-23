@@ -1,10 +1,6 @@
 use crate::*;
 pub mod create_pool;
 pub use create_pool::*;
-
-// pub mod check_pool_info;
-// pub use check_pool_info::*;
-
 pub mod deposit;
 pub use deposit::*;
 pub mod withdraw;
@@ -12,6 +8,9 @@ pub use withdraw::*;
 
 pub mod swap;
 pub use swap::*;
+
+pub mod quote;
+pub use quote::*;
 
 pub mod pda;
 pub use pda::*;
@@ -26,6 +25,6 @@ pub enum DynamicAmmCommands {
     Withdraw(WithdrawDynamicAmmArgs),
     /// Swap
     Swap(SwapDynamicAmmArgs),
-    // /// Swap
-    // CheckPool(CheckDynamicAmmPoolArgs),
+    /// Quote
+    Quote(QuoteDynamicAmmArgs),
 }
