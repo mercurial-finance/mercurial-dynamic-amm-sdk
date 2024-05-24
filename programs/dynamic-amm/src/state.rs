@@ -1,13 +1,5 @@
 //! Pool account state
-
-// use crate::curve::base::SwapCurve;
-// use crate::curve::curve_type::CurveType;
-// use crate::curve::fees::PoolFees;
-// use crate::error::PoolError;
-// use crate::math::safe_math::SafeMath;
-// use crate::math::u128x128_math::{shl_div, Rounding, SCALE_OFFSET};
-// use crate::math::utils_math::safe_mul_div_cast;
-// use crate::utils::to_u64;
+use crate::constants;
 use anchor_lang::prelude::*;
 use std::fmt::Debug;
 
@@ -152,6 +144,54 @@ pub struct PoolFees {
     pub owner_trade_fee_denominator: u64,
 }
 
+/// Helper function for calculating swap fee
+pub fn calculate_fee(
+    token_amount: u128,
+    fee_numerator: u128,
+    fee_denominator: u128,
+) -> Option<u128> {
+    if fee_numerator == 0 || token_amount == 0 {
+        Some(0)
+    } else {
+        let fee = token_amount
+            .checked_mul(fee_numerator)?
+            .checked_div(fee_denominator)?;
+        if fee == 0 {
+            Some(1) // minimum fee of one token
+        } else {
+            Some(fee)
+        }
+    }
+}
+impl PoolFees {
+    /// Calculate the host trading fee in trading tokens
+    pub fn host_trading_fee(&self, trading_tokens: u128) -> Option<u128> {
+        calculate_fee(
+            trading_tokens,
+            u128::try_from(constants::fee::HOST_TRADE_FEE_NUMERATOR).ok()?,
+            u128::try_from(constants::fee::FEE_DENOMINATOR).ok()?,
+        )
+    }
+
+    /// Calculate the trading fee in trading tokens
+    pub fn trading_fee(&self, trading_tokens: u128) -> Option<u128> {
+        calculate_fee(
+            trading_tokens,
+            u128::try_from(self.trade_fee_numerator).ok()?,
+            u128::try_from(self.trade_fee_denominator).ok()?,
+        )
+    }
+
+    /// Calculate the owner trading fee in trading tokens
+    pub fn owner_trading_fee(&self, trading_tokens: u128) -> Option<u128> {
+        calculate_fee(
+            trading_tokens,
+            u128::try_from(self.owner_trade_fee_numerator).ok()?,
+            u128::try_from(self.owner_trade_fee_denominator).ok()?,
+        )
+    }
+}
+
 #[derive(Clone, Copy, Debug, AnchorDeserialize, AnchorSerialize)]
 /// Type of the swap curve
 pub enum CurveType {
@@ -180,6 +220,26 @@ pub struct TokenMultiplier {
     /// Record the highest token decimal in the pool. For example, Token A is 6 decimal, token B is 9 decimal. This will save value of 9.
     pub precision_factor: u8, // 1
 }
+impl TokenMultiplier {
+    /// Upscale the token amount using token_a_multiplier.
+    pub fn upscale_token_a(&self, token_amount: u128) -> Option<u128> {
+        token_amount.checked_mul(self.token_a_multiplier.into())
+    }
+    /// Upscale the token amount using token_b_multiplier.
+    pub fn upscale_token_b(&self, token_amount: u128) -> Option<u128> {
+        token_amount.checked_mul(self.token_b_multiplier.into())
+    }
+
+    /// Downscale the token amount using token_a_multiplier
+    pub fn downscale_token_a(&self, token_amount: u128) -> Option<u128> {
+        token_amount.checked_div(self.token_a_multiplier.into())
+    }
+    /// Downscale the token amount using token_b_multiplier
+    pub fn downscale_token_b(&self, token_amount: u128) -> Option<u128> {
+        token_amount.checked_div(self.token_b_multiplier.into())
+    }
+}
+
 /// Contains information for depeg pool
 #[derive(Clone, Copy, Debug, AnchorSerialize, AnchorDeserialize)]
 pub struct Depeg {
@@ -190,6 +250,14 @@ pub struct Depeg {
     /// Type of the depeg pool
     pub depeg_type: DepegType,
 }
+
+impl DepegType {
+    /// Check whether the pool is a depeg pool or not
+    pub fn is_none(&self) -> bool {
+        matches!(self, DepegType::None)
+    }
+}
+
 /// Type of depeg pool
 #[derive(Clone, Copy, Debug, AnchorDeserialize, AnchorSerialize, PartialEq)]
 pub enum DepegType {

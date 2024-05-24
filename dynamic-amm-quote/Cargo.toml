@@ -1,0 +1,22 @@
+[package]
+name = "dynamic-amm-quote"
+version = { workspace = true }
+edition = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "dynamic_amm_quote"
+
+[dependencies]
+anchor-lang = "0.28.0"
+anchor-spl = "0.28.0"
+prog_dynamic_amm={path="../programs/dynamic-amm", package="dynamic-amm"}
+prog_dynamic_vault={path="../programs/dynamic-vault", package="dynamic-vault"}
+anyhow = "1.0.57"
+spl-token-swap = "3.0.0"
+meteora-marinade-sdk = { version = "0.1.0", features = ["cpi"] }
+spl-stake-pool = { git = "https://github.com/solana-labs/solana-program-library", rev = "cd79bba17331235ab489bae56600043ea853c70b", features = [
+    "no-entrypoint",
+] }
+meteora-stable-swap-math = { git = "https://github.com/mercurial-finance/stable-swap", rev = "140c2e0d366765d49edc9a175ed12b1ad10c3b66", package = "stable-swap-math" }
+meteora-stable-swap-client = { git = "https://github.com/mercurial-finance/stable-swap", rev = "140c2e0d366765d49edc9a175ed12b1ad10c3b66", package = "stable-swap-client" }
