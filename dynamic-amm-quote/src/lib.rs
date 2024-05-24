@@ -1,13 +1,12 @@
 pub mod curve;
 pub mod depeg;
-pub mod error;
 pub mod math;
 use crate::depeg::update_base_virtual_price;
-use crate::error::PoolError;
 use crate::math::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, TokenAccount};
 use anyhow::{ensure, Context};
+use prog_dynamic_amm::error::PoolError;
 use prog_dynamic_amm::state::Pool;
 use prog_dynamic_vault::state::Vault;
 use spl_token_swap::curve::calculator::TradeDirection;

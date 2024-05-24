@@ -1,8 +1,8 @@
 //! Fees module includes information about fee charges
-use crate::error::PoolError;
 use anchor_lang::prelude::*;
 use prog_dynamic_amm::constants;
 use prog_dynamic_amm::constants::fee::{FEE_DENOMINATOR, MAX_BASIS_POINT};
+use prog_dynamic_amm::error::PoolError;
 use std::convert::TryFrom;
 
 /// Information regarding fee charges
