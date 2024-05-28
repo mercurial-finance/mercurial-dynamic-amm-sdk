@@ -1,8 +1,4 @@
-use crate::event;
-use crate::state::Pool;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Burn};
-use anchor_spl::token::{Mint, Token, TokenAccount};
 /// Accounts for remove liquidity single sided instruction
 #[derive(Accounts)]
 pub struct RemoveLiquiditySingleSide<'info> {
