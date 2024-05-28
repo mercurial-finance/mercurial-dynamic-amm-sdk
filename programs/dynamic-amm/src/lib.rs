@@ -12,9 +12,9 @@ pub mod instructions;
 pub mod state;
 
 use crate::state::CurveType;
+use crate::state::PoolFees;
 use anchor_lang::prelude::*;
 use instructions::*;
-
 #[cfg(feature = "staging")]
 declare_id!("ammbh4CQztZ6txJ8AaQgPsWjd6o7GhmvopS2JAo5bCB");
 
@@ -25,6 +25,16 @@ declare_id!("Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB");
 #[program]
 pub mod dynamic_amm {
     use super::*;
+
+    /// Initialize a new permissionless pool.
+    pub fn initialize_permissionless_pool(
+        ctx: Context<InitializePermissionlessPool>,
+        curve_type: CurveType,
+        token_a_amount: u64,
+        token_b_amount: u64,
+    ) -> Result<()> {
+        Ok(())
+    }
 
     /// Initialize a new permissionless pool with customized fee tier
     pub fn initialize_permissionless_pool_with_fee_tier(
@@ -111,6 +121,45 @@ pub mod dynamic_amm {
 
     /// Claim fee
     pub fn claim_fee(ctx: Context<ClaimFee>, max_amount: u64) -> Result<()> {
+        Ok(())
+    }
+
+    /// ADMIN functions
+
+    /// Initialize a new permissioned pool.
+    pub fn initialize_permissioned_pool(
+        ctx: Context<InitializePermissionedPool>,
+        curve_type: CurveType,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Enable or disable a pool. A disabled pool allow only remove balanced liquidity operation.
+    pub fn enable_or_disable_pool(ctx: Context<EnableOrDisablePool>, enable: bool) -> Result<()> {
+        Ok(())
+    }
+
+    /// Update trading fee charged for liquidity provider, and admin.
+    pub fn set_pool_fees(ctx: Context<SetPoolFees>, fees: PoolFees) -> Result<()> {
+        Ok(())
+    }
+
+    /// Update swap curve parameters. This function do not allow update of curve type. For example: stable swap curve to constant product curve. Only supported by pool with stable swap curve.
+    /// Only amp is allowed to be override. The other attributes of stable swap curve will be ignored.
+    pub fn override_curve_param(
+        ctx: Context<OverrideCurveParam>,
+        curve_type: CurveType,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Transfer the admin of the pool to new admin.
+    pub fn transfer_admin(ctx: Context<TransferAdmin>) -> Result<()> {
+        Ok(())
+    }
+
+    /// Create mint metadata account for old pools
+    pub fn create_mint_metadata(ctx: Context<CreateMintMetadata>) -> Result<()> {
         Ok(())
     }
 }
