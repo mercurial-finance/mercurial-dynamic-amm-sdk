@@ -139,21 +139,6 @@ pub struct PoolEnabled {
     pub enabled: bool,
 }
 
-/// Migrate fee account event
-#[event]
-pub struct MigrateFeeAccount {
-    /// Pool address
-    pub pool: Pubkey,
-    /// New admin token a fee
-    pub new_admin_token_a_fee: Pubkey,
-    /// New admin token b fee
-    pub new_admin_token_b_fee: Pubkey,
-    /// Transfer token a fee amount
-    pub token_a_amount: u64,
-    /// Transfer token b fee amount
-    pub token_b_amount: u64,
-}
-
 /// Create lock escrow
 #[event]
 pub struct CreateLockEscrow {
