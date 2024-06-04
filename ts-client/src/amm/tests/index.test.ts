@@ -4,7 +4,7 @@ import { Cluster, Keypair, PublicKey } from '@solana/web3.js';
 import { DEFAULT_SLIPPAGE, DEVNET_COIN, DEVNET_POOL, MAINNET_POOL } from '../constants';
 import AmmImpl from '../index';
 import { calculateSwapQuote, getOnchainTime } from '../utils';
-import { DEVNET, MAINNET, airDropSol, getOrCreateATA, mockWallet } from './utils';
+import { DEVNET, MAINNET, airDropSol, airDropSolIfBalanceNotEnough, getOrCreateATA, mockWallet } from './utils';
 import { NATIVE_MINT } from '@solana/spl-token';
 
 describe('Interact with Devnet pool', () => {
@@ -21,7 +21,7 @@ describe('Interact with Devnet pool', () => {
   let referrer = Keypair.generate();
 
   beforeAll(async () => {
-    await airDropSol(DEVNET.connection, mockWallet.publicKey);
+    await airDropSolIfBalanceNotEnough(DEVNET.connection, mockWallet.publicKey);
 
     const USDT = DEVNET_COIN.find((token) => token.address === '9NGDi2tZtNmCCp8SVLKNuGjuWAVwNF3Vap5tT8km5er9');
     const USDC = DEVNET_COIN.find((token) => token.address === 'zVzi5VAf4qMEwzv7NXECVx5v2pQ7xnqVVjCXZwS9XzA');
