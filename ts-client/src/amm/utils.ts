@@ -288,9 +288,9 @@ export const calculatePoolInfo = (
   return poolInformation;
 };
 
-export const calculateAdminTradingFee = (amount: BN, poolState: PoolState): BN => {
-  const { ownerTradeFeeDenominator, ownerTradeFeeNumerator } = poolState.fees;
-  return amount.mul(ownerTradeFeeNumerator).div(ownerTradeFeeDenominator);
+export const calculateProtocolTradingFee = (amount: BN, poolState: PoolState): BN => {
+  const { protocolTradeFeeDenominator, protocolTradeFeeNumerator } = poolState.fees;
+  return amount.mul(protocolTradeFeeNumerator).div(protocolTradeFeeDenominator);
 };
 
 export const calculateTradingFee = (amount: BN, poolState: PoolState): BN => {
@@ -478,7 +478,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
         vaultALpSupply,
         TradeDirection.BToA,
       ];
-  const adminFee = calculateAdminTradingFee(sourceAmount, poolState);
+  const adminFee = calculateProtocolTradingFee(sourceAmount, poolState);
   const tradeFee = calculateTradingFee(sourceAmount, poolState);
 
   const sourceVaultWithdrawableAmount = calculateWithdrawableAmount(currentTime, swapSourceVault);
