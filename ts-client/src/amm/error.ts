@@ -16,7 +16,7 @@ class DynamicAmmError extends Error {
     let _errorMessage = 'Something went wrong';
 
     if (error instanceof Error) {
-      const anchorError = AnchorError.parse(JSON.parse(JSON.stringify(error)).logs as string[]);
+      const anchorError = AnchorError.parse(JSON.parse(JSON.stringify(error)).transactionLogs as string[]);
 
       if (anchorError?.program.toBase58() === PROGRAM_ID) {
         _errorCode = anchorError.error.errorCode.number;
