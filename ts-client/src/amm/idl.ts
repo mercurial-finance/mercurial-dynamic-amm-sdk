@@ -1,5 +1,5 @@
 export type Amm = {
-  version: '0.5.0';
+  version: '0.4.12';
   name: 'amm';
   docs: ['Program for AMM'];
   instructions: [
@@ -91,16 +91,16 @@ export type Amm = {
           ];
         },
         {
-          name: 'adminTokenAFee';
+          name: 'protocolTokenAFee';
           isMut: true;
           isSigner: false;
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'];
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'];
         },
         {
-          name: 'adminTokenBFee';
+          name: 'protocolTokenBFee';
           isMut: true;
           isSigner: false;
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'];
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'];
         },
         {
           name: 'admin';
@@ -261,16 +261,16 @@ export type Amm = {
           isSigner: false;
         },
         {
-          name: 'adminTokenAFee';
+          name: 'protocolTokenAFee';
           isMut: true;
           isSigner: false;
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'];
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'];
         },
         {
-          name: 'adminTokenBFee';
+          name: 'protocolTokenBFee';
           isMut: true;
           isSigner: false;
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'];
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'];
         },
         {
           name: 'payer';
@@ -439,16 +439,16 @@ export type Amm = {
           isSigner: false;
         },
         {
-          name: 'adminTokenAFee';
+          name: 'protocolTokenAFee';
           isMut: true;
           isSigner: false;
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'];
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'];
         },
         {
-          name: 'adminTokenBFee';
+          name: 'protocolTokenBFee';
           isMut: true;
           isSigner: false;
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'];
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'];
         },
         {
           name: 'payer';
@@ -628,11 +628,11 @@ export type Amm = {
           ];
         },
         {
-          name: 'adminTokenFee';
+          name: 'protocolTokenFee';
           isMut: true;
           isSigner: false;
           docs: [
-            "Admin fee token account. Used to receive trading fee. It's mint field must matched with user_source_token mint field.",
+            "Protocol fee token account. Used to receive trading fee. It's mint field must matched with user_source_token mint field.",
           ];
         },
         {
@@ -1409,97 +1409,6 @@ export type Amm = {
       ];
     },
     {
-      name: 'migrateFeeAccount';
-      docs: ['Migrate old token fee owner to PDA'];
-      accounts: [
-        {
-          name: 'pool';
-          isMut: true;
-          isSigner: false;
-          docs: ['Pool account'];
-        },
-        {
-          name: 'aVaultLp';
-          isMut: false;
-          isSigner: false;
-          docs: ['A vault LP token account of the pool.'];
-        },
-        {
-          name: 'adminTokenAFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'];
-        },
-        {
-          name: 'adminTokenBFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'];
-        },
-        {
-          name: 'tokenAMint';
-          isMut: false;
-          isSigner: false;
-          docs: ['Token A mint'];
-        },
-        {
-          name: 'tokenBMint';
-          isMut: false;
-          isSigner: false;
-          docs: ['Token B mint'];
-        },
-        {
-          name: 'newAdminTokenAFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['Token fee account. Controlled by pool a_vault_lp PDA.'];
-        },
-        {
-          name: 'newAdminTokenBFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['Token fee account. Controlled by pool a_vault_lp PDA.'];
-        },
-        {
-          name: 'admin';
-          isMut: true;
-          isSigner: true;
-          docs: ['Admin account. Must be owner of the pool.'];
-        },
-        {
-          name: 'treasuryTokenAFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['Treasury token a fee ATA.'];
-        },
-        {
-          name: 'treasuryTokenBFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['Treasury token b fee ATA.'];
-        },
-        {
-          name: 'treasury';
-          isMut: false;
-          isSigner: true;
-          docs: ['Treasury signer'];
-        },
-        {
-          name: 'tokenProgram';
-          isMut: false;
-          isSigner: false;
-          docs: ['Token program.'];
-        },
-        {
-          name: 'systemProgram';
-          isMut: false;
-          isSigner: false;
-          docs: ['System program.'];
-        },
-      ];
-      args: [];
-    },
-    {
       name: 'createMintMetadata';
       docs: ['Create mint metadata account for old pools'];
       accounts: [
@@ -1872,13 +1781,13 @@ export type Amm = {
             type: 'bool';
           },
           {
-            name: 'adminTokenAFee';
-            docs: ['Admin fee token account for token A. Used to receive trading fee.'];
+            name: 'protocolTokenAFee';
+            docs: ['Protocol fee token account for token A. Used to receive trading fee.'];
             type: 'publicKey';
           },
           {
-            name: 'adminTokenBFee';
-            docs: ['Admin fee token account for token B. Used to receive trading fee.'];
+            name: 'protocolTokenBFee';
+            docs: ['Protocol fee token account for token B. Used to receive trading fee.'];
             type: 'publicKey';
           },
           {
@@ -2030,18 +1939,18 @@ export type Amm = {
             type: 'u64';
           },
           {
-            name: 'ownerTradeFeeNumerator';
+            name: 'protocolTradeFeeNumerator';
             docs: [
-              'Owner trading fees are extra token amounts that are held inside the token',
+              'Protocol trading fees are extra token amounts that are held inside the token',
               'accounts during a trade, with the equivalent in pool tokens minted to',
-              'the owner of the program.',
-              'Owner trade fee numerator',
+              'the protocol of the program.',
+              'Protocol trade fee numerator',
             ];
             type: 'u64';
           },
           {
-            name: 'ownerTradeFeeDenominator';
-            docs: ['Owner trade fee denominator'];
+            name: 'protocolTradeFeeDenominator';
+            docs: ['Protocol trade fee denominator'];
             type: 'u64';
           },
         ];
@@ -2370,7 +2279,7 @@ export type Amm = {
           index: false;
         },
         {
-          name: 'adminFee';
+          name: 'protocolFee';
           type: 'u64';
           index: false;
         },
@@ -2395,12 +2304,12 @@ export type Amm = {
           index: false;
         },
         {
-          name: 'ownerTradeFeeNumerator';
+          name: 'protocolTradeFeeNumerator';
           type: 'u64';
           index: false;
         },
         {
-          name: 'ownerTradeFeeDenominator';
+          name: 'protocolTradeFeeDenominator';
           type: 'u64';
           index: false;
         },
@@ -2451,31 +2360,6 @@ export type Amm = {
         },
         {
           name: 'pool';
-          type: 'publicKey';
-          index: false;
-        },
-      ];
-    },
-    {
-      name: 'SetAdminFeeAccount';
-      fields: [
-        {
-          name: 'adminTokenAFee';
-          type: 'publicKey';
-          index: false;
-        },
-        {
-          name: 'adminTokenBFee';
-          type: 'publicKey';
-          index: false;
-        },
-        {
-          name: 'newAdminTokenAFee';
-          type: 'publicKey';
-          index: false;
-        },
-        {
-          name: 'newAdminTokenBFee';
           type: 'publicKey';
           index: false;
         },
@@ -2732,8 +2616,8 @@ export type Amm = {
     },
     {
       code: 6017;
-      name: 'InvalidAdminFeeAccount';
-      msg: 'Invalid admin fee account';
+      name: 'InvalidProtocolFeeAccount';
+      msg: 'Invalid protocol fee account';
     },
     {
       code: 6018;
@@ -2822,8 +2706,8 @@ export type Amm = {
     },
     {
       code: 6035;
-      name: 'OwnerFeeOverHalfOfTradeFee';
-      msg: 'Owner fee exceed half of trade fee';
+      name: 'ProtocolFeeOverHalfOfTradeFee';
+      msg: 'Protocol fee exceed half of trade fee';
     },
     {
       code: 6036;
@@ -2874,7 +2758,7 @@ export type Amm = {
 };
 
 export const IDL: Amm = {
-  version: '0.5.0',
+  version: '0.4.12',
   name: 'amm',
   docs: ['Program for AMM'],
   instructions: [
@@ -2966,16 +2850,16 @@ export const IDL: Amm = {
           ],
         },
         {
-          name: 'adminTokenAFee',
+          name: 'protocolTokenAFee',
           isMut: true,
           isSigner: false,
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'],
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'],
         },
         {
-          name: 'adminTokenBFee',
+          name: 'protocolTokenBFee',
           isMut: true,
           isSigner: false,
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'],
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'],
         },
         {
           name: 'admin',
@@ -3136,16 +3020,16 @@ export const IDL: Amm = {
           isSigner: false,
         },
         {
-          name: 'adminTokenAFee',
+          name: 'protocolTokenAFee',
           isMut: true,
           isSigner: false,
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'],
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'],
         },
         {
-          name: 'adminTokenBFee',
+          name: 'protocolTokenBFee',
           isMut: true,
           isSigner: false,
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'],
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'],
         },
         {
           name: 'payer',
@@ -3314,16 +3198,16 @@ export const IDL: Amm = {
           isSigner: false,
         },
         {
-          name: 'adminTokenAFee',
+          name: 'protocolTokenAFee',
           isMut: true,
           isSigner: false,
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'],
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'],
         },
         {
-          name: 'adminTokenBFee',
+          name: 'protocolTokenBFee',
           isMut: true,
           isSigner: false,
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'],
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'],
         },
         {
           name: 'payer',
@@ -3503,11 +3387,11 @@ export const IDL: Amm = {
           ],
         },
         {
-          name: 'adminTokenFee',
+          name: 'protocolTokenFee',
           isMut: true,
           isSigner: false,
           docs: [
-            "Admin fee token account. Used to receive trading fee. It's mint field must matched with user_source_token mint field.",
+            "Protocol fee token account. Used to receive trading fee. It's mint field must matched with user_source_token mint field.",
           ],
         },
         {
@@ -4284,97 +4168,6 @@ export const IDL: Amm = {
       ],
     },
     {
-      name: 'migrateFeeAccount',
-      docs: ['Migrate old token fee owner to PDA'],
-      accounts: [
-        {
-          name: 'pool',
-          isMut: true,
-          isSigner: false,
-          docs: ['Pool account'],
-        },
-        {
-          name: 'aVaultLp',
-          isMut: false,
-          isSigner: false,
-          docs: ['A vault LP token account of the pool.'],
-        },
-        {
-          name: 'adminTokenAFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'],
-        },
-        {
-          name: 'adminTokenBFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'],
-        },
-        {
-          name: 'tokenAMint',
-          isMut: false,
-          isSigner: false,
-          docs: ['Token A mint'],
-        },
-        {
-          name: 'tokenBMint',
-          isMut: false,
-          isSigner: false,
-          docs: ['Token B mint'],
-        },
-        {
-          name: 'newAdminTokenAFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['Token fee account. Controlled by pool a_vault_lp PDA.'],
-        },
-        {
-          name: 'newAdminTokenBFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['Token fee account. Controlled by pool a_vault_lp PDA.'],
-        },
-        {
-          name: 'admin',
-          isMut: true,
-          isSigner: true,
-          docs: ['Admin account. Must be owner of the pool.'],
-        },
-        {
-          name: 'treasuryTokenAFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['Treasury token a fee ATA.'],
-        },
-        {
-          name: 'treasuryTokenBFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['Treasury token b fee ATA.'],
-        },
-        {
-          name: 'treasury',
-          isMut: false,
-          isSigner: true,
-          docs: ['Treasury signer'],
-        },
-        {
-          name: 'tokenProgram',
-          isMut: false,
-          isSigner: false,
-          docs: ['Token program.'],
-        },
-        {
-          name: 'systemProgram',
-          isMut: false,
-          isSigner: false,
-          docs: ['System program.'],
-        },
-      ],
-      args: [],
-    },
-    {
       name: 'createMintMetadata',
       docs: ['Create mint metadata account for old pools'],
       accounts: [
@@ -4747,13 +4540,13 @@ export const IDL: Amm = {
             type: 'bool',
           },
           {
-            name: 'adminTokenAFee',
-            docs: ['Admin fee token account for token A. Used to receive trading fee.'],
+            name: 'protocolTokenAFee',
+            docs: ['Protocol fee token account for token A. Used to receive trading fee.'],
             type: 'publicKey',
           },
           {
-            name: 'adminTokenBFee',
-            docs: ['Admin fee token account for token B. Used to receive trading fee.'],
+            name: 'protocolTokenBFee',
+            docs: ['Protocol fee token account for token B. Used to receive trading fee.'],
             type: 'publicKey',
           },
           {
@@ -4905,18 +4698,18 @@ export const IDL: Amm = {
             type: 'u64',
           },
           {
-            name: 'ownerTradeFeeNumerator',
+            name: 'protocolTradeFeeNumerator',
             docs: [
-              'Owner trading fees are extra token amounts that are held inside the token',
+              'Protocol trading fees are extra token amounts that are held inside the token',
               'accounts during a trade, with the equivalent in pool tokens minted to',
-              'the owner of the program.',
-              'Owner trade fee numerator',
+              'the protocol of the program.',
+              'Protocol trade fee numerator',
             ],
             type: 'u64',
           },
           {
-            name: 'ownerTradeFeeDenominator',
-            docs: ['Owner trade fee denominator'],
+            name: 'protocolTradeFeeDenominator',
+            docs: ['Protocol trade fee denominator'],
             type: 'u64',
           },
         ],
@@ -5245,7 +5038,7 @@ export const IDL: Amm = {
           index: false,
         },
         {
-          name: 'adminFee',
+          name: 'protocolFee',
           type: 'u64',
           index: false,
         },
@@ -5270,12 +5063,12 @@ export const IDL: Amm = {
           index: false,
         },
         {
-          name: 'ownerTradeFeeNumerator',
+          name: 'protocolTradeFeeNumerator',
           type: 'u64',
           index: false,
         },
         {
-          name: 'ownerTradeFeeDenominator',
+          name: 'protocolTradeFeeDenominator',
           type: 'u64',
           index: false,
         },
@@ -5326,31 +5119,6 @@ export const IDL: Amm = {
         },
         {
           name: 'pool',
-          type: 'publicKey',
-          index: false,
-        },
-      ],
-    },
-    {
-      name: 'SetAdminFeeAccount',
-      fields: [
-        {
-          name: 'adminTokenAFee',
-          type: 'publicKey',
-          index: false,
-        },
-        {
-          name: 'adminTokenBFee',
-          type: 'publicKey',
-          index: false,
-        },
-        {
-          name: 'newAdminTokenAFee',
-          type: 'publicKey',
-          index: false,
-        },
-        {
-          name: 'newAdminTokenBFee',
           type: 'publicKey',
           index: false,
         },
@@ -5607,8 +5375,8 @@ export const IDL: Amm = {
     },
     {
       code: 6017,
-      name: 'InvalidAdminFeeAccount',
-      msg: 'Invalid admin fee account',
+      name: 'InvalidProtocolFeeAccount',
+      msg: 'Invalid protocol fee account',
     },
     {
       code: 6018,
@@ -5697,8 +5465,8 @@ export const IDL: Amm = {
     },
     {
       code: 6035,
-      name: 'OwnerFeeOverHalfOfTradeFee',
-      msg: 'Owner fee exceed half of trade fee',
+      name: 'ProtocolFeeOverHalfOfTradeFee',
+      msg: 'Protocol fee exceed half of trade fee',
     },
     {
       code: 6036,
