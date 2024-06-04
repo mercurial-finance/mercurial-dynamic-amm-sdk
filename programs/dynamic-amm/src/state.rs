@@ -80,10 +80,10 @@ pub struct Pool {
     pub a_vault_lp_bump: u8, //1
     /// Flag to determine whether the pool is enabled, or disabled.
     pub enabled: bool, //1
-    /// Admin fee token account for token A. Used to receive trading fee.
-    pub admin_token_a_fee: Pubkey, //32
-    /// Admin fee token account for token B. Used to receive trading fee.
-    pub admin_token_b_fee: Pubkey, //32
+    /// Protocol fee token account for token A. Used to receive trading fee.
+    pub protocol_token_a_fee: Pubkey, //32
+    /// Protocol fee token account for token B. Used to receive trading fee.
+    pub protocol_token_b_fee: Pubkey, //32
     /// Owner of the pool.
     pub admin: Pubkey, //32
     /// Store the fee charges setting.
@@ -166,11 +166,10 @@ pub fn calculate_fee(
 impl PoolFees {
     /// Calculate the host trading fee in trading tokens
     pub fn host_trading_fee(&self, trading_tokens: u128) -> Option<u128> {
-        calculate_fee(
-            trading_tokens,
-            u128::try_from(constants::fee::HOST_TRADE_FEE_NUMERATOR).ok()?,
-            u128::try_from(constants::fee::FEE_DENOMINATOR).ok()?,
-        )
+        // Floor division
+        trading_tokens
+            .checked_mul(constants::fee::HOST_TRADE_FEE_NUMERATOR.into())?
+            .checked_div(constants::fee::FEE_DENOMINATOR.into())
     }
 
     /// Calculate the trading fee in trading tokens
@@ -182,8 +181,8 @@ impl PoolFees {
         )
     }
 
-    /// Calculate the owner trading fee in trading tokens
-    pub fn owner_trading_fee(&self, trading_tokens: u128) -> Option<u128> {
+    /// Calculate the protocol trading fee in trading tokens
+    pub fn protocol_trading_fee(&self, trading_tokens: u128) -> Option<u128> {
         calculate_fee(
             trading_tokens,
             u128::try_from(self.owner_trade_fee_numerator).ok()?,

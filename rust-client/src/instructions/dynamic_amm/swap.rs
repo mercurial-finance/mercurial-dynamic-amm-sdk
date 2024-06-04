@@ -51,13 +51,13 @@ pub fn process_swap_dynamic_pool(args: &Args, sub_args: &SwapDynamicAmmArgs) {
         if *source_token == pool_state.token_a_mint {
             (
                 get_associated_token_address(&keypair.pubkey(), &pool_state.token_b_mint),
-                pool_state.admin_token_a_fee,
+                pool_state.protocol_token_a_fee,
                 pool_state.token_b_mint,
             )
         } else {
             (
                 get_associated_token_address(&keypair.pubkey(), &pool_state.token_a_mint),
-                pool_state.admin_token_b_fee,
+                pool_state.protocol_token_b_fee,
                 pool_state.token_a_mint,
             )
         };
