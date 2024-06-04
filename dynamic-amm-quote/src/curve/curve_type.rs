@@ -1,8 +1,8 @@
 //! Curve type
 use anchor_lang::prelude::*;
 
-use super::fees::PoolFees;
-use crate::constants::fee::*;
+use prog_dynamic_amm::constants::fee::*;
+use prog_dynamic_amm::state::PoolFees;
 
 pub const PERMISSIONLESS_AMP: u64 = 100;
 
