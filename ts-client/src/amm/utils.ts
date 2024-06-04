@@ -478,22 +478,25 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
         vaultALpSupply,
         TradeDirection.BToA,
       ];
-  const adminFee = calculateProtocolTradingFee(sourceAmount, poolState);
+
   const tradeFee = calculateTradingFee(sourceAmount, poolState);
+  // Protocol fee is a cut of trade fee
+  const protocolFee = calculateProtocolTradingFee(tradeFee, poolState);
+  const tradeFeeAfterProtocolFee = tradeFee.sub(protocolFee);
 
   const sourceVaultWithdrawableAmount = calculateWithdrawableAmount(currentTime, swapSourceVault);
 
   const beforeSwapSourceAmount = swapSourceAmount;
-  const sourceAmountLessAdminFee = sourceAmount.sub(adminFee);
+  const sourceAmountLessProtocolFee = sourceAmount.sub(protocolFee);
 
   // Get vault lp minted when deposit to the vault
   const sourceVaultLp = getUnmintAmount(
-    sourceAmountLessAdminFee,
+    sourceAmountLessProtocolFee,
     sourceVaultWithdrawableAmount,
     swapSourceVaultLpSupply,
   );
 
-  const sourceVaultTotalAmount = sourceVaultWithdrawableAmount.add(sourceAmountLessAdminFee);
+  const sourceVaultTotalAmount = sourceVaultWithdrawableAmount.add(sourceAmountLessProtocolFee);
 
   const afterSwapSourceAmount = getAmountByShare(
     sourceVaultLp.add(swapSourceVaultLpAmount),
@@ -502,7 +505,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
   );
 
   const actualSourceAmount = afterSwapSourceAmount.sub(beforeSwapSourceAmount);
-  let sourceAmountWithFee = actualSourceAmount.sub(tradeFee);
+  let sourceAmountWithFee = actualSourceAmount.sub(tradeFeeAfterProtocolFee);
 
   const { outAmount: destinationAmount, priceImpact } = swapCurve.computeOutAmount(
     sourceAmountWithFee,
@@ -539,7 +542,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
 
   return {
     amountOut: actualDestinationAmount,
-    fee: adminFee.add(tradeFee),
+    fee: tradeFee,
     priceImpact,
   };
 };
