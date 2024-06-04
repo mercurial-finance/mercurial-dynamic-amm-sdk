@@ -91,19 +91,6 @@ pub struct TransferAdmin {
     pub pool: Pubkey,
 }
 
-/// Set admin fee account event
-#[event]
-pub struct SetAdminFeeAccount {
-    /// Old admin token A fee account
-    pub admin_token_a_fee: Pubkey,
-    /// Old admin token B fee account
-    pub admin_token_b_fee: Pubkey,
-    /// New admin token A fee account
-    pub new_admin_token_a_fee: Pubkey,
-    /// New admin token B fee account
-    pub new_admin_token_b_fee: Pubkey,
-}
-
 /// Override curve param event
 #[event]
 pub struct OverrideCurveParam {
