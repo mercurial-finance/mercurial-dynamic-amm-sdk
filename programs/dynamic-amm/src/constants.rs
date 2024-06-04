@@ -20,13 +20,13 @@ pub mod fee {
     // 1bps, https://curve.fi/rootfaq
     pub static STABLE_SWAP_TRADE_FEE_NUMERATOR: u64 = 10;
 
-    /// Admin trade fee numerator for constant product swap curve.
+    /// Protocol trade fee numerator for constant product swap curve.
     // 5bps, https://docs.uniswap.org/protocol/V2/concepts/advanced-topics/fees
-    pub static CONSTANT_PRODUCT_ADMIN_TRADE_FEE_NUMERATOR: u64 = 50;
+    pub static CONSTANT_PRODUCT_PROTOCOL_TRADE_FEE_NUMERATOR: u64 = 50;
 
-    /// Admin trade fee numerator for stable swap curve.
+    /// Protocol trade fee numerator for stable swap curve.
     // 2bps, https://curve.fi/rootfaq
-    pub static STABLE_SWAP_ADMIN_TRADE_FEE_NUMERATOR: u64 = 5;
+    pub static STABLE_SWAP_PROTOCOL_TRADE_FEE_NUMERATOR: u64 = 5;
 
     /// Host trade fee numerator
     // 20% of admin trade fee

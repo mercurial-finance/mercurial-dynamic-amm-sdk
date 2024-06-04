@@ -121,14 +121,14 @@ impl CurveType {
             CurveType::ConstantProduct {} => PoolFees {
                 trade_fee_numerator: CONSTANT_PRODUCT_TRADE_FEE_NUMERATOR,
                 trade_fee_denominator: FEE_DENOMINATOR,
-                owner_trade_fee_numerator: CONSTANT_PRODUCT_ADMIN_TRADE_FEE_NUMERATOR,
-                owner_trade_fee_denominator: FEE_DENOMINATOR,
+                protocol_trade_fee_numerator: CONSTANT_PRODUCT_PROTOCOL_TRADE_FEE_NUMERATOR,
+                protocol_trade_fee_denominator: FEE_DENOMINATOR,
             },
             CurveType::Stable { .. } => PoolFees {
                 trade_fee_numerator: STABLE_SWAP_TRADE_FEE_NUMERATOR,
                 trade_fee_denominator: FEE_DENOMINATOR,
-                owner_trade_fee_numerator: STABLE_SWAP_ADMIN_TRADE_FEE_NUMERATOR,
-                owner_trade_fee_denominator: FEE_DENOMINATOR,
+                protocol_trade_fee_numerator: STABLE_SWAP_PROTOCOL_TRADE_FEE_NUMERATOR,
+                protocol_trade_fee_denominator: FEE_DENOMINATOR,
             },
         }
     }

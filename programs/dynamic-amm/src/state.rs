@@ -139,9 +139,9 @@ pub struct PoolFees {
     /// accounts during a trade, with the equivalent in pool tokens minted to
     /// the owner of the program.
     /// Owner trade fee numerator
-    pub owner_trade_fee_numerator: u64,
+    pub protocol_trade_fee_numerator: u64,
     /// Owner trade fee denominator
-    pub owner_trade_fee_denominator: u64,
+    pub protocol_trade_fee_denominator: u64,
 }
 
 /// Helper function for calculating swap fee
@@ -185,8 +185,8 @@ impl PoolFees {
     pub fn protocol_trading_fee(&self, trading_tokens: u128) -> Option<u128> {
         calculate_fee(
             trading_tokens,
-            u128::try_from(self.owner_trade_fee_numerator).ok()?,
-            u128::try_from(self.owner_trade_fee_denominator).ok()?,
+            u128::try_from(self.protocol_trade_fee_numerator).ok()?,
+            u128::try_from(self.protocol_trade_fee_denominator).ok()?,
         )
     }
 }

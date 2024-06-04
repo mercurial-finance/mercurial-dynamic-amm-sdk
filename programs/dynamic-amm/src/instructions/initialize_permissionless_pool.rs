@@ -50,8 +50,8 @@ pub fn get_trade_fee_bps_bytes(trade_fee_bps: u64) -> Vec<u8> {
     let default_fees = PoolFees {
         trade_fee_numerator: 250,
         trade_fee_denominator: 100000,
-        owner_trade_fee_numerator: 0,
-        owner_trade_fee_denominator: 100000,
+        protocol_trade_fee_numerator: 0,
+        protocol_trade_fee_denominator: 100000,
     };
 
     // Unwrap on default configured fee is safe
@@ -184,10 +184,10 @@ pub struct InitializePermissionlessPool<'info> {
         token::mint = token_a_mint,
         token::authority = a_vault_lp
     )]
-    /// Admin fee token account for token A. Used to receive trading fee.
-    pub admin_token_a_fee: Box<Account<'info, TokenAccount>>,
+    /// Protocol fee token account for token A. Used to receive trading fee.
+    pub protocol_token_a_fee: Box<Account<'info, TokenAccount>>,
 
-    /// Admin fee token account for token B. Used to receive trading fee.
+    /// Protocol fee token account for token B. Used to receive trading fee.
     #[account(
         init,
         seeds = [
@@ -200,7 +200,7 @@ pub struct InitializePermissionlessPool<'info> {
         token::mint = token_b_mint,
         token::authority = a_vault_lp
     )]
-    pub admin_token_b_fee: Box<Account<'info, TokenAccount>>,
+    pub protocol_token_b_fee: Box<Account<'info, TokenAccount>>,
 
     /// Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.
     #[account(mut)]
@@ -344,10 +344,10 @@ pub struct InitializePermissionlessPoolWithFeeTier<'info> {
         token::mint = token_a_mint,
         token::authority = a_vault_lp
     )]
-    /// Admin fee token account for token A. Used to receive trading fee.
-    pub admin_token_a_fee: Box<Account<'info, TokenAccount>>,
+    /// Protocol fee token account for token A. Used to receive trading fee.
+    pub protocol_token_a_fee: Box<Account<'info, TokenAccount>>,
 
-    /// Admin fee token account for token B. Used to receive trading fee.
+    /// Protocol fee token account for token B. Used to receive trading fee.
     #[account(
         init,
         seeds = [
@@ -360,7 +360,7 @@ pub struct InitializePermissionlessPoolWithFeeTier<'info> {
         token::mint = token_b_mint,
         token::authority = a_vault_lp
     )]
-    pub admin_token_b_fee: Box<Account<'info, TokenAccount>>,
+    pub protocol_token_b_fee: Box<Account<'info, TokenAccount>>,
 
     /// Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.
     #[account(mut)]

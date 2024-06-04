@@ -47,7 +47,7 @@ pub fn process_swap_dynamic_pool(args: &Args, sub_args: &SwapDynamicAmmArgs) {
     let a_vault_state: Vault = program_vault_client.account(pool_state.a_vault).unwrap();
     let b_vault_state: Vault = program_vault_client.account(pool_state.b_vault).unwrap();
 
-    let (user_destination_token, admin_token_fee, destination_mint) =
+    let (user_destination_token, protocol_token_fee, destination_mint) =
         if *source_token == pool_state.token_a_mint {
             (
                 get_associated_token_address(&keypair.pubkey(), &pool_state.token_b_mint),
@@ -90,7 +90,7 @@ pub fn process_swap_dynamic_pool(args: &Args, sub_args: &SwapDynamicAmmArgs) {
             user: keypair.pubkey(),
             vault_program: prog_dynamic_vault::ID,
             token_program: spl_token::ID,
-            admin_token_fee,
+            protocol_token_fee,
         }
         .to_account_metas(None),
         data: prog_dynamic_amm::instruction::Swap {

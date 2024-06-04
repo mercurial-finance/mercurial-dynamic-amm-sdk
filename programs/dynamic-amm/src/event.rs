@@ -46,8 +46,8 @@ pub struct Swap {
     pub out_amount: u64,
     /// Trading fee charged for liquidity provider.
     pub trade_fee: u64,
-    /// Trading fee charged for admin.
-    pub admin_fee: u64,
+    /// Trading fee charged for the protocol.
+    pub protocol_fee: u64,
     /// Host fee charged
     pub host_fee: u64,
 }
@@ -59,10 +59,10 @@ pub struct SetPoolFees {
     pub trade_fee_numerator: u64,
     /// New trade fee denominator
     pub trade_fee_denominator: u64,
-    /// New owner (admin) fee numerator
-    pub owner_trade_fee_numerator: u64,
-    /// New owner (admin) fee denominator
-    pub owner_trade_fee_denominator: u64,
+    /// New protocol fee numerator
+    pub protocol_trade_fee_numerator: u64,
+    /// New protocol fee denominator
+    pub protocol_trade_fee_denominator: u64,
     /// Pool address
     pub pool: Pubkey,
 }
