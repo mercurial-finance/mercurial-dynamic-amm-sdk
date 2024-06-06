@@ -34,7 +34,7 @@ pub fn process_quote_dynamic_pool(args: &Args, sub_args: &QuoteDynamicAmmArgs) {
 
     let pool_state: Pool = program_dynamic_amm.account(*pool).unwrap();
     let vault_a: Vault = program_dynamic_vault.account(pool_state.a_vault).unwrap();
-    let vault_b: Vault = program_dynamic_vault.account(pool_state.a_vault).unwrap();
+    let vault_b: Vault = program_dynamic_vault.account(pool_state.b_vault).unwrap();
 
     let accounts = program_dynamic_amm
         .rpc()
