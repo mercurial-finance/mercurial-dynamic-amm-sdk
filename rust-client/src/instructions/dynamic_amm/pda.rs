@@ -72,3 +72,20 @@ pub fn derive_pool_fee_token_address(token_mint: Pubkey, pool: Pubkey) -> Pubkey
     );
     token_fee
 }
+
+#[cfg(test)]
+mod tests {
+    use solana_sdk::pubkey;
+
+    use crate::derive_vault_lp_mint_address;
+
+    #[test]
+    fn test_derive_vault_lp_mint_address() {
+        let vault = pubkey!("3ESUFCnRNgZ7Mn2mPPUMmXYaKU8jpnV9VtA17M7t2mHQ");
+        let vault_a_lp_mint = derive_vault_lp_mint_address(&vault);
+        assert_eq!(
+            vault_a_lp_mint.to_string(),
+            "3RpEekjLE5cdcG15YcXJUpxSepemvq2FpmMcgo342BwC"
+        );
+    }
+}
