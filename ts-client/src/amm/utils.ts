@@ -599,6 +599,15 @@ export function deriveMintMetadata(lpMint: PublicKey) {
   );
 }
 
+export function derivePoolAddressWithConfig(
+  tokenA: PublicKey,
+  tokenB: PublicKey,
+  config: PublicKey,
+  programId: PublicKey,
+) {
+  return PublicKey.findProgramAddressSync([tokenA.toBuffer(), tokenB.toBuffer(), config.toBuffer()], programId);
+}
+
 export function derivePoolAddress(
   connection: Connection,
   tokenInfoA: TokenInfo,

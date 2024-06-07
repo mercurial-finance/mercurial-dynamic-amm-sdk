@@ -1,7 +1,7 @@
 import { AnchorProvider, BN } from '@project-serum/anchor';
 import { TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
 import { Cluster, Keypair, PublicKey } from '@solana/web3.js';
-import { DEFAULT_SLIPPAGE, DEVNET_COIN, DEVNET_POOL, MAINNET_POOL } from '../constants';
+import { DEFAULT_SLIPPAGE, DEVNET_COIN, DEVNET_POOL, MAINNET_POOL, STAGING_PROGRAM_ID } from '../constants';
 import AmmImpl from '../index';
 import { calculateSwapQuote, getOnchainTime } from '../utils';
 import { DEVNET, MAINNET, airDropSol, airDropSolIfBalanceNotEnough, getOrCreateATA, mockWallet } from './utils';
@@ -673,13 +673,22 @@ describe('Interact with Devnet pool', () => {
 
 describe('Staging pool', () => {
   let splBasedDepegPool: AmmImpl;
+  let USDT: TokenInfo | undefined;
+  let USDC: TokenInfo | undefined;
+  let SOL: TokenInfo | undefined;
+  let STSOL: TokenInfo | undefined;
   const jitoSolDepegPool = new PublicKey('HcHN59j1xArjLuqfCMJ96yJ2CKatxHMFABEZWvcfPrYZ');
 
   beforeAll(async () => {
     const tokenMap = await new TokenListProvider().resolve().then((tokens) => {
       return tokens.filterByClusterSlug('mainnet-beta').getList();
     });
-    const SOL = tokenMap.find((token) => token.address === 'So11111111111111111111111111111111111111112');
+
+    USDT = tokenMap.find((token) => token.address === 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
+    USDC = tokenMap.find((token) => token.address === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+    SOL = tokenMap.find((token) => token.address === 'So11111111111111111111111111111111111111112');
+    STSOL = tokenMap.find((token) => token.address === '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj');
+
     const jitoSOL: TokenInfo = {
       chainId: SOL!.chainId,
       address: 'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn',
@@ -689,6 +698,49 @@ describe('Staging pool', () => {
     };
 
     splBasedDepegPool = await AmmImpl.create(MAINNET.connection, jitoSolDepegPool, SOL!, jitoSOL);
+  });
+
+  test('Get all fee configuration', async () => {
+    const feeConfigurations = await AmmImpl.getFeeConfigurations(MAINNET.connection, {
+      programId: STAGING_PROGRAM_ID,
+    });
+
+    feeConfigurations.map((config) => {
+      console.log(config.publicKey.toBase58());
+      console.log(config.tradeFeeBps.toString());
+      console.log(config.protocolTradeFeeBps.toString());
+    });
+
+    expect(feeConfigurations.length).toBeGreaterThan(0);
+  });
+
+  test('Initialize permissionless constant product pool with config', async () => {
+    const connection = MAINNET.connection;
+    const feeConfigurations = await AmmImpl.getFeeConfigurations(MAINNET.connection, {
+      programId: STAGING_PROGRAM_ID,
+    });
+
+    const config = feeConfigurations[0];
+    const transaction = await AmmImpl.createPermissionlessConstantProductPoolWithConfig(
+      connection,
+      mockWallet.publicKey,
+      SOL!,
+      USDC!,
+      new BN(10000),
+      new BN(1732),
+      config.publicKey,
+      {
+        programId: STAGING_PROGRAM_ID,
+      },
+    );
+
+    const simulationResult = await connection.simulateTransaction(transaction, [mockWallet.payer]);
+    console.log(JSON.stringify(simulationResult.value.logs));
+    expect(
+      simulationResult.value.logs?.find((log) =>
+        log.toLowerCase().includes('Program ammbh4CQztZ6txJ8AaQgPsWjd6o7GhmvopS2JAo5bCB success'.toLowerCase()),
+      ),
+    ).toBeTruthy;
   });
 
   test('SOL → JitoSOL swap quote', async () => {
