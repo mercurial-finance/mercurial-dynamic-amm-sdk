@@ -218,12 +218,8 @@ pub fn compute_quote(
         "Out amount > vault reserve"
     );
 
-    let total_fee = trade_fee
-        .checked_add(protocol_fee)
-        .context("Fail to calculate total fee")?;
-
     Ok(QuoteResult {
-        fee: total_fee.try_into()?,
+        fee: trade_fee.try_into()?,
         out_amount,
     })
 }
