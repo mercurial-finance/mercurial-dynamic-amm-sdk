@@ -8,6 +8,8 @@ pub static MIN_CHANGE_AMP_DURATION: u64 = 600; // 10 minutes
 pub mod seeds {
     /// Prefix for apy PDA
     pub static APY_PREFIX: &str = "apy";
+    /// Prefix for config PDA
+    pub static CONFIG_PREFIX: &[u8] = b"config";
 }
 
 /// Store constants related to fees

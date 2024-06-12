@@ -162,4 +162,30 @@ pub mod dynamic_amm {
     pub fn create_mint_metadata(ctx: Context<CreateMintMetadata>) -> Result<()> {
         Ok(())
     }
+
+    /// Create config
+    pub fn create_config(
+        ctx: Context<CreateConfig>,
+        config_parameters: ConfigParameters,
+    ) -> Result<()> {
+        instructions::create_config(ctx, config_parameters)
+    }
+
+    /// Close config
+    pub fn close_config(ctx: Context<CloseConfig>) -> Result<()> {
+        instructions::close_config(ctx)
+    }
+
+    /// Initialize permissionless pool with config
+    pub fn initialize_permissionless_constant_product_pool_with_config(
+        ctx: Context<InitializePermissionlessConstantProductPoolWithConfig>,
+        token_a_amount: u64,
+        token_b_amount: u64,
+    ) -> Result<()> {
+        instructions::initialize_permissionless_constant_product_pool_with_config(
+            ctx,
+            token_a_amount,
+            token_b_amount,
+        )
+    }
 }

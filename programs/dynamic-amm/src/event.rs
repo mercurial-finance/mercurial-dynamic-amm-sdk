@@ -1,6 +1,7 @@
 //! Event module includes information about events of the program
-use crate::state::PoolType;
 use anchor_lang::prelude::*;
+
+use crate::state::PoolType;
 
 /// Add liquidity event
 #[event]
@@ -159,4 +160,22 @@ pub struct ClaimFee {
     pub a_fee: u64,
     /// B fee
     pub b_fee: u64,
+}
+
+/// Create config
+#[event]
+pub struct CreateConfig {
+    /// New trade fee numerator
+    pub trade_fee_numerator: u64,
+    /// New protocol fee numerator
+    pub protocol_trade_fee_numerator: u64,
+    /// Config pubkey
+    pub config: Pubkey,
+}
+
+/// Close config
+#[event]
+pub struct CloseConfig {
+    /// Config pubkey
+    pub config: Pubkey,
 }

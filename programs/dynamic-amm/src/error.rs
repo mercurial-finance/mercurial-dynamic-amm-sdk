@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 
 /// Error messages and codes of the program
 #[error_code]
+#[derive(PartialEq)]
 pub enum PoolError {
     /// Mathematic operation results in overflow.
     #[msg("Math operation overflow")]
@@ -72,10 +73,9 @@ pub enum PoolError {
     #[msg("Invalid admin account")]
     InvalidAdminAccount,
 
-    /// Invalid admin fee token account.
-
-    #[msg("Invalid admin fee account")]
-    InvalidAdminFeeAccount,
+    /// Invalid protocol fee token account.
+    #[msg("Invalid protocol fee account")]
+    InvalidProtocolFeeAccount,
 
     /// Old and new admin are the same account.
     #[msg("Same admin account")]
@@ -145,10 +145,6 @@ pub enum PoolError {
     #[msg("Exceeded max fee bps")]
     ExceedMaxFeeBps,
 
-    /// Owner fee exceed half of trade fee
-    #[msg("Owner fee exceed half of trade fee")]
-    OwnerFeeOverHalfOfTradeFee,
-
     /// Invalid admin
     #[msg("Invalid admin")]
     InvalidAdmin,
@@ -173,7 +169,15 @@ pub enum PoolError {
     #[msg("Token amount is not 1:1")]
     AmountNotPeg,
 
-    /// Invalid fee claimer account.
-    #[msg("Invalid fee claimer account")]
-    InvalidFeeClaimerAccount,
+    /// Amount is zero
+    #[msg("Amount is zero")]
+    AmountIsZero,
+
+    /// Type case failed
+    #[msg("Type cast error")]
+    TypeCastFailed,
+
+    /// Amount is zero
+    #[msg("Amount is not enough")]
+    AmountIsNotEnough,
 }

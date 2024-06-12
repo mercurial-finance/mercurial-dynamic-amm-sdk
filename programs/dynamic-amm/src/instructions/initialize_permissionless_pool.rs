@@ -19,7 +19,7 @@ pub fn get_second_key(key1: Pubkey, key2: Pubkey) -> Pubkey {
 }
 
 /// get_lp_mint
-pub fn get_lp_mint(token_a_mint_decimals: u8, token_b_mint_decimals: u8) -> u8 {
+pub fn get_lp_mint_decimal(token_a_mint_decimals: u8, token_b_mint_decimals: u8) -> u8 {
     if token_a_mint_decimals > token_b_mint_decimals {
         return token_a_mint_decimals;
     }
@@ -98,7 +98,7 @@ pub struct InitializePermissionlessPool<'info> {
         ],
         bump,
         payer = payer,
-        mint::decimals = get_lp_mint(token_a_mint.decimals, token_b_mint.decimals),
+        mint::decimals = get_lp_mint_decimal(token_a_mint.decimals, token_b_mint.decimals),
         mint::authority = a_vault_lp
     )]
     pub lp_mint: Box<Account<'info, Mint>>,
@@ -259,7 +259,7 @@ pub struct InitializePermissionlessPoolWithFeeTier<'info> {
         ],
         bump,
         payer = payer,
-        mint::decimals = get_lp_mint(token_a_mint.decimals, token_b_mint.decimals),
+        mint::decimals = get_lp_mint_decimal(token_a_mint.decimals, token_b_mint.decimals),
         mint::authority = a_vault_lp,
     )]
     pub lp_mint: Box<Account<'info, Mint>>,

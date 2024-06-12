@@ -126,7 +126,7 @@ pub struct LockEscrow {
 }
 
 /// Information regarding fee charges
-#[derive(Copy, Clone, Debug, AnchorSerialize, AnchorDeserialize)]
+#[derive(Copy, Clone, Debug, AnchorSerialize, AnchorDeserialize, InitSpace)]
 pub struct PoolFees {
     /// Trade fees are extra token amounts that are held inside the token
     /// accounts during a trade, making the value of liquidity tokens rise.
@@ -268,4 +268,11 @@ pub enum DepegType {
     Lido,
     /// A depeg pool belongs to SPL stake pool program
     SplStake,
+}
+
+#[account]
+#[derive(InitSpace, Debug)]
+pub struct Config {
+    pub pool_fees: PoolFees,
+    pub _padding: [u8; 300],
 }
