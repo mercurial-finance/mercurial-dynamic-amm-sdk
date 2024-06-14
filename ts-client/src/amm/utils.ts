@@ -605,7 +605,12 @@ export function derivePoolAddressWithConfig(
   config: PublicKey,
   programId: PublicKey,
 ) {
-  return PublicKey.findProgramAddressSync([tokenA.toBuffer(), tokenB.toBuffer(), config.toBuffer()], programId);
+  const [poolPubkey] = PublicKey.findProgramAddressSync(
+    [tokenA.toBuffer(), tokenB.toBuffer(), config.toBuffer()],
+    programId,
+  );
+
+  return poolPubkey;
 }
 
 export function derivePoolAddress(
@@ -659,6 +664,33 @@ export async function checkPoolExists(
   const poolPubkey = derivePoolAddress(connection, tokenInfoA, tokenInfoB, isStable, tradeFeeBps, {
     programId: opt?.programId,
   });
+
+  const poolAccount = await ammProgram.account.pool.fetchNullable(poolPubkey);
+
+  if (!poolAccount) return;
+
+  return poolPubkey;
+}
+
+/**
+ * It checks if a pool with config exists by checking if the pool account exists
+ * @param {Connection} connection - Connection - the connection to the Solana cluster
+ * @param {PublicKey} tokenA - TokenInfo
+ * @param {PublicKey} tokenB - TokenInfo
+ * @returns A PublicKey value or undefined.
+ */
+export async function checkPoolWithConfigExists(
+  connection: Connection,
+  tokenA: PublicKey,
+  tokenB: PublicKey,
+  config: PublicKey,
+  opt?: {
+    programId: string;
+  },
+): Promise<PublicKey | undefined> {
+  const { ammProgram } = createProgram(connection, opt?.programId);
+
+  const poolPubkey = derivePoolAddressWithConfig(tokenA, tokenB, config, ammProgram.programId);
 
   const poolAccount = await ammProgram.account.pool.fetchNullable(poolPubkey);
 
