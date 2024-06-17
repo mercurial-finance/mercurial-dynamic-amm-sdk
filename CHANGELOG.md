@@ -48,13 +48,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `MigrateFeeAccount` and `SetAdminFeeAccount` event
 
+## @mercurial-finance/dynamic-amm-sdk [0.4.22] - PR #117
+
+### Added
+- `AmmImpl.lockLiquidityNewlyCreatedPool` method to help lock liquidity for pool that haven't been created yet
+- `skipAta` flag to help skipping check for create ata when creating the pool in `AmmImpl.createPermissionlessPool`
+
 ## @mercurial-finance/dynamic-amm-sdk [0.4.23-rc.1] - PR #125
 
 ### Changed
 
 - Protocol fee is now part of LP trade fee.
 
-### Added 
+### Added
 
 - `AmmImpl.createPermissionlessConstantProductPoolWithConfig` to create constant product pool based on `config` account.
 - `AmmImpl.getFeeConfigurations` to get all fee configurations to be used in `AmmImpl.createPermissionlessConstantProductPoolWithConfig`

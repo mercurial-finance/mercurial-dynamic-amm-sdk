@@ -6,6 +6,7 @@ target
 node_modules
 test-ledger
 .pnpm-debug.log
+.idea
 
 ts-client/dist/
 ts-client/package-lock.json
