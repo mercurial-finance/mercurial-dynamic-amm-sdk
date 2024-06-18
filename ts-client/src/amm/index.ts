@@ -944,11 +944,18 @@ export default class AmmImpl implements AmmImplementation {
     }
 
     const remainingAccounts = this.swapCurve.getRemainingAccounts();
+
     if (referrerToken) {
+      const [referralTokenAccount, createReferralTokenAccountIx] = await getOrCreateATAInstruction(
+        inTokenMint,
+        referrerToken,
+        this.program.provider.connection,
+      );
+      createReferralTokenAccountIx && preInstructions.push(createReferralTokenAccountIx);
       remainingAccounts.push({
         isSigner: false,
         isWritable: true,
-        pubkey: referrerToken,
+        pubkey: referralTokenAccount,
       });
     }
 
@@ -1387,10 +1394,8 @@ export default class AmmImpl implements AmmImplementation {
     }).add(withdrawTx);
   }
 
-  public async getUserLockEscrow(owner: PublicKey): Promise<LockEscrow | null> {
+  public async getUserLockEscrow(owner: PublicKey, lockEscrowAccount: LockEscrowAccount): Promise<LockEscrow | null> {
     const [lockEscrow, _lockEscrowBump] = deriveLockEscrowPda(this.address, owner, this.program.programId);
-    const lockEscrowAccount: LockEscrowAccount | null = await this.program.account.lockEscrow.fetchNullable(lockEscrow);
-    if (!lockEscrowAccount) return null;
     const unClaimedFee = calculateUnclaimedLockEscrowFee(
       lockEscrowAccount.totalLockedAmount,
       lockEscrowAccount.lpPerToken,
@@ -1500,17 +1505,21 @@ export default class AmmImpl implements AmmImplementation {
 
     const preInstructions: TransactionInstruction[] = [];
 
-    const lockEscrow = await this.getUserLockEscrow(owner);
+    const lockEscrowAccount = await this.program.account.lockEscrow.fetch(lockEscrowPK);
+    const lockEscrow = await this.getUserLockEscrow(owner, lockEscrowAccount);
     if (!lockEscrow) {
-      const createLockEscrowIx = await this.program.methods.createLockEscrow().accounts({
-        pool: this.address,
-        lockEscrow: lockEscrowPK,
-        owner,
-        lpMint: this.poolState.lpMint,
-        payer: owner,
-        systemProgram: SystemProgram.programId,
-      });
-      preInstructions.push(await createLockEscrowIx.instruction());
+      const createLockEscrowIx = await this.program.methods
+        .createLockEscrow()
+        .accounts({
+          pool: this.address,
+          lockEscrow: lockEscrowPK,
+          owner,
+          lpMint: this.poolState.lpMint,
+          payer: owner,
+          systemProgram: SystemProgram.programId,
+        })
+        .instruction();
+      preInstructions.push(createLockEscrowIx);
     }
 
     const [[userAta, createUserAtaIx], [escrowAta, createEscrowAtaIx]] = await Promise.all([
