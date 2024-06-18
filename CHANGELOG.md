@@ -19,10 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-
 ## @mercurial-finance/dynamic-amm-sdk [0.4.21] - PR #117
 
 ### Added
+
 - Introduced a new lock escrow mechanism supported by the program.
 - `AmmImpl.getLockedAtaAmount` to retrieve locked LP amounts from the ATA mechanism (old mechanism).
 - `AmmImpl.getLockedLpAmount` to fetch locked LP amounts from two versions of locking: ATA (old) and escrow (new), and then sum them.
@@ -33,5 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## @mercurial-finance/dynamic-amm-sdk [0.4.22] - PR #117
 
 ### Added
+
 - `lockLiquidityNewlyCreatedPool` method to help lock liquidity for pool that haven't been created yet
 - `skipAta` flag to help skipping check for create ata when creating the pool
+
+## @mercurial-finance/dynamic-amm-sdk [0.4.22] - PR #129
+
+### Update
+
+- `swap` method param `referrerToken` is non-ATA address.
