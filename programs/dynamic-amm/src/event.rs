@@ -1,6 +1,7 @@
 //! Event module includes information about events of the program
-use crate::state::PoolType;
 use anchor_lang::prelude::*;
+
+use crate::state::PoolType;
 
 /// Add liquidity event
 #[event]
@@ -46,8 +47,8 @@ pub struct Swap {
     pub out_amount: u64,
     /// Trading fee charged for liquidity provider.
     pub trade_fee: u64,
-    /// Trading fee charged for admin.
-    pub admin_fee: u64,
+    /// Trading fee charged for the protocol.
+    pub protocol_fee: u64,
     /// Host fee charged
     pub host_fee: u64,
 }
@@ -59,10 +60,10 @@ pub struct SetPoolFees {
     pub trade_fee_numerator: u64,
     /// New trade fee denominator
     pub trade_fee_denominator: u64,
-    /// New owner (admin) fee numerator
-    pub owner_trade_fee_numerator: u64,
-    /// New owner (admin) fee denominator
-    pub owner_trade_fee_denominator: u64,
+    /// New protocol fee numerator
+    pub protocol_trade_fee_numerator: u64,
+    /// New protocol fee denominator
+    pub protocol_trade_fee_denominator: u64,
     /// Pool address
     pub pool: Pubkey,
 }
@@ -89,19 +90,6 @@ pub struct TransferAdmin {
     pub new_admin: Pubkey,
     /// Pool address
     pub pool: Pubkey,
-}
-
-/// Set admin fee account event
-#[event]
-pub struct SetAdminFeeAccount {
-    /// Old admin token A fee account
-    pub admin_token_a_fee: Pubkey,
-    /// Old admin token B fee account
-    pub admin_token_b_fee: Pubkey,
-    /// New admin token A fee account
-    pub new_admin_token_a_fee: Pubkey,
-    /// New admin token B fee account
-    pub new_admin_token_b_fee: Pubkey,
 }
 
 /// Override curve param event
@@ -139,21 +127,6 @@ pub struct PoolEnabled {
     pub enabled: bool,
 }
 
-/// Migrate fee account event
-#[event]
-pub struct MigrateFeeAccount {
-    /// Pool address
-    pub pool: Pubkey,
-    /// New admin token a fee
-    pub new_admin_token_a_fee: Pubkey,
-    /// New admin token b fee
-    pub new_admin_token_b_fee: Pubkey,
-    /// Transfer token a fee amount
-    pub token_a_amount: u64,
-    /// Transfer token b fee amount
-    pub token_b_amount: u64,
-}
-
 /// Create lock escrow
 #[event]
 pub struct CreateLockEscrow {
@@ -187,4 +160,22 @@ pub struct ClaimFee {
     pub a_fee: u64,
     /// B fee
     pub b_fee: u64,
+}
+
+/// Create config
+#[event]
+pub struct CreateConfig {
+    /// New trade fee numerator
+    pub trade_fee_numerator: u64,
+    /// New protocol fee numerator
+    pub protocol_trade_fee_numerator: u64,
+    /// Config pubkey
+    pub config: Pubkey,
+}
+
+/// Close config
+#[event]
+pub struct CloseConfig {
+    /// Config pubkey
+    pub config: Pubkey,
 }

@@ -288,9 +288,9 @@ export const calculatePoolInfo = (
   return poolInformation;
 };
 
-export const calculateAdminTradingFee = (amount: BN, poolState: PoolState): BN => {
-  const { ownerTradeFeeDenominator, ownerTradeFeeNumerator } = poolState.fees;
-  return amount.mul(ownerTradeFeeNumerator).div(ownerTradeFeeDenominator);
+export const calculateProtocolTradingFee = (amount: BN, poolState: PoolState): BN => {
+  const { protocolTradeFeeDenominator, protocolTradeFeeNumerator } = poolState.fees;
+  return amount.mul(protocolTradeFeeNumerator).div(protocolTradeFeeDenominator);
 };
 
 export const calculateTradingFee = (amount: BN, poolState: PoolState): BN => {
@@ -478,22 +478,25 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
         vaultALpSupply,
         TradeDirection.BToA,
       ];
-  const adminFee = calculateAdminTradingFee(sourceAmount, poolState);
+
   const tradeFee = calculateTradingFee(sourceAmount, poolState);
+  // Protocol fee is a cut of trade fee
+  const protocolFee = calculateProtocolTradingFee(tradeFee, poolState);
+  const tradeFeeAfterProtocolFee = tradeFee.sub(protocolFee);
 
   const sourceVaultWithdrawableAmount = calculateWithdrawableAmount(currentTime, swapSourceVault);
 
   const beforeSwapSourceAmount = swapSourceAmount;
-  const sourceAmountLessAdminFee = sourceAmount.sub(adminFee);
+  const sourceAmountLessProtocolFee = sourceAmount.sub(protocolFee);
 
   // Get vault lp minted when deposit to the vault
   const sourceVaultLp = getUnmintAmount(
-    sourceAmountLessAdminFee,
+    sourceAmountLessProtocolFee,
     sourceVaultWithdrawableAmount,
     swapSourceVaultLpSupply,
   );
 
-  const sourceVaultTotalAmount = sourceVaultWithdrawableAmount.add(sourceAmountLessAdminFee);
+  const sourceVaultTotalAmount = sourceVaultWithdrawableAmount.add(sourceAmountLessProtocolFee);
 
   const afterSwapSourceAmount = getAmountByShare(
     sourceVaultLp.add(swapSourceVaultLpAmount),
@@ -502,7 +505,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
   );
 
   const actualSourceAmount = afterSwapSourceAmount.sub(beforeSwapSourceAmount);
-  let sourceAmountWithFee = actualSourceAmount.sub(tradeFee);
+  let sourceAmountWithFee = actualSourceAmount.sub(tradeFeeAfterProtocolFee);
 
   const { outAmount: destinationAmount, priceImpact } = swapCurve.computeOutAmount(
     sourceAmountWithFee,
@@ -539,7 +542,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
 
   return {
     amountOut: actualDestinationAmount,
-    fee: adminFee.add(tradeFee),
+    fee: tradeFee,
     priceImpact,
   };
 };
@@ -594,6 +597,20 @@ export function deriveMintMetadata(lpMint: PublicKey) {
     [Buffer.from('metadata'), METAPLEX_PROGRAM.toBuffer(), lpMint.toBuffer()],
     METAPLEX_PROGRAM,
   );
+}
+
+export function derivePoolAddressWithConfig(
+  tokenA: PublicKey,
+  tokenB: PublicKey,
+  config: PublicKey,
+  programId: PublicKey,
+) {
+  const [poolPubkey] = PublicKey.findProgramAddressSync(
+    [getFirstKey(tokenA, tokenB), getSecondKey(tokenA, tokenB), config.toBuffer()],
+    programId,
+  );
+
+  return poolPubkey;
 }
 
 export function derivePoolAddress(
@@ -655,6 +672,33 @@ export async function checkPoolExists(
   return poolPubkey;
 }
 
+/**
+ * It checks if a pool with config exists by checking if the pool account exists
+ * @param {Connection} connection - Connection - the connection to the Solana cluster
+ * @param {PublicKey} tokenA - TokenInfo
+ * @param {PublicKey} tokenB - TokenInfo
+ * @returns A PublicKey value or undefined.
+ */
+export async function checkPoolWithConfigExists(
+  connection: Connection,
+  tokenA: PublicKey,
+  tokenB: PublicKey,
+  config: PublicKey,
+  opt?: {
+    programId: string;
+  },
+): Promise<PublicKey | undefined> {
+  const { ammProgram } = createProgram(connection, opt?.programId);
+
+  const poolPubkey = derivePoolAddressWithConfig(tokenA, tokenB, config, ammProgram.programId);
+
+  const poolAccount = await ammProgram.account.pool.fetchNullable(poolPubkey);
+
+  if (!poolAccount) return;
+
+  return poolPubkey;
+}
+
 export function chunks<T>(array: T[], size: number): T[][] {
   return Array.apply<number, T[], T[][]>(0, new Array(Math.ceil(array.length / size))).map((_, index) =>
     array.slice(index * size, (index + 1) * size),
@@ -695,7 +739,7 @@ export function getSecondKey(key1: PublicKey, key2: PublicKey) {
   const buf1 = key1.toBuffer();
   const buf2 = key2.toBuffer();
   // Buf1 > buf2
-  if (Buffer.compare(buf1, buf2) == 1) {
+  if (Buffer.compare(buf1, buf2) === -1) {
     return buf2;
   }
   return buf1;
@@ -705,7 +749,7 @@ export function getFirstKey(key1: PublicKey, key2: PublicKey) {
   const buf1 = key1.toBuffer();
   const buf2 = key2.toBuffer();
   // Buf1 > buf2
-  if (Buffer.compare(buf1, buf2) == 1) {
+  if (Buffer.compare(buf1, buf2) === -1) {
     return buf1;
   }
   return buf2;

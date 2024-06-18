@@ -30,15 +30,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AmmImpl.lockLiquidity` to lock the user's LP into the lock escrow.
 - `AmmImpl.claimLockFee` to claim fees from locked LPs in the lock escrow.
 
-## @mercurial-finance/dynamic-amm-sdk [0.4.22] - PR #117
+## dynamic-amm [0.1.1] - PR #125
 
 ### Added
 
-- `lockLiquidityNewlyCreatedPool` method to help lock liquidity for pool that haven't been created yet
-- `skipAta` flag to help skipping check for create ata when creating the pool
+- Program endpoint `initialize_permissionless_constant_product_pool_with_config`. Able to create constant product pool based on `config` account.
+- Program endpoint `create_config`. Config account store default fee configuration to be used in program endpoint `initialize_permissionless_constant_product_pool_with_config`.
+- Program endpoint `remove_config`. Remove unused / misconfigured config account.
+- Account `config`. Used to store default fee configuration.
 
-## @mercurial-finance/dynamic-amm-sdk [0.4.22] - PR #129
+### Changed
 
-### Update
+- Protocol fee is now part of LP trade fee.
+- Rename of all `owner_trade_fee` related variables to `protocol_trade_fee`
 
+### Removed
+
+- `MigrateFeeAccount` and `SetAdminFeeAccount` event
+
+## @mercurial-finance/dynamic-amm-sdk [0.4.22] - PR #117
+
+### Added
 - `swap` method param `referrerToken` is non-ATA address.
+- `AmmImpl.lockLiquidityNewlyCreatedPool` method to help lock liquidity for pool that haven't been created yet
+- `skipAta` flag to help skipping check for create ata when creating the pool in `AmmImpl.createPermissionlessPool`
+
+## @mercurial-finance/dynamic-amm-sdk [0.4.23] - PR #125
+
+### Changed
+
+- Protocol fee is now part of LP trade fee.
+- update swap function `referralToken` param to `referralOwner`
+
+### Added
+
+- `AmmImpl.createPermissionlessConstantProductPoolWithConfig` to create constant product pool based on `config` account.
+- `AmmImpl.getFeeConfigurations` to get all fee configurations to be used in `AmmImpl.createPermissionlessConstantProductPoolWithConfig`

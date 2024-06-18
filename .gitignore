@@ -10,6 +10,7 @@ test-ledger
 
 ts-client/dist/
 ts-client/package-lock.json
+ts-client/src/amm/tests/snapshots
 
 ts-client/.env
 
