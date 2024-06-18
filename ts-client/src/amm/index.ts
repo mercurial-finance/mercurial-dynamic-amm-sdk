@@ -950,6 +950,7 @@ export default class AmmImpl implements AmmImplementation {
         inTokenMint,
         referralOwner,
         this.program.provider.connection,
+        owner,
       );
       createReferralTokenAccountIx && preInstructions.push(createReferralTokenAccountIx);
       remainingAccounts.push({
