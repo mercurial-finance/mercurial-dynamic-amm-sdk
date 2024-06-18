@@ -542,7 +542,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
 
   return {
     amountOut: actualDestinationAmount,
-    fee: tradeFee,
+    fee: tradeFeeAfterProtocolFee,
     priceImpact,
   };
 };
