@@ -914,7 +914,7 @@ export default class AmmImpl implements AmmImplementation {
     inTokenMint: PublicKey,
     inAmountLamport: BN,
     outAmountLamport: BN,
-    referrerToken?: PublicKey,
+    referralOwner?: PublicKey,
   ): Promise<Transaction> {
     const [sourceToken, destinationToken] =
       this.tokenA.address === inTokenMint.toBase58()
@@ -945,10 +945,10 @@ export default class AmmImpl implements AmmImplementation {
 
     const remainingAccounts = this.swapCurve.getRemainingAccounts();
 
-    if (referrerToken) {
+    if (referralOwner) {
       const [referralTokenAccount, createReferralTokenAccountIx] = await getOrCreateATAInstruction(
         inTokenMint,
-        referrerToken,
+        referralOwner,
         this.program.provider.connection,
       );
       createReferralTokenAccountIx && preInstructions.push(createReferralTokenAccountIx);
