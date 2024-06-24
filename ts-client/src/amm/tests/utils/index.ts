@@ -35,9 +35,7 @@ export const getOrCreateATA = async (connection: Connection, mint: PublicKey, ow
   return ata.address;
 };
 
-export const mockWallet = new Wallet(
-  process.env.WALLET_PRIVATE_KEY ? Keypair.fromSecretKey(bs58.decode(process.env.WALLET_PRIVATE_KEY)) : new Keypair(),
-);
+export const mockWallet = new Wallet(Keypair.generate());
 
 // export const MAINNET = {
 //   connection: new Connection(process.env.MAINNET_RPC_ENDPOINT as string),

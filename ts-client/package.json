@@ -6,8 +6,7 @@
   "module": "dist/esm/index.js",
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json && tsc -p tsconfig.esm.json",
-    "test": "jest ./src/amm/tests/*.test.ts --runInBand --setupFiles dotenv/config",
-    "test-snapshot": "jest ./src/amm/tests/snapshot.test.ts --runInBand"
+    "test": "jest ./src/amm/tests/*.test.ts --runInBand"
   },
   "files": [
     "dist"
