@@ -456,7 +456,7 @@ function calculateEstimatedMintAmount(
 class Helper {
   public static toFees(fees: PoolFees): Fees {
     return {
-      adminTrade: new Percent(fees.ownerTradeFeeNumerator, fees.ownerTradeFeeDenominator),
+      adminTrade: new Percent(fees.protocolTradeFeeNumerator, fees.protocolTradeFeeDenominator),
       trade: new Percent(fees.tradeFeeNumerator, fees.tradeFeeDenominator),
       adminWithdraw: new Percent(0, 100),
       withdraw: new Percent(0, 100),

@@ -238,7 +238,7 @@ export default class AmmImpl implements AmmImplementation {
     }
     createPayerTokenBIx && preInstructions.push(createPayerTokenBIx);
 
-    const [[adminTokenAFee], [adminTokenBFee]] = [
+    const [[protocolTokenAFee], [protocolTokenBFee]] = [
       PublicKey.findProgramAddressSync(
         [Buffer.from(SEEDS.FEE), tokenAMint.toBuffer(), poolPubkey.toBuffer()],
         ammProgram.programId,
@@ -281,8 +281,8 @@ export default class AmmImpl implements AmmImplementation {
         lpMint,
         payerTokenA,
         payerTokenB,
-        adminTokenAFee,
-        adminTokenBFee,
+        protocolTokenAFee,
+        protocolTokenBFee,
         payerPoolLp,
         aTokenVault,
         bTokenVault,
@@ -922,7 +922,9 @@ export default class AmmImpl implements AmmImplementation {
         : [this.poolState.tokenBMint, this.poolState.tokenAMint];
 
     const adminTokenFee =
-      this.tokenA.address === inTokenMint.toBase58() ? this.poolState.adminTokenAFee : this.poolState.adminTokenBFee;
+      this.tokenA.address === inTokenMint.toBase58()
+        ? this.poolState.protocolTokenAFee
+        : this.poolState.protocolTokenBFee;
 
     let preInstructions: Array<TransactionInstruction> = [];
     const [[userSourceToken, createUserSourceIx], [userDestinationToken, createUserDestinationIx]] =
@@ -966,7 +968,6 @@ export default class AmmImpl implements AmmImplementation {
         userSourceToken,
         userDestinationToken,
         user: owner,
-        adminTokenFee,
         pool: this.address,
         tokenProgram: TOKEN_PROGRAM_ID,
         vaultProgram: this.vaultProgram.programId,
@@ -1613,8 +1614,8 @@ export default class AmmImpl implements AmmImplementation {
   }
 
   private calculateAdminTradingFee(amount: BN): BN {
-    const { ownerTradeFeeDenominator, ownerTradeFeeNumerator } = this.poolState.fees;
-    return amount.mul(ownerTradeFeeNumerator).div(ownerTradeFeeDenominator);
+    const { protocolTradeFeeNumerator, protocolTradeFeeDenominator } = this.poolState.fees;
+    return amount.mul(protocolTradeFeeNumerator).div(protocolTradeFeeDenominator);
   }
 
   private calculateTradingFee(amount: BN): BN {

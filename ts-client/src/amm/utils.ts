@@ -289,8 +289,8 @@ export const calculatePoolInfo = (
 };
 
 export const calculateAdminTradingFee = (amount: BN, poolState: PoolState): BN => {
-  const { ownerTradeFeeDenominator, ownerTradeFeeNumerator } = poolState.fees;
-  return amount.mul(ownerTradeFeeNumerator).div(ownerTradeFeeDenominator);
+  const { protocolTradeFeeDenominator, protocolTradeFeeNumerator } = poolState.fees;
+  return amount.mul(protocolTradeFeeNumerator).div(protocolTradeFeeDenominator);
 };
 
 export const calculateTradingFee = (amount: BN, poolState: PoolState): BN => {

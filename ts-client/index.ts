@@ -61,6 +61,7 @@ export type {
   ConstantProductCurve,
   StableSwapCurve,
   SwapQuoteParam,
+  AlphaVault,
 } from './src/amm/types';
 export type { VaultState } from '@mercurial-finance/vault-sdk';
 export type { Amm, Vault };
