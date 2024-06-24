@@ -144,7 +144,7 @@ pub fn compute_quote(
 
     let protocol_fee = pool
         .fees
-        .protocol_trading_fee(in_amount.into())
+        .protocol_trading_fee(trade_fee)
         .context("Fail to calculate protocol trading fee")?;
 
     let in_amount_after_protocol_fee = in_amount
