@@ -1,5 +1,5 @@
 export type Amm = {
-  version: '0.5.0';
+  version: '0.4.12';
   name: 'amm';
   docs: ['Program for AMM'];
   instructions: [
@@ -91,16 +91,16 @@ export type Amm = {
           ];
         },
         {
-          name: 'adminTokenAFee';
+          name: 'protocolTokenAFee';
           isMut: true;
           isSigner: false;
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'];
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'];
         },
         {
-          name: 'adminTokenBFee';
+          name: 'protocolTokenBFee';
           isMut: true;
           isSigner: false;
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'];
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'];
         },
         {
           name: 'admin';
@@ -261,16 +261,16 @@ export type Amm = {
           isSigner: false;
         },
         {
-          name: 'adminTokenAFee';
+          name: 'protocolTokenAFee';
           isMut: true;
           isSigner: false;
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'];
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'];
         },
         {
-          name: 'adminTokenBFee';
+          name: 'protocolTokenBFee';
           isMut: true;
           isSigner: false;
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'];
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'];
         },
         {
           name: 'payer';
@@ -439,16 +439,16 @@ export type Amm = {
           isSigner: false;
         },
         {
-          name: 'adminTokenAFee';
+          name: 'protocolTokenAFee';
           isMut: true;
           isSigner: false;
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'];
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'];
         },
         {
-          name: 'adminTokenBFee';
+          name: 'protocolTokenBFee';
           isMut: true;
           isSigner: false;
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'];
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'];
         },
         {
           name: 'payer';
@@ -628,11 +628,11 @@ export type Amm = {
           ];
         },
         {
-          name: 'adminTokenFee';
+          name: 'protocolTokenFee';
           isMut: true;
           isSigner: false;
           docs: [
-            "Admin fee token account. Used to receive trading fee. It's mint field must matched with user_source_token mint field.",
+            "Protocol fee token account. Used to receive trading fee. It's mint field must matched with user_source_token mint field.",
           ];
         },
         {
@@ -1409,97 +1409,6 @@ export type Amm = {
       ];
     },
     {
-      name: 'migrateFeeAccount';
-      docs: ['Migrate old token fee owner to PDA'];
-      accounts: [
-        {
-          name: 'pool';
-          isMut: true;
-          isSigner: false;
-          docs: ['Pool account'];
-        },
-        {
-          name: 'aVaultLp';
-          isMut: false;
-          isSigner: false;
-          docs: ['A vault LP token account of the pool.'];
-        },
-        {
-          name: 'adminTokenAFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'];
-        },
-        {
-          name: 'adminTokenBFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'];
-        },
-        {
-          name: 'tokenAMint';
-          isMut: false;
-          isSigner: false;
-          docs: ['Token A mint'];
-        },
-        {
-          name: 'tokenBMint';
-          isMut: false;
-          isSigner: false;
-          docs: ['Token B mint'];
-        },
-        {
-          name: 'newAdminTokenAFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['Token fee account. Controlled by pool a_vault_lp PDA.'];
-        },
-        {
-          name: 'newAdminTokenBFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['Token fee account. Controlled by pool a_vault_lp PDA.'];
-        },
-        {
-          name: 'admin';
-          isMut: true;
-          isSigner: true;
-          docs: ['Admin account. Must be owner of the pool.'];
-        },
-        {
-          name: 'treasuryTokenAFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['Treasury token a fee ATA.'];
-        },
-        {
-          name: 'treasuryTokenBFee';
-          isMut: true;
-          isSigner: false;
-          docs: ['Treasury token b fee ATA.'];
-        },
-        {
-          name: 'treasury';
-          isMut: false;
-          isSigner: true;
-          docs: ['Treasury signer'];
-        },
-        {
-          name: 'tokenProgram';
-          isMut: false;
-          isSigner: false;
-          docs: ['Token program.'];
-        },
-        {
-          name: 'systemProgram';
-          isMut: false;
-          isSigner: false;
-          docs: ['System program.'];
-        },
-      ];
-      args: [];
-    },
-    {
       name: 'createMintMetadata';
       docs: ['Create mint metadata account for old pools'];
       accounts: [
@@ -1677,7 +1586,7 @@ export type Amm = {
       ];
       args: [
         {
-          name: 'amount';
+          name: 'maxAmount';
           type: 'u64';
         },
       ];
@@ -1810,8 +1719,313 @@ export type Amm = {
         },
       ];
     },
+    {
+      name: 'createConfig';
+      docs: ['Create config'];
+      accounts: [
+        {
+          name: 'config';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'admin';
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
+        {
+          name: 'configParameters';
+          type: {
+            defined: 'ConfigParameters';
+          };
+        },
+      ];
+    },
+    {
+      name: 'closeConfig';
+      docs: ['Close config'];
+      accounts: [
+        {
+          name: 'config';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'admin';
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: 'rentReceiver';
+          isMut: true;
+          isSigner: false;
+        },
+      ];
+      args: [];
+    },
+    {
+      name: 'initializePermissionlessConstantProductPoolWithConfig';
+      docs: ['Initialize permissionless pool with config'];
+      accounts: [
+        {
+          name: 'pool';
+          isMut: true;
+          isSigner: false;
+          docs: ['Pool account (PDA address)'];
+        },
+        {
+          name: 'config';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'lpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of the pool'];
+        },
+        {
+          name: 'tokenAMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token A mint of the pool. Eg: USDT'];
+        },
+        {
+          name: 'tokenBMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token B mint of the pool. Eg: USDC'];
+        },
+        {
+          name: 'aVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.'];
+        },
+        {
+          name: 'bVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.'];
+        },
+        {
+          name: 'aTokenVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Token vault account of vault A'];
+        },
+        {
+          name: 'bTokenVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Token vault account of vault B'];
+        },
+        {
+          name: 'aVaultLpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of vault A'];
+        },
+        {
+          name: 'bVaultLpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of vault B'];
+        },
+        {
+          name: 'aVaultLp';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
+        },
+        {
+          name: 'bVaultLp';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault.'];
+        },
+        {
+          name: 'payerTokenA';
+          isMut: true;
+          isSigner: false;
+          docs: ['Payer token account for pool token A mint. Used to bootstrap the pool with initial liquidity.'];
+        },
+        {
+          name: 'payerTokenB';
+          isMut: true;
+          isSigner: false;
+          docs: ['Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity.'];
+        },
+        {
+          name: 'payerPoolLp';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'protocolTokenAFee';
+          isMut: true;
+          isSigner: false;
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'];
+        },
+        {
+          name: 'protocolTokenBFee';
+          isMut: true;
+          isSigner: false;
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'];
+        },
+        {
+          name: 'payer';
+          isMut: true;
+          isSigner: true;
+          docs: [
+            'Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.',
+          ];
+        },
+        {
+          name: 'rent';
+          isMut: false;
+          isSigner: false;
+          docs: ['Rent account.'];
+        },
+        {
+          name: 'mintMetadata';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'metadataProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'vaultProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Vault program. The pool will deposit/withdraw liquidity from the vault.'];
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token program.'];
+        },
+        {
+          name: 'associatedTokenProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Associated token program.'];
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['System program.'];
+        },
+      ];
+      args: [
+        {
+          name: 'tokenAAmount';
+          type: 'u64';
+        },
+        {
+          name: 'tokenBAmount';
+          type: 'u64';
+        },
+      ];
+    },
   ];
   accounts: [
+    {
+      name: 'config';
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'poolFees';
+            type: {
+              defined: 'PoolFees';
+            };
+          },
+          {
+            name: 'activationDurationInSlot';
+            type: 'u64';
+          },
+          {
+            name: 'vaultConfigKey';
+            type: 'publicKey';
+          },
+          {
+            name: 'padding';
+            type: {
+              array: ['u8', 260];
+            };
+          },
+        ];
+      };
+    },
+    {
+      name: 'lockEscrow';
+      docs: ['State of lock escrow account'];
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'pool';
+            docs: ['Pool address'];
+            type: 'publicKey';
+          },
+          {
+            name: 'owner';
+            docs: ['Owner address'];
+            type: 'publicKey';
+          },
+          {
+            name: 'escrowVault';
+            docs: ['Vault address, store the lock user lock'];
+            type: 'publicKey';
+          },
+          {
+            name: 'bump';
+            docs: ['bump, used to sign'];
+            type: 'u8';
+          },
+          {
+            name: 'totalLockedAmount';
+            docs: ['Total locked amount'];
+            type: 'u64';
+          },
+          {
+            name: 'lpPerToken';
+            docs: ['Lp per token, virtual price of lp token'];
+            type: 'u128';
+          },
+          {
+            name: 'unclaimedFeePending';
+            docs: ['Unclaimed fee pending'];
+            type: 'u64';
+          },
+          {
+            name: 'aFee';
+            docs: ['Total a fee claimed so far'];
+            type: 'u64';
+          },
+          {
+            name: 'bFee';
+            docs: ['Total b fee claimed so far'];
+            type: 'u64';
+          },
+        ];
+      };
+    },
     {
       name: 'pool';
       docs: ['State of pool account'];
@@ -1872,13 +2086,13 @@ export type Amm = {
             type: 'bool';
           },
           {
-            name: 'adminTokenAFee';
-            docs: ['Admin fee token account for token A. Used to receive trading fee.'];
+            name: 'protocolTokenAFee';
+            docs: ['Protocol fee token account for token A. Used to receive trading fee.'];
             type: 'publicKey';
           },
           {
-            name: 'adminTokenBFee';
-            docs: ['Admin fee token account for token B. Used to receive trading fee.'];
+            name: 'protocolTokenBFee';
+            docs: ['Protocol fee token account for token B. Used to receive trading fee.'];
             type: 'publicKey';
           },
           {
@@ -1911,6 +2125,13 @@ export type Amm = {
             type: 'u64';
           },
           {
+            name: 'alphaVault';
+            docs: ['Alpha vault config'];
+            type: {
+              defined: 'AlphaVault';
+            };
+          },
+          {
             name: 'padding';
             docs: ['Padding for future pool field'];
             type: {
@@ -1923,60 +2144,6 @@ export type Amm = {
             type: {
               defined: 'CurveType';
             };
-          },
-        ];
-      };
-    },
-    {
-      name: 'lockEscrow';
-      docs: ['State of lock escrow account'];
-      type: {
-        kind: 'struct';
-        fields: [
-          {
-            name: 'pool';
-            docs: ['Pool address'];
-            type: 'publicKey';
-          },
-          {
-            name: 'owner';
-            docs: ['Owner address'];
-            type: 'publicKey';
-          },
-          {
-            name: 'escrowVault';
-            docs: ['Vault address, store the lock user lock'];
-            type: 'publicKey';
-          },
-          {
-            name: 'bump';
-            docs: ['bump, used to sign'];
-            type: 'u8';
-          },
-          {
-            name: 'totalLockedAmount';
-            docs: ['Total locked amount'];
-            type: 'u64';
-          },
-          {
-            name: 'lpPerToken';
-            docs: ['Lp per token, virtual price of lp token'];
-            type: 'u128';
-          },
-          {
-            name: 'unclaimedFeePending';
-            docs: ['Unclaimed fee pending'];
-            type: 'u64';
-          },
-          {
-            name: 'aFee';
-            docs: ['Total a fee claimed so far'];
-            type: 'u64';
-          },
-          {
-            name: 'bFee';
-            docs: ['Total b fee claimed so far'];
-            type: 'u64';
           },
         ];
       };
@@ -2030,18 +2197,18 @@ export type Amm = {
             type: 'u64';
           },
           {
-            name: 'ownerTradeFeeNumerator';
+            name: 'protocolTradeFeeNumerator';
             docs: [
-              'Owner trading fees are extra token amounts that are held inside the token',
+              'Protocol trading fees are extra token amounts that are held inside the token',
               'accounts during a trade, with the equivalent in pool tokens minted to',
-              'the owner of the program.',
-              'Owner trade fee numerator',
+              'the protocol of the program.',
+              'Protocol trade fee numerator',
             ];
             type: 'u64';
           },
           {
-            name: 'ownerTradeFeeDenominator';
-            docs: ['Owner trade fee denominator'];
+            name: 'protocolTradeFeeDenominator';
+            docs: ['Protocol trade fee denominator'];
             type: 'u64';
           },
         ];
@@ -2074,6 +2241,34 @@ export type Amm = {
       };
     },
     {
+      name: 'ConfigParameters';
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'tradeFeeNumerator';
+            type: 'u64';
+          },
+          {
+            name: 'protocolTradeFeeNumerator';
+            type: 'u64';
+          },
+          {
+            name: 'activationDurationInSlot';
+            type: 'u64';
+          },
+          {
+            name: 'vaultConfigKey';
+            type: 'publicKey';
+          },
+          {
+            name: 'index';
+            type: 'u64';
+          },
+        ];
+      };
+    },
+    {
       name: 'Padding';
       docs: ['Padding for future pool fields'];
       type: {
@@ -2083,15 +2278,38 @@ export type Amm = {
             name: 'padding0';
             docs: ['Padding 0'];
             type: {
-              array: ['u8', 7];
+              array: ['u8', 15];
             };
           },
           {
             name: 'padding';
             docs: ['Padding 1'];
             type: {
-              array: ['u128', 29];
+              array: ['u128', 24];
             };
+          },
+        ];
+      };
+    },
+    {
+      name: 'AlphaVault';
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'activationSlot';
+            docs: ['Activation slot'];
+            type: 'u64';
+          },
+          {
+            name: 'whitelistedVault';
+            docs: ['Whitelisted vault to be able to buy pool before open slot'];
+            type: 'publicKey';
+          },
+          {
+            name: 'poolCreator';
+            docs: ['Need to store pool creator in lauch pool, so they can modify liquidity before activation slot'];
+            type: 'publicKey';
           },
         ];
       };
@@ -2144,7 +2362,7 @@ export type Amm = {
                 type: 'u64';
               },
               {
-                name: 'token_multiplier';
+                name: 'tokenMultiplier';
                 docs: [
                   'Multiplier for the pool token. Used to normalized token with different decimal into the same precision.',
                 ];
@@ -2162,7 +2380,7 @@ export type Amm = {
                 };
               },
               {
-                name: 'last_amp_updated_timestamp';
+                name: 'lastAmpUpdatedTimestamp';
                 docs: [
                   'The last amp updated timestamp. Used to prevent update_curve_info called infinitely many times within a short period',
                 ];
@@ -2174,11 +2392,11 @@ export type Amm = {
             name: 'NewCurve';
             fields: [
               {
-                name: 'field_one';
+                name: 'fieldOne';
                 type: 'u64';
               },
               {
-                name: 'field_two';
+                name: 'fieldTwo';
                 type: 'u64';
               },
             ];
@@ -2204,7 +2422,7 @@ export type Amm = {
                 type: 'u64';
               },
               {
-                name: 'token_multiplier';
+                name: 'tokenMultiplier';
                 docs: [
                   'Multiplier for the pool token. Used to normalized token with different decimal into the same precision.',
                 ];
@@ -2222,7 +2440,7 @@ export type Amm = {
                 };
               },
               {
-                name: 'last_amp_updated_timestamp';
+                name: 'lastAmpUpdatedTimestamp';
                 docs: [
                   'The last amp updated timestamp. Used to prevent update_curve_info called infinitely many times within a short period',
                 ];
@@ -2370,7 +2588,7 @@ export type Amm = {
           index: false;
         },
         {
-          name: 'adminFee';
+          name: 'protocolFee';
           type: 'u64';
           index: false;
         },
@@ -2395,12 +2613,12 @@ export type Amm = {
           index: false;
         },
         {
-          name: 'ownerTradeFeeNumerator';
+          name: 'protocolTradeFeeNumerator';
           type: 'u64';
           index: false;
         },
         {
-          name: 'ownerTradeFeeDenominator';
+          name: 'protocolTradeFeeDenominator';
           type: 'u64';
           index: false;
         },
@@ -2451,31 +2669,6 @@ export type Amm = {
         },
         {
           name: 'pool';
-          type: 'publicKey';
-          index: false;
-        },
-      ];
-    },
-    {
-      name: 'SetAdminFeeAccount';
-      fields: [
-        {
-          name: 'adminTokenAFee';
-          type: 'publicKey';
-          index: false;
-        },
-        {
-          name: 'adminTokenBFee';
-          type: 'publicKey';
-          index: false;
-        },
-        {
-          name: 'newAdminTokenAFee';
-          type: 'publicKey';
-          index: false;
-        },
-        {
-          name: 'newAdminTokenBFee';
           type: 'publicKey';
           index: false;
         },
@@ -2643,6 +2836,36 @@ export type Amm = {
         },
       ];
     },
+    {
+      name: 'CreateConfig';
+      fields: [
+        {
+          name: 'tradeFeeNumerator';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'protocolTradeFeeNumerator';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'config';
+          type: 'publicKey';
+          index: false;
+        },
+      ];
+    },
+    {
+      name: 'CloseConfig';
+      fields: [
+        {
+          name: 'config';
+          type: 'publicKey';
+          index: false;
+        },
+      ];
+    },
   ];
   errors: [
     {
@@ -2732,8 +2955,8 @@ export type Amm = {
     },
     {
       code: 6017;
-      name: 'InvalidAdminFeeAccount';
-      msg: 'Invalid admin fee account';
+      name: 'InvalidProtocolFeeAccount';
+      msg: 'Invalid protocol fee account';
     },
     {
       code: 6018;
@@ -2822,59 +3045,59 @@ export type Amm = {
     },
     {
       code: 6035;
-      name: 'OwnerFeeOverHalfOfTradeFee';
-      msg: 'Owner fee exceed half of trade fee';
-    },
-    {
-      code: 6036;
       name: 'InvalidAdmin';
       msg: 'Invalid admin';
     },
     {
-      code: 6037;
+      code: 6036;
       name: 'PoolIsNotPermissioned';
       msg: 'Pool is not permissioned';
     },
     {
-      code: 6038;
+      code: 6037;
       name: 'InvalidDepositAmount';
       msg: 'Invalid deposit amount';
     },
     {
-      code: 6039;
+      code: 6038;
       name: 'InvalidFeeOwner';
       msg: 'Invalid fee owner';
     },
     {
-      code: 6040;
+      code: 6039;
       name: 'NonDepletedPool';
       msg: 'Pool is not depleted';
     },
     {
-      code: 6041;
+      code: 6040;
       name: 'AmountNotPeg';
       msg: 'Token amount is not 1:1';
     },
     {
-      code: 6042;
+      code: 6041;
       name: 'AmountIsZero';
       msg: 'Amount is zero';
     },
     {
-      code: 6043;
+      code: 6042;
       name: 'TypeCastFailed';
       msg: 'Type cast error';
     },
     {
-      code: 6044;
+      code: 6043;
       name: 'AmountIsNotEnough';
       msg: 'Amount is not enough';
+    },
+    {
+      code: 6044;
+      name: 'InvalidActivationSlotInDuration';
+      msg: 'Invalid activation slot in duration';
     },
   ];
 };
 
 export const IDL: Amm = {
-  version: '0.5.0',
+  version: '0.4.12',
   name: 'amm',
   docs: ['Program for AMM'],
   instructions: [
@@ -2966,16 +3189,16 @@ export const IDL: Amm = {
           ],
         },
         {
-          name: 'adminTokenAFee',
+          name: 'protocolTokenAFee',
           isMut: true,
           isSigner: false,
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'],
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'],
         },
         {
-          name: 'adminTokenBFee',
+          name: 'protocolTokenBFee',
           isMut: true,
           isSigner: false,
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'],
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'],
         },
         {
           name: 'admin',
@@ -3136,16 +3359,16 @@ export const IDL: Amm = {
           isSigner: false,
         },
         {
-          name: 'adminTokenAFee',
+          name: 'protocolTokenAFee',
           isMut: true,
           isSigner: false,
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'],
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'],
         },
         {
-          name: 'adminTokenBFee',
+          name: 'protocolTokenBFee',
           isMut: true,
           isSigner: false,
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'],
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'],
         },
         {
           name: 'payer',
@@ -3314,16 +3537,16 @@ export const IDL: Amm = {
           isSigner: false,
         },
         {
-          name: 'adminTokenAFee',
+          name: 'protocolTokenAFee',
           isMut: true,
           isSigner: false,
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'],
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'],
         },
         {
-          name: 'adminTokenBFee',
+          name: 'protocolTokenBFee',
           isMut: true,
           isSigner: false,
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'],
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'],
         },
         {
           name: 'payer',
@@ -3503,11 +3726,11 @@ export const IDL: Amm = {
           ],
         },
         {
-          name: 'adminTokenFee',
+          name: 'protocolTokenFee',
           isMut: true,
           isSigner: false,
           docs: [
-            "Admin fee token account. Used to receive trading fee. It's mint field must matched with user_source_token mint field.",
+            "Protocol fee token account. Used to receive trading fee. It's mint field must matched with user_source_token mint field.",
           ],
         },
         {
@@ -4284,97 +4507,6 @@ export const IDL: Amm = {
       ],
     },
     {
-      name: 'migrateFeeAccount',
-      docs: ['Migrate old token fee owner to PDA'],
-      accounts: [
-        {
-          name: 'pool',
-          isMut: true,
-          isSigner: false,
-          docs: ['Pool account'],
-        },
-        {
-          name: 'aVaultLp',
-          isMut: false,
-          isSigner: false,
-          docs: ['A vault LP token account of the pool.'],
-        },
-        {
-          name: 'adminTokenAFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['Admin fee token account for token A. Used to receive trading fee.'],
-        },
-        {
-          name: 'adminTokenBFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['Admin fee token account for token B. Used to receive trading fee.'],
-        },
-        {
-          name: 'tokenAMint',
-          isMut: false,
-          isSigner: false,
-          docs: ['Token A mint'],
-        },
-        {
-          name: 'tokenBMint',
-          isMut: false,
-          isSigner: false,
-          docs: ['Token B mint'],
-        },
-        {
-          name: 'newAdminTokenAFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['Token fee account. Controlled by pool a_vault_lp PDA.'],
-        },
-        {
-          name: 'newAdminTokenBFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['Token fee account. Controlled by pool a_vault_lp PDA.'],
-        },
-        {
-          name: 'admin',
-          isMut: true,
-          isSigner: true,
-          docs: ['Admin account. Must be owner of the pool.'],
-        },
-        {
-          name: 'treasuryTokenAFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['Treasury token a fee ATA.'],
-        },
-        {
-          name: 'treasuryTokenBFee',
-          isMut: true,
-          isSigner: false,
-          docs: ['Treasury token b fee ATA.'],
-        },
-        {
-          name: 'treasury',
-          isMut: false,
-          isSigner: true,
-          docs: ['Treasury signer'],
-        },
-        {
-          name: 'tokenProgram',
-          isMut: false,
-          isSigner: false,
-          docs: ['Token program.'],
-        },
-        {
-          name: 'systemProgram',
-          isMut: false,
-          isSigner: false,
-          docs: ['System program.'],
-        },
-      ],
-      args: [],
-    },
-    {
       name: 'createMintMetadata',
       docs: ['Create mint metadata account for old pools'],
       accounts: [
@@ -4552,7 +4684,7 @@ export const IDL: Amm = {
       ],
       args: [
         {
-          name: 'amount',
+          name: 'maxAmount',
           type: 'u64',
         },
       ],
@@ -4685,8 +4817,313 @@ export const IDL: Amm = {
         },
       ],
     },
+    {
+      name: 'createConfig',
+      docs: ['Create config'],
+      accounts: [
+        {
+          name: 'config',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'admin',
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: 'configParameters',
+          type: {
+            defined: 'ConfigParameters',
+          },
+        },
+      ],
+    },
+    {
+      name: 'closeConfig',
+      docs: ['Close config'],
+      accounts: [
+        {
+          name: 'config',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'admin',
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: 'rentReceiver',
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
+    {
+      name: 'initializePermissionlessConstantProductPoolWithConfig',
+      docs: ['Initialize permissionless pool with config'],
+      accounts: [
+        {
+          name: 'pool',
+          isMut: true,
+          isSigner: false,
+          docs: ['Pool account (PDA address)'],
+        },
+        {
+          name: 'config',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'lpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of the pool'],
+        },
+        {
+          name: 'tokenAMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token A mint of the pool. Eg: USDT'],
+        },
+        {
+          name: 'tokenBMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token B mint of the pool. Eg: USDC'],
+        },
+        {
+          name: 'aVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.'],
+        },
+        {
+          name: 'bVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.'],
+        },
+        {
+          name: 'aTokenVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Token vault account of vault A'],
+        },
+        {
+          name: 'bTokenVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Token vault account of vault B'],
+        },
+        {
+          name: 'aVaultLpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of vault A'],
+        },
+        {
+          name: 'bVaultLpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of vault B'],
+        },
+        {
+          name: 'aVaultLp',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
+        },
+        {
+          name: 'bVaultLp',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault.'],
+        },
+        {
+          name: 'payerTokenA',
+          isMut: true,
+          isSigner: false,
+          docs: ['Payer token account for pool token A mint. Used to bootstrap the pool with initial liquidity.'],
+        },
+        {
+          name: 'payerTokenB',
+          isMut: true,
+          isSigner: false,
+          docs: ['Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity.'],
+        },
+        {
+          name: 'payerPoolLp',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'protocolTokenAFee',
+          isMut: true,
+          isSigner: false,
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'],
+        },
+        {
+          name: 'protocolTokenBFee',
+          isMut: true,
+          isSigner: false,
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'],
+        },
+        {
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
+          docs: [
+            'Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.',
+          ],
+        },
+        {
+          name: 'rent',
+          isMut: false,
+          isSigner: false,
+          docs: ['Rent account.'],
+        },
+        {
+          name: 'mintMetadata',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'metadataProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'vaultProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Vault program. The pool will deposit/withdraw liquidity from the vault.'],
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token program.'],
+        },
+        {
+          name: 'associatedTokenProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Associated token program.'],
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['System program.'],
+        },
+      ],
+      args: [
+        {
+          name: 'tokenAAmount',
+          type: 'u64',
+        },
+        {
+          name: 'tokenBAmount',
+          type: 'u64',
+        },
+      ],
+    },
   ],
   accounts: [
+    {
+      name: 'config',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'poolFees',
+            type: {
+              defined: 'PoolFees',
+            },
+          },
+          {
+            name: 'activationDurationInSlot',
+            type: 'u64',
+          },
+          {
+            name: 'vaultConfigKey',
+            type: 'publicKey',
+          },
+          {
+            name: 'padding',
+            type: {
+              array: ['u8', 260],
+            },
+          },
+        ],
+      },
+    },
+    {
+      name: 'lockEscrow',
+      docs: ['State of lock escrow account'],
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'pool',
+            docs: ['Pool address'],
+            type: 'publicKey',
+          },
+          {
+            name: 'owner',
+            docs: ['Owner address'],
+            type: 'publicKey',
+          },
+          {
+            name: 'escrowVault',
+            docs: ['Vault address, store the lock user lock'],
+            type: 'publicKey',
+          },
+          {
+            name: 'bump',
+            docs: ['bump, used to sign'],
+            type: 'u8',
+          },
+          {
+            name: 'totalLockedAmount',
+            docs: ['Total locked amount'],
+            type: 'u64',
+          },
+          {
+            name: 'lpPerToken',
+            docs: ['Lp per token, virtual price of lp token'],
+            type: 'u128',
+          },
+          {
+            name: 'unclaimedFeePending',
+            docs: ['Unclaimed fee pending'],
+            type: 'u64',
+          },
+          {
+            name: 'aFee',
+            docs: ['Total a fee claimed so far'],
+            type: 'u64',
+          },
+          {
+            name: 'bFee',
+            docs: ['Total b fee claimed so far'],
+            type: 'u64',
+          },
+        ],
+      },
+    },
     {
       name: 'pool',
       docs: ['State of pool account'],
@@ -4747,13 +5184,13 @@ export const IDL: Amm = {
             type: 'bool',
           },
           {
-            name: 'adminTokenAFee',
-            docs: ['Admin fee token account for token A. Used to receive trading fee.'],
+            name: 'protocolTokenAFee',
+            docs: ['Protocol fee token account for token A. Used to receive trading fee.'],
             type: 'publicKey',
           },
           {
-            name: 'adminTokenBFee',
-            docs: ['Admin fee token account for token B. Used to receive trading fee.'],
+            name: 'protocolTokenBFee',
+            docs: ['Protocol fee token account for token B. Used to receive trading fee.'],
             type: 'publicKey',
           },
           {
@@ -4786,6 +5223,13 @@ export const IDL: Amm = {
             type: 'u64',
           },
           {
+            name: 'alphaVault',
+            docs: ['Alpha vault config'],
+            type: {
+              defined: 'AlphaVault',
+            },
+          },
+          {
             name: 'padding',
             docs: ['Padding for future pool field'],
             type: {
@@ -4798,60 +5242,6 @@ export const IDL: Amm = {
             type: {
               defined: 'CurveType',
             },
-          },
-        ],
-      },
-    },
-    {
-      name: 'lockEscrow',
-      docs: ['State of lock escrow account'],
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'pool',
-            docs: ['Pool address'],
-            type: 'publicKey',
-          },
-          {
-            name: 'owner',
-            docs: ['Owner address'],
-            type: 'publicKey',
-          },
-          {
-            name: 'escrowVault',
-            docs: ['Vault address, store the lock user lock'],
-            type: 'publicKey',
-          },
-          {
-            name: 'bump',
-            docs: ['bump, used to sign'],
-            type: 'u8',
-          },
-          {
-            name: 'totalLockedAmount',
-            docs: ['Total locked amount'],
-            type: 'u64',
-          },
-          {
-            name: 'lpPerToken',
-            docs: ['Lp per token, virtual price of lp token'],
-            type: 'u128',
-          },
-          {
-            name: 'unclaimedFeePending',
-            docs: ['Unclaimed fee pending'],
-            type: 'u64',
-          },
-          {
-            name: 'aFee',
-            docs: ['Total a fee claimed so far'],
-            type: 'u64',
-          },
-          {
-            name: 'bFee',
-            docs: ['Total b fee claimed so far'],
-            type: 'u64',
           },
         ],
       },
@@ -4905,18 +5295,18 @@ export const IDL: Amm = {
             type: 'u64',
           },
           {
-            name: 'ownerTradeFeeNumerator',
+            name: 'protocolTradeFeeNumerator',
             docs: [
-              'Owner trading fees are extra token amounts that are held inside the token',
+              'Protocol trading fees are extra token amounts that are held inside the token',
               'accounts during a trade, with the equivalent in pool tokens minted to',
-              'the owner of the program.',
-              'Owner trade fee numerator',
+              'the protocol of the program.',
+              'Protocol trade fee numerator',
             ],
             type: 'u64',
           },
           {
-            name: 'ownerTradeFeeDenominator',
-            docs: ['Owner trade fee denominator'],
+            name: 'protocolTradeFeeDenominator',
+            docs: ['Protocol trade fee denominator'],
             type: 'u64',
           },
         ],
@@ -4949,6 +5339,34 @@ export const IDL: Amm = {
       },
     },
     {
+      name: 'ConfigParameters',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'tradeFeeNumerator',
+            type: 'u64',
+          },
+          {
+            name: 'protocolTradeFeeNumerator',
+            type: 'u64',
+          },
+          {
+            name: 'activationDurationInSlot',
+            type: 'u64',
+          },
+          {
+            name: 'vaultConfigKey',
+            type: 'publicKey',
+          },
+          {
+            name: 'index',
+            type: 'u64',
+          },
+        ],
+      },
+    },
+    {
       name: 'Padding',
       docs: ['Padding for future pool fields'],
       type: {
@@ -4958,15 +5376,38 @@ export const IDL: Amm = {
             name: 'padding0',
             docs: ['Padding 0'],
             type: {
-              array: ['u8', 7],
+              array: ['u8', 15],
             },
           },
           {
             name: 'padding',
             docs: ['Padding 1'],
             type: {
-              array: ['u128', 29],
+              array: ['u128', 24],
             },
+          },
+        ],
+      },
+    },
+    {
+      name: 'AlphaVault',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'activationSlot',
+            docs: ['Activation slot'],
+            type: 'u64',
+          },
+          {
+            name: 'whitelistedVault',
+            docs: ['Whitelisted vault to be able to buy pool before open slot'],
+            type: 'publicKey',
+          },
+          {
+            name: 'poolCreator',
+            docs: ['Need to store pool creator in lauch pool, so they can modify liquidity before activation slot'],
+            type: 'publicKey',
           },
         ],
       },
@@ -5019,7 +5460,7 @@ export const IDL: Amm = {
                 type: 'u64',
               },
               {
-                name: 'token_multiplier',
+                name: 'tokenMultiplier',
                 docs: [
                   'Multiplier for the pool token. Used to normalized token with different decimal into the same precision.',
                 ],
@@ -5037,7 +5478,7 @@ export const IDL: Amm = {
                 },
               },
               {
-                name: 'last_amp_updated_timestamp',
+                name: 'lastAmpUpdatedTimestamp',
                 docs: [
                   'The last amp updated timestamp. Used to prevent update_curve_info called infinitely many times within a short period',
                 ],
@@ -5049,11 +5490,11 @@ export const IDL: Amm = {
             name: 'NewCurve',
             fields: [
               {
-                name: 'field_one',
+                name: 'fieldOne',
                 type: 'u64',
               },
               {
-                name: 'field_two',
+                name: 'fieldTwo',
                 type: 'u64',
               },
             ],
@@ -5079,7 +5520,7 @@ export const IDL: Amm = {
                 type: 'u64',
               },
               {
-                name: 'token_multiplier',
+                name: 'tokenMultiplier',
                 docs: [
                   'Multiplier for the pool token. Used to normalized token with different decimal into the same precision.',
                 ],
@@ -5097,7 +5538,7 @@ export const IDL: Amm = {
                 },
               },
               {
-                name: 'last_amp_updated_timestamp',
+                name: 'lastAmpUpdatedTimestamp',
                 docs: [
                   'The last amp updated timestamp. Used to prevent update_curve_info called infinitely many times within a short period',
                 ],
@@ -5245,7 +5686,7 @@ export const IDL: Amm = {
           index: false,
         },
         {
-          name: 'adminFee',
+          name: 'protocolFee',
           type: 'u64',
           index: false,
         },
@@ -5270,12 +5711,12 @@ export const IDL: Amm = {
           index: false,
         },
         {
-          name: 'ownerTradeFeeNumerator',
+          name: 'protocolTradeFeeNumerator',
           type: 'u64',
           index: false,
         },
         {
-          name: 'ownerTradeFeeDenominator',
+          name: 'protocolTradeFeeDenominator',
           type: 'u64',
           index: false,
         },
@@ -5326,31 +5767,6 @@ export const IDL: Amm = {
         },
         {
           name: 'pool',
-          type: 'publicKey',
-          index: false,
-        },
-      ],
-    },
-    {
-      name: 'SetAdminFeeAccount',
-      fields: [
-        {
-          name: 'adminTokenAFee',
-          type: 'publicKey',
-          index: false,
-        },
-        {
-          name: 'adminTokenBFee',
-          type: 'publicKey',
-          index: false,
-        },
-        {
-          name: 'newAdminTokenAFee',
-          type: 'publicKey',
-          index: false,
-        },
-        {
-          name: 'newAdminTokenBFee',
           type: 'publicKey',
           index: false,
         },
@@ -5518,6 +5934,36 @@ export const IDL: Amm = {
         },
       ],
     },
+    {
+      name: 'CreateConfig',
+      fields: [
+        {
+          name: 'tradeFeeNumerator',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'protocolTradeFeeNumerator',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'config',
+          type: 'publicKey',
+          index: false,
+        },
+      ],
+    },
+    {
+      name: 'CloseConfig',
+      fields: [
+        {
+          name: 'config',
+          type: 'publicKey',
+          index: false,
+        },
+      ],
+    },
   ],
   errors: [
     {
@@ -5607,8 +6053,8 @@ export const IDL: Amm = {
     },
     {
       code: 6017,
-      name: 'InvalidAdminFeeAccount',
-      msg: 'Invalid admin fee account',
+      name: 'InvalidProtocolFeeAccount',
+      msg: 'Invalid protocol fee account',
     },
     {
       code: 6018,
@@ -5697,53 +6143,53 @@ export const IDL: Amm = {
     },
     {
       code: 6035,
-      name: 'OwnerFeeOverHalfOfTradeFee',
-      msg: 'Owner fee exceed half of trade fee',
-    },
-    {
-      code: 6036,
       name: 'InvalidAdmin',
       msg: 'Invalid admin',
     },
     {
-      code: 6037,
+      code: 6036,
       name: 'PoolIsNotPermissioned',
       msg: 'Pool is not permissioned',
     },
     {
-      code: 6038,
+      code: 6037,
       name: 'InvalidDepositAmount',
       msg: 'Invalid deposit amount',
     },
     {
-      code: 6039,
+      code: 6038,
       name: 'InvalidFeeOwner',
       msg: 'Invalid fee owner',
     },
     {
-      code: 6040,
+      code: 6039,
       name: 'NonDepletedPool',
       msg: 'Pool is not depleted',
     },
     {
-      code: 6041,
+      code: 6040,
       name: 'AmountNotPeg',
       msg: 'Token amount is not 1:1',
     },
     {
-      code: 6042,
+      code: 6041,
       name: 'AmountIsZero',
       msg: 'Amount is zero',
     },
     {
-      code: 6043,
+      code: 6042,
       name: 'TypeCastFailed',
       msg: 'Type cast error',
     },
     {
-      code: 6044,
+      code: 6043,
       name: 'AmountIsNotEnough',
       msg: 'Amount is not enough',
+    },
+    {
+      code: 6044,
+      name: 'InvalidActivationSlotInDuration',
+      msg: 'Invalid activation slot in duration',
     },
   ],
 };
