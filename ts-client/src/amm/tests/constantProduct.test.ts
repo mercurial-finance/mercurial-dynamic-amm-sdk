@@ -109,7 +109,7 @@ describe('Constant product pool', () => {
 
       transaction.sign(mockWallet.payer);
       const txHash = await connection.sendRawTransaction(transaction.serialize());
-      await connection.confirmTransaction(txHash, connection.commitment);
+      await connection.confirmTransaction(txHash, 'finalized');
 
       const poolKey = derivePoolAddress(connection, btcTokenInfo, usdcTokenInfo, false, tradeFeeBps);
       cpPoolFeeTiered = await AmmImpl.create(connection, poolKey, btcTokenInfo, usdcTokenInfo);
@@ -299,7 +299,7 @@ describe('Constant product pool', () => {
       transaction.sign(mockWallet.payer);
       const txHash = await connection.sendRawTransaction(transaction.serialize());
       console.log('Create config', txHash);
-      await connection.confirmTransaction(txHash, connection.commitment);
+      await connection.confirmTransaction(txHash, 'finalized');
     });
 
     test('Create constant product pool', async () => {
@@ -320,7 +320,7 @@ describe('Constant product pool', () => {
       for (const transaction of transactions) {
         transaction.sign(mockWallet.payer);
         const txHash = await connection.sendRawTransaction(transaction.serialize());
-        await connection.confirmTransaction(txHash, connection.commitment);
+        await connection.confirmTransaction(txHash, 'finalized');
       }
 
       const poolKey = derivePoolAddressWithConfig(

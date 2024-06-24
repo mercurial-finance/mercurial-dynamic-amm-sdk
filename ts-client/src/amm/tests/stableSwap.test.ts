@@ -116,7 +116,7 @@ describe('Stable Swap pool', () => {
 
       transaction.sign(mockWallet.payer);
       const txHash = await connection.sendRawTransaction(transaction.serialize());
-      await connection.confirmTransaction(txHash, connection.commitment);
+      await connection.confirmTransaction(txHash, 'finalized');
 
       const poolKey = derivePoolAddress(connection, usdtTokenInfo, usdcTokenInfo, true, tradeFeeBps);
       stableSwapFeeTiered = await AmmImpl.create(connection, poolKey, usdtTokenInfo, usdcTokenInfo);

@@ -113,7 +113,7 @@ describe('Error parsing', () => {
 
     transaction.sign(mockWallet.payer);
     let txHash = await connection.sendRawTransaction(transaction.serialize());
-    await connection.confirmTransaction(txHash, connection.commitment);
+    await connection.confirmTransaction(txHash, 'finalized');
 
     let poolKey = derivePoolAddress(connection, usdtTokenInfo, usdcTokenInfo, true, tradeFeeBps);
     stablePool = await AmmImpl.create(connection, poolKey, usdtTokenInfo, usdcTokenInfo);
@@ -132,7 +132,7 @@ describe('Error parsing', () => {
 
     transaction.sign(mockWallet.payer);
     txHash = await connection.sendRawTransaction(transaction.serialize());
-    await connection.confirmTransaction(txHash, connection.commitment);
+    await connection.confirmTransaction(txHash, 'finalized');
 
     poolKey = derivePoolAddress(connection, usdtTokenInfo, usdcTokenInfo, false, tradeFeeBps);
     cpPool = await AmmImpl.create(connection, poolKey, usdtTokenInfo, usdcTokenInfo);
