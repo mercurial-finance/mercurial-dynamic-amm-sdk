@@ -1,4 +1,4 @@
-name: Continuous Integration NPM
+name: Typescript SDK CI
 
 on:
   pull_request:

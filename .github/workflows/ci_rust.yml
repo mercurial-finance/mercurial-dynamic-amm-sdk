@@ -1,16 +1,16 @@
-name: CICD on main
+name: Rust SDK CI
 
 on:
   pull_request:
-  push:
     paths-ignore:
       - "docs/**"
       - "README.md"
       - "LICENSE"
       - ".editorconfig"
     branches:
-      - main
       - master
+      - develop
+      - staging
 
 env:
   SOLANA_CLI_VERSION: 1.16.2
@@ -31,11 +31,12 @@ jobs:
           files: |
             rust-client
             programs
+            dynamic-amm-quote
 
-  rust-test-publish:
+  rust-test:
     needs: changed_files_rust
-    if: needs.changed_files_rust.outputs.program == 'true'
     runs-on: ubuntu-latest
+    if: needs.changed_files_rust.outputs.program == 'true'
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/setup-dep
@@ -62,6 +63,3 @@ jobs:
       - name: Cargo test
         run: cargo test -- --nocapture
         shell: bash
-      - name: Publish Rust to Crates.io
-        if: github.event_name == 'push'
-        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} -p mercurial-amm
