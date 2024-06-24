@@ -14,6 +14,9 @@ on:
 
 env:
   working_dir: ./ts-client
+  NODE_VERSION: 18.14.2
+  ANCHOR_CLI_VERSION: 0.28.0
+  PNPM_VERSION: 9.1.4
 
 jobs:
   changed_files_ts:
@@ -40,10 +43,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: ${{ env.NODE_VERSION }}
       - uses: pnpm/action-setup@v2.2.2
         with:
-          version: 9.1.4
+          version: ${{ env.PNPM_VERSION }}
       - name: Install dependencies
         working-directory: ${{ env.working_dir }}
         run: pnpm install
