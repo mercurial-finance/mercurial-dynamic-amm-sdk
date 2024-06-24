@@ -606,12 +606,18 @@ export function derivePoolAddressWithConfig(
   programId: PublicKey,
 ) {
   const [poolPubkey] = PublicKey.findProgramAddressSync(
-    [getFirstKey(tokenA, tokenB), getSecondKey(tokenA, tokenB), config.toBuffer()],
+    [tokenA.toBuffer(), tokenB.toBuffer(), config.toBuffer()],
     programId,
   );
 
   return poolPubkey;
 }
+
+export const deriveConfigPda = (index: BN, programId: PublicKey) => {
+  const [configPda] = PublicKey.findProgramAddressSync([Buffer.from('config'), index.toBuffer('le', 8)], programId);
+
+  return configPda;
+};
 
 export function derivePoolAddress(
   connection: Connection,
@@ -739,7 +745,7 @@ export function getSecondKey(key1: PublicKey, key2: PublicKey) {
   const buf1 = key1.toBuffer();
   const buf2 = key2.toBuffer();
   // Buf1 > buf2
-  if (Buffer.compare(buf1, buf2) === -1) {
+  if (Buffer.compare(buf1, buf2) === 1) {
     return buf2;
   }
   return buf1;
@@ -749,7 +755,7 @@ export function getFirstKey(key1: PublicKey, key2: PublicKey) {
   const buf1 = key1.toBuffer();
   const buf2 = key2.toBuffer();
   // Buf1 > buf2
-  if (Buffer.compare(buf1, buf2) === -1) {
+  if (Buffer.compare(buf1, buf2) === 1) {
     return buf1;
   }
   return buf2;

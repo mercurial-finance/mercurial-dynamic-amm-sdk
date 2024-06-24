@@ -61,6 +61,7 @@ import {
   deriveLockEscrowPda,
   calculateUnclaimedLockEscrowFee,
   derivePoolAddressWithConfig as deriveConstantProductPoolAddressWithConfig,
+  deriveConfigPda,
 } from './utils';
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 
@@ -168,6 +169,51 @@ export default class AmmImpl implements AmmImplementation {
       ...this.opt,
       ...opt,
     };
+  }
+
+  public static async createConfig(
+    connection: Connection,
+    payer: PublicKey,
+    tradeFeeBps: BN,
+    protocolFeeBps: BN,
+    vaultConfigKey: PublicKey,
+    activationDurationInSlot: BN,
+    opt?: {
+      cluster?: Cluster;
+      programId?: string;
+    },
+  ) {
+    const { ammProgram } = createProgram(connection, opt?.programId);
+    const configs = await this.getFeeConfigurations(connection, opt);
+
+    let index = 0;
+    while (true) {
+      const configPda = deriveConfigPda(new BN(index), ammProgram.programId);
+      if (!configs.find((c) => c.publicKey.equals(configPda))) {
+        const createConfigTx = await ammProgram.methods
+          .createConfig({
+            // Default fee denominator is 100_000
+            tradeFeeNumerator: tradeFeeBps.mul(new BN(10)),
+            protocolTradeFeeNumerator: protocolFeeBps.mul(new BN(10)),
+            vaultConfigKey,
+            activationDurationInSlot,
+            index: new BN(index),
+          })
+          .accounts({
+            config: configPda,
+            systemProgram: SystemProgram.programId,
+            admin: payer,
+          })
+          .transaction();
+
+        return new Transaction({
+          feePayer: payer,
+          ...(await ammProgram.provider.connection.getLatestBlockhash(ammProgram.provider.connection.commitment)),
+        }).add(createConfigTx);
+      } else {
+        index++;
+      }
+    }
   }
 
   public static async createPermissionlessConstantProductPoolWithConfig(
