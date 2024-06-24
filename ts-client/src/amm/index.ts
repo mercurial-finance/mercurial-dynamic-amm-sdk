@@ -305,18 +305,15 @@ export default class AmmImpl implements AmmImplementation {
       resultTx.push(preInstructionTx);
     }
 
+    const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_400_000,
+    });
     const mainTx = new Transaction({
       feePayer: payer,
       ...(await ammProgram.provider.connection.getLatestBlockhash(ammProgram.provider.connection.commitment)),
-    });
-
-    if (opt?.lockLiquidity) {
-      const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1_400_000,
-      });
-      mainTx.add(setComputeUnitLimitIx);
-    }
-    mainTx.add(createPermissionlessPoolTx);
+    })
+      .add(setComputeUnitLimitIx)
+      .add(createPermissionlessPoolTx);
 
     if (opt?.lockLiquidity) {
       const preLockLiquidityIx: TransactionInstruction[] = [];
