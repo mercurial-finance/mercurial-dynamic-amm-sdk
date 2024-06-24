@@ -296,15 +296,27 @@ export default class AmmImpl implements AmmImplementation {
       })
       .transaction();
 
-    const preInstructionTx = new Transaction({
-      feePayer: payer,
-      ...(await ammProgram.provider.connection.getLatestBlockhash(ammProgram.provider.connection.commitment)),
-    }).add(...preInstructions);
+    const resultTx: Transaction[] = [];
+    if (preInstructions.length) {
+      const preInstructionTx = new Transaction({
+        feePayer: payer,
+        ...(await ammProgram.provider.connection.getLatestBlockhash(ammProgram.provider.connection.commitment)),
+      }).add(...preInstructions);
+      resultTx.push(preInstructionTx);
+    }
 
+    const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_400_000,
+    });
     const mainTx = new Transaction({
       feePayer: payer,
       ...(await ammProgram.provider.connection.getLatestBlockhash(ammProgram.provider.connection.commitment)),
-    }).add(createPermissionlessPoolTx);
+    });
+
+    if (opt?.lockLiquidity) {
+      mainTx.add(setComputeUnitLimitIx);
+    }
+    mainTx.add(createPermissionlessPoolTx);
 
     if (opt?.lockLiquidity) {
       const preLockLiquidityIx: TransactionInstruction[] = [];
@@ -346,7 +358,9 @@ export default class AmmImpl implements AmmImplementation {
       mainTx.add(lockTx);
     }
 
-    return [preInstructionTx, mainTx];
+    resultTx.push(mainTx);
+
+    return resultTx;
   }
 
   public static async createPermissionlessPool(
