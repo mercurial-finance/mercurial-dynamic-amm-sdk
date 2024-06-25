@@ -606,7 +606,7 @@ export function derivePoolAddressWithConfig(
   programId: PublicKey,
 ) {
   const [poolPubkey] = PublicKey.findProgramAddressSync(
-    [tokenA.toBuffer(), tokenB.toBuffer(), config.toBuffer()],
+    [getFirstKey(tokenA, tokenB), getSecondKey(tokenA, tokenB), config.toBuffer()],
     programId,
   );
 
