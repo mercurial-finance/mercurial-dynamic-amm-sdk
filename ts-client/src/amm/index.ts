@@ -235,12 +235,6 @@ export default class AmmImpl implements AmmImplementation {
     let tokenAMint = new PublicKey(tokenInfoA.address);
     let tokenBMint = new PublicKey(tokenInfoB.address);
 
-    // Flip to ensure tokenAMint always is smaller
-    [tokenInfoA, tokenInfoB, tokenAMint, tokenBMint, tokenAAmount, tokenBAmount] =
-      tokenAMint.toBuffer().compare(tokenBMint.toBuffer()) === 1
-        ? [tokenInfoB, tokenInfoA, tokenBMint, tokenAMint, tokenBAmount, tokenAAmount]
-        : [tokenInfoA, tokenInfoB, tokenAMint, tokenBMint, tokenAAmount, tokenBAmount];
-
     const [
       { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aLpMintPda },
       { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bLpMintPda },

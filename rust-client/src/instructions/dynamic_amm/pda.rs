@@ -51,6 +51,24 @@ pub fn derive_pool_address(
     );
     pool
 }
+
+pub fn derive_constant_product_pool_with_config(
+    token_a_mint: Pubkey,
+    token_b_mint: Pubkey,
+    config: Pubkey,
+) -> Pubkey {
+    let (pool, _bump) = Pubkey::find_program_address(
+        &[
+            get_first_key(token_a_mint, token_b_mint).as_ref(),
+            get_second_key(token_a_mint, token_b_mint).as_ref(),
+            config.as_ref(),
+        ],
+        &prog_dynamic_amm::id(),
+    );
+
+    pool
+}
+
 pub fn derive_pool_lp_mint_address(pool: Pubkey) -> Pubkey {
     let (lp_mint, _bump) = Pubkey::find_program_address(
         &[b"lp_mint".as_ref(), pool.as_ref()],

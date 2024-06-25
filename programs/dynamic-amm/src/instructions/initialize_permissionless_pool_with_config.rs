@@ -1,5 +1,5 @@
-use crate::state::*;
 use crate::{error::PoolError, get_lp_mint_decimal};
+use crate::{get_first_key, get_second_key, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -11,8 +11,8 @@ pub struct InitializePermissionlessConstantProductPoolWithConfig<'info> {
     #[account(
         init,
         seeds = [
-            token_a_mint.key().as_ref(),
-            token_b_mint.key().as_ref(),
+            get_first_key(token_a_mint.key(), token_b_mint.key()).as_ref(),
+            get_second_key(token_a_mint.key(), token_b_mint.key()).as_ref(),
             config.key().as_ref()
         ],
         bump,
@@ -39,9 +39,6 @@ pub struct InitializePermissionlessConstantProductPoolWithConfig<'info> {
     pub lp_mint: Box<Account<'info, Mint>>,
 
     /// Token A mint of the pool. Eg: USDT
-    #[account(
-        constraint = token_a_mint.key() < token_b_mint.key()
-    )]
     pub token_a_mint: Box<Account<'info, Mint>>,
     /// Token B mint of the pool. Eg: USDC
     pub token_b_mint: Box<Account<'info, Mint>>,
