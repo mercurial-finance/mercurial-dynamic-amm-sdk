@@ -87,6 +87,7 @@ export const MAINNET_POOL = Object.freeze({
   USDT_USDC: new PublicKey('32D4zRxNc1EssbJieVHfPhZM3rH6CzfUPrWUuWxD9prG'),
   USDC_SOL: new PublicKey('5yuefgbJJpmFNK2iiYbLSpv1aZXq7F9AUKkZKErTYCvs'),
   SOL_STSOL: new PublicKey('7EJSgV2pthhDfb4UiER9vzTqe2eojei9GEQAQnkqJ96e'),
+  SOL_MSOL: new PublicKey('HcjZvfeSNJbNkfLD4eEcRBr96AD3w1GpmMppaeRZf7ur'),
 });
 
 // Extra accounts for depeg pools. Might add more addresses in the future when more different types of pools are being added

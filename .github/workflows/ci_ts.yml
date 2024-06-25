@@ -1,0 +1,50 @@
+name: Typescript SDK CI
+
+on:
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
+      - "LICENSE"
+      - ".editorconfig"
+    branches:
+      - master
+      - develop
+      - staging
+      - feat/protocol-fee-part-of-lp-fees
+
+env:
+  SOLANA_CLI_VERSION: 1.16.3
+  NODE_VERSION: 18.14.2
+  ANCHOR_CLI_VERSION: 0.28.0
+
+jobs:
+  sdk_changed_files:
+    runs-on: ubuntu-latest
+    outputs:
+      sdk: ${{steps.changed-files-specific.outputs.any_changed}}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get specific changed files
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v18.6
+        with:
+          files: |
+            ts-client
+
+  sdk_test:
+    runs-on: ubuntu-latest
+    needs: sdk_changed_files
+    if: needs.sdk_changed_files.outputs.sdk == 'true'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/setup-solana
+      - uses: ./.github/actions/setup-dep
+      - uses: ./.github/actions/setup-anchor
+      # This much more faster than anchor localnet
+      - run: solana-test-validator --bpf-program 24Uqj9JCLxUeoC3hGfh5W3s9FM9uCHDS2SG3LYwBpyTi ./dynamic-amm-quote/tests/fixtures/dynamic_vault.so --bpf-program Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB ./dynamic-amm-quote/tests/fixtures/dynamic_amm.so --bpf-program metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s ./dynamic-amm-quote/tests/fixtures/metaplex.so --account-dir ./dynamic-amm-quote/tests/fixtures/accounts --reset & sleep 2
+        shell: bash
+      - run: cd ts-client && npm install && npm run test
+        shell: bash

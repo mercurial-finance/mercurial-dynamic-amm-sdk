@@ -1948,7 +1948,7 @@ export type Amm = {
       ],
       "args": [
         {
-          "name": "amount",
+          "name": "maxAmount",
           "type": "u64"
         }
       ]
@@ -2394,11 +2394,19 @@ export type Amm = {
             }
           },
           {
+            "name": "activationDurationInSlot",
+            "type": "u64"
+          },
+          {
+            "name": "vaultConfigKey",
+            "type": "publicKey"
+          },
+          {
             "name": "padding",
             "type": {
               "array": [
                 "u8",
-                300
+                260
               ]
             }
           }
@@ -2604,6 +2612,15 @@ export type Amm = {
             "type": "u64"
           },
           {
+            "name": "alphaVault",
+            "docs": [
+              "Alpha vault config"
+            ],
+            "type": {
+              "defined": "AlphaVault"
+            }
+          },
+          {
             "name": "padding",
             "docs": [
               "Padding for future pool field"
@@ -2750,6 +2767,14 @@ export type Amm = {
             "type": "u64"
           },
           {
+            "name": "activationDurationInSlot",
+            "type": "u64"
+          },
+          {
+            "name": "vaultConfigKey",
+            "type": "publicKey"
+          },
+          {
             "name": "index",
             "type": "u64"
           }
@@ -2772,7 +2797,7 @@ export type Amm = {
             "type": {
               "array": [
                 "u8",
-                7
+                15
               ]
             }
           },
@@ -2784,9 +2809,38 @@ export type Amm = {
             "type": {
               "array": [
                 "u128",
-                29
+                24
               ]
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AlphaVault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "activationSlot",
+            "docs": [
+              "Activation slot"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "whitelistedVault",
+            "docs": [
+              "Whitelisted vault to be able to buy pool before open slot"
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "poolCreator",
+            "docs": [
+              "Need to store pool creator in lauch pool, so they can modify liquidity before activation slot"
+            ],
+            "type": "publicKey"
           }
         ]
       }
@@ -3582,6 +3636,11 @@ export type Amm = {
       "code": 6043,
       "name": "AmountIsNotEnough",
       "msg": "Amount is not enough"
+    },
+    {
+      "code": 6044,
+      "name": "InvalidActivationSlotInDuration",
+      "msg": "Invalid activation slot in duration"
     }
   ]
 };
@@ -5536,7 +5595,7 @@ export const IDL: Amm = {
       ],
       "args": [
         {
-          "name": "amount",
+          "name": "maxAmount",
           "type": "u64"
         }
       ]
@@ -5982,11 +6041,19 @@ export const IDL: Amm = {
             }
           },
           {
+            "name": "activationDurationInSlot",
+            "type": "u64"
+          },
+          {
+            "name": "vaultConfigKey",
+            "type": "publicKey"
+          },
+          {
             "name": "padding",
             "type": {
               "array": [
                 "u8",
-                300
+                260
               ]
             }
           }
@@ -6192,6 +6259,15 @@ export const IDL: Amm = {
             "type": "u64"
           },
           {
+            "name": "alphaVault",
+            "docs": [
+              "Alpha vault config"
+            ],
+            "type": {
+              "defined": "AlphaVault"
+            }
+          },
+          {
             "name": "padding",
             "docs": [
               "Padding for future pool field"
@@ -6338,6 +6414,14 @@ export const IDL: Amm = {
             "type": "u64"
           },
           {
+            "name": "activationDurationInSlot",
+            "type": "u64"
+          },
+          {
+            "name": "vaultConfigKey",
+            "type": "publicKey"
+          },
+          {
             "name": "index",
             "type": "u64"
           }
@@ -6360,7 +6444,7 @@ export const IDL: Amm = {
             "type": {
               "array": [
                 "u8",
-                7
+                15
               ]
             }
           },
@@ -6372,9 +6456,38 @@ export const IDL: Amm = {
             "type": {
               "array": [
                 "u128",
-                29
+                24
               ]
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AlphaVault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "activationSlot",
+            "docs": [
+              "Activation slot"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "whitelistedVault",
+            "docs": [
+              "Whitelisted vault to be able to buy pool before open slot"
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "poolCreator",
+            "docs": [
+              "Need to store pool creator in lauch pool, so they can modify liquidity before activation slot"
+            ],
+            "type": "publicKey"
           }
         ]
       }
@@ -7170,6 +7283,11 @@ export const IDL: Amm = {
       "code": 6043,
       "name": "AmountIsNotEnough",
       "msg": "Amount is not enough"
+    },
+    {
+      "code": 6044,
+      "name": "InvalidActivationSlotInDuration",
+      "msg": "Invalid activation slot in duration"
     }
   ]
 };
