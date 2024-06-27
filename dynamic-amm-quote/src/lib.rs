@@ -142,28 +142,28 @@ pub fn compute_quote(
         .trading_fee(in_amount.into())
         .context("Fail to calculate trading fee")?;
 
-    let owner_fee = pool
+    let protocol_fee = pool
         .fees
-        .owner_trading_fee(in_amount.into())
-        .context("Fail to calculate owner trading fee")?;
+        .protocol_trading_fee(trade_fee)
+        .context("Fail to calculate protocol trading fee")?;
 
-    let in_amount_after_owner_fee = in_amount
-        .checked_sub(owner_fee.try_into()?)
-        .context("Fail to calculate in_amount_after_owner_fee")?;
+    let in_amount_after_protocol_fee = in_amount
+        .checked_sub(protocol_fee.try_into()?)
+        .context("Fail to calculate in_amount_after_protocol_fee")?;
 
     let before_in_token_total_amount = in_token_total_amount;
 
     let in_lp = in_vault
         .get_unmint_amount(
             current_time,
-            in_amount_after_owner_fee,
+            in_amount_after_protocol_fee,
             in_vault_lp_mint.supply,
         )
         .context("Fail to get in_vault_lp")?;
 
     in_vault.total_amount = in_vault
         .total_amount
-        .checked_add(in_amount_after_owner_fee)
+        .checked_add(in_amount_after_protocol_fee)
         .context("Fail to add in_vault.total_amount")?;
 
     let after_in_token_total_amount = in_vault
@@ -218,12 +218,8 @@ pub fn compute_quote(
         "Out amount > vault reserve"
     );
 
-    let total_fee = trade_fee
-        .checked_add(owner_fee)
-        .context("Fail to calculate total fee")?;
-
     Ok(QuoteResult {
-        fee: total_fee.try_into()?,
+        fee: trade_fee.try_into()?,
         out_amount,
     })
 }

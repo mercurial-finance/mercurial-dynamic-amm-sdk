@@ -80,10 +80,10 @@ pub struct Pool {
     pub a_vault_lp_bump: u8, //1
     /// Flag to determine whether the pool is enabled, or disabled.
     pub enabled: bool, //1
-    /// Admin fee token account for token A. Used to receive trading fee.
-    pub admin_token_a_fee: Pubkey, //32
-    /// Admin fee token account for token B. Used to receive trading fee.
-    pub admin_token_b_fee: Pubkey, //32
+    /// Protocol fee token account for token A. Used to receive trading fee.
+    pub protocol_token_a_fee: Pubkey, //32
+    /// Protocol fee token account for token B. Used to receive trading fee.
+    pub protocol_token_b_fee: Pubkey, //32
     /// Owner of the pool.
     pub admin: Pubkey, //32
     /// Store the fee charges setting.
@@ -126,7 +126,7 @@ pub struct LockEscrow {
 }
 
 /// Information regarding fee charges
-#[derive(Copy, Clone, Debug, AnchorSerialize, AnchorDeserialize)]
+#[derive(Copy, Clone, Debug, AnchorSerialize, AnchorDeserialize, InitSpace)]
 pub struct PoolFees {
     /// Trade fees are extra token amounts that are held inside the token
     /// accounts during a trade, making the value of liquidity tokens rise.
@@ -139,9 +139,9 @@ pub struct PoolFees {
     /// accounts during a trade, with the equivalent in pool tokens minted to
     /// the owner of the program.
     /// Owner trade fee numerator
-    pub owner_trade_fee_numerator: u64,
+    pub protocol_trade_fee_numerator: u64,
     /// Owner trade fee denominator
-    pub owner_trade_fee_denominator: u64,
+    pub protocol_trade_fee_denominator: u64,
 }
 
 /// Helper function for calculating swap fee
@@ -166,11 +166,10 @@ pub fn calculate_fee(
 impl PoolFees {
     /// Calculate the host trading fee in trading tokens
     pub fn host_trading_fee(&self, trading_tokens: u128) -> Option<u128> {
-        calculate_fee(
-            trading_tokens,
-            u128::try_from(constants::fee::HOST_TRADE_FEE_NUMERATOR).ok()?,
-            u128::try_from(constants::fee::FEE_DENOMINATOR).ok()?,
-        )
+        // Floor division
+        trading_tokens
+            .checked_mul(constants::fee::HOST_TRADE_FEE_NUMERATOR.into())?
+            .checked_div(constants::fee::FEE_DENOMINATOR.into())
     }
 
     /// Calculate the trading fee in trading tokens
@@ -182,12 +181,12 @@ impl PoolFees {
         )
     }
 
-    /// Calculate the owner trading fee in trading tokens
-    pub fn owner_trading_fee(&self, trading_tokens: u128) -> Option<u128> {
+    /// Calculate the protocol trading fee in trading tokens
+    pub fn protocol_trading_fee(&self, trading_tokens: u128) -> Option<u128> {
         calculate_fee(
             trading_tokens,
-            u128::try_from(self.owner_trade_fee_numerator).ok()?,
-            u128::try_from(self.owner_trade_fee_denominator).ok()?,
+            u128::try_from(self.protocol_trade_fee_numerator).ok()?,
+            u128::try_from(self.protocol_trade_fee_denominator).ok()?,
         )
     }
 }
@@ -269,4 +268,11 @@ pub enum DepegType {
     Lido,
     /// A depeg pool belongs to SPL stake pool program
     SplStake,
+}
+
+#[account]
+#[derive(InitSpace, Debug)]
+pub struct Config {
+    pub pool_fees: PoolFees,
+    pub _padding: [u8; 300],
 }

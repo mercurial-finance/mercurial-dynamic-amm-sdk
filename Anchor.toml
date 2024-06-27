@@ -1,5 +1,6 @@
 [features]
 seeds = false
+
 [programs.localnet]
 mercurial_dynamic_amm_sdk = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
 
@@ -8,7 +9,19 @@ url = "https://anchor.projectserum.com"
 
 [provider]
 cluster = "localnet"
-wallet = "/home/guantian/.config/solana/id.json"
+wallet = "./keys/localnet/admin-bossj3JvwiNK7pvjr149DqdtJxf2gdygbcmEPTkb2F1.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[[test.genesis]]
+address = "Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB"
+program = "./dynamic-amm-quote/tests/fixtures/dynamic_amm.so"
+
+[[test.genesis]]
+address = "24Uqj9JCLxUeoC3hGfh5W3s9FM9uCHDS2SG3LYwBpyTi"
+program = "./dynamic-amm-quote/tests/fixtures/dynamic_vault.so"
+
+[[test.genesis]]
+address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+program = "./dynamic-amm-quote/tests/fixtures/metaplex.so"

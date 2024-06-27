@@ -43,8 +43,8 @@ pub struct Swap<'info> {
     pub b_vault_lp: UncheckedAccount<'info>,
 
     #[account(mut)]
-    /// CHECK: Admin fee token account. Used to receive trading fee. It's mint field must matched with user_source_token mint field.
-    pub admin_token_fee: UncheckedAccount<'info>,
+    /// CHECK: Protocol fee token account. Used to receive trading fee. It's mint field must matched with user_source_token mint field.
+    pub protocol_token_fee: UncheckedAccount<'info>,
 
     /// CHECK: User account. Must be owner of user_source_token.
     pub user: Signer<'info>,

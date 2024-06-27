@@ -1,12 +1,8 @@
 [workspace]
-members = [
-    "programs/*",
-    "rust-client",
-    "dynamic-amm-quote"
-]
+members = ["programs/*", "rust-client", "dynamic-amm-quote"]
 resolver = "2"
 
 [workspace.package]
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Andrew"]
 edition = "2021"

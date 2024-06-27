@@ -1,0 +1,66 @@
+name: Rust SDK CI
+
+on:
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
+      - "LICENSE"
+      - ".editorconfig"
+    branches:
+      - master
+      - develop
+      - staging
+      - feat/protocol-fee-part-of-lp-fees
+
+env:
+  SOLANA_CLI_VERSION: 1.16.3
+
+jobs:
+  changed_files_rust:
+    runs-on: ubuntu-latest
+    outputs:
+      program: ${{steps.changed-files-specific.outputs.any_changed}}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get specific changed files
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v18.6
+        with:
+          files: |
+            rust-client
+            programs
+            dynamic-amm-quote
+
+  rust-test:
+    needs: changed_files_rust
+    runs-on: ubuntu-latest
+    if: needs.changed_files_rust.outputs.program == 'true'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/setup-dep
+      - uses: ./.github/actions/setup-solana
+      # Install rust + toolchain
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+      # Cargo build cache
+      - name: Cargo Cache
+        uses: actions/cache@v1
+        with:
+          path: |
+            ~/.cargo/
+            target
+          key: ${{ runner.os }}-cargo-${{ steps.extract_branch.outputs.branch }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ steps.extract_branch.outputs.branch }}
+            ${{ runner.os }}-cargo
+      - name: Cargo fmt check
+        run: cargo fmt -- --check
+        shell: bash
+      - name: Cargo test
+        run: cargo test -- --nocapture
+        shell: bash
