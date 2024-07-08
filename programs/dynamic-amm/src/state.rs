@@ -285,5 +285,12 @@ pub enum DepegType {
 #[derive(InitSpace, Debug)]
 pub struct Config {
     pub pool_fees: PoolFees,
-    pub _padding: [u8; 300],
+    pub activation_duration_in_slot: u64,
+    pub vault_config_key: Pubkey,
+    pub _padding: [u8; 260],
+}
+
+pub struct AlphaVaultConfig {
+    pub activation_duration_in_slot: u64,
+    pub vault_config_key: Pubkey,
 }
