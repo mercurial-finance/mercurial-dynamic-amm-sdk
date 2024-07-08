@@ -74,6 +74,14 @@ pub fn compute_quote(
         stake_data,
     } = quote_data;
 
+    let current_slot = clock.slot;
+    if pool.alpha_vault.whitelisted_vault.ne(&Pubkey::default()) {
+        ensure!(
+            pool.alpha_vault.activation_slot >= current_slot,
+            "Swap is disabled"
+        );
+    }
+
     update_base_virtual_price(&mut pool, &clock, stake_data)?;
 
     let current_time: u64 = clock.unix_timestamp.try_into()?;

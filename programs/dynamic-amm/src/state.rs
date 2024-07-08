@@ -26,16 +26,15 @@ use std::fmt::Debug;
 /// Padding for future pool fields
 pub struct Padding {
     /// Padding 0
-    pub padding_0: [u8; 7], // 7
+    pub padding_0: [u8; 15], // 15
     /// Padding 1
-    pub padding: [u128; 29], // 464
+    pub padding: [u128; 24], // 384
 }
 
 impl Padding {
     /// Space for rental
-    pub const SPACE: usize = 471;
+    pub const SPACE: usize = 399;
 }
-
 /// Host fee
 pub struct HostFee<'c, 'info> {
     /// Host fee
@@ -94,11 +93,23 @@ pub struct Pool {
     pub stake: Pubkey,
     /// Total locked lp token
     pub total_locked_lp: u64,
+    /// Alpha vault config
+    pub alpha_vault: AlphaVault,
     /// Padding for future pool field
     pub padding: Padding, // 512 Refer: curve_type.rs for the test
     /// The type of the swap curve supported by the pool.
     // Leaving curve_type as last field give us the flexibility to add specific curve information / new curve type
     pub curve_type: CurveType, //9
+}
+
+#[derive(Copy, Clone, Debug, AnchorSerialize, AnchorDeserialize, InitSpace, Default)]
+pub struct AlphaVault {
+    /// Activation slot
+    pub activation_slot: u64,
+    /// Whitelisted vault to be able to buy pool before open slot
+    pub whitelisted_vault: Pubkey,
+    /// Need to store pool creator in lauch pool, so they can modify liquidity before activation slot
+    pub pool_creator: Pubkey,
 }
 
 #[account]
@@ -274,5 +285,12 @@ pub enum DepegType {
 #[derive(InitSpace, Debug)]
 pub struct Config {
     pub pool_fees: PoolFees,
-    pub _padding: [u8; 300],
+    pub activation_duration_in_slot: u64,
+    pub vault_config_key: Pubkey,
+    pub _padding: [u8; 260],
+}
+
+pub struct AlphaVaultConfig {
+    pub activation_duration_in_slot: u64,
+    pub vault_config_key: Pubkey,
 }
