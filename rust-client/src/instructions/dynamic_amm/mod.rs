@@ -15,6 +15,9 @@ pub use quote::*;
 pub mod pda;
 pub use pda::*;
 
+pub mod get_pool_info;
+pub use get_pool_info::*;
+
 #[derive(Debug, Parser, Clone)]
 pub enum DynamicAmmCommands {
     /// Create pool
@@ -27,4 +30,6 @@ pub enum DynamicAmmCommands {
     Swap(SwapDynamicAmmArgs),
     /// Quote
     Quote(QuoteDynamicAmmArgs),
+    /// Get pool info
+    GetPoolInfo(PoolInfoDynamicAmmArgs),
 }

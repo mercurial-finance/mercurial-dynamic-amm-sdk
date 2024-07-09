@@ -161,6 +161,9 @@ fn main() {
             DynamicAmmCommands::Quote(sub_args) => {
                 dynamic_amm::process_quote_dynamic_pool(&args, sub_args)
             }
+            DynamicAmmCommands::GetPoolInfo(sub_args) => {
+                dynamic_amm::process_get_dynamic_pool_info(&args, sub_args)
+            }
         },
     }
 }
