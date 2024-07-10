@@ -714,6 +714,13 @@ export default class AmmImpl implements AmmImplementation {
     return ammImpls;
   }
 
+  public static async getPoolConfig(connection: Connection, config: PublicKey, opt?: { programId?: string }) {
+    const { ammProgram } = createProgram(connection, opt?.programId);
+    const configAccount = await ammProgram.account.config.fetch(config);
+
+    return configAccount;
+  }
+
   public static async getFeeConfigurations(connection: Connection, opt?: { programId?: string; cluster?: Cluster }) {
     const { ammProgram } = createProgram(connection, opt?.programId);
     const configs = await ammProgram.account.config.all();

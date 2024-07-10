@@ -685,24 +685,27 @@ export async function checkPoolExists(
  * @param {PublicKey} tokenB - TokenInfo
  * @returns A PublicKey value or undefined.
  */
-export async function checkPoolWithConfigExists(
+export async function checkPoolWithConfigsExists(
   connection: Connection,
   tokenA: PublicKey,
   tokenB: PublicKey,
-  config: PublicKey,
+  configs: PublicKey[],
   opt?: {
     programId: string;
   },
 ): Promise<PublicKey | undefined> {
   const { ammProgram } = createProgram(connection, opt?.programId);
 
-  const poolPubkey = derivePoolAddressWithConfig(tokenA, tokenB, config, ammProgram.programId);
+  const poolsPubkey = configs.map((config) =>
+    derivePoolAddressWithConfig(tokenA, tokenB, config, ammProgram.programId),
+  );
 
-  const poolAccount = await ammProgram.account.pool.fetchNullable(poolPubkey);
+  const poolsAccount = await ammProgram.account.pool.fetchMultiple(poolsPubkey);
 
-  if (!poolAccount) return;
+  if (poolsAccount.every((account) => account === null)) return;
 
-  return poolPubkey;
+  const poolAccountIndex = poolsAccount.findIndex((account) => account !== null);
+  return poolsPubkey[poolAccountIndex];
 }
 
 export function chunks<T>(array: T[], size: number): T[][] {
