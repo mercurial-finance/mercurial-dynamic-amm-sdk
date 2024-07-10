@@ -1677,9 +1677,8 @@ export default class AmmImpl implements AmmImplementation {
 
     const preInstructions: TransactionInstruction[] = [];
 
-    const lockEscrowAccount = await this.program.account.lockEscrow.fetch(lockEscrowPK);
-    const lockEscrow = await this.getUserLockEscrow(owner, lockEscrowAccount);
-    if (!lockEscrow) {
+    const lockEscrowAccount = await this.program.account.lockEscrow.fetchNullable(lockEscrowPK);
+    if (!lockEscrowAccount) {
       const createLockEscrowIx = await this.program.methods
         .createLockEscrow()
         .accounts({
