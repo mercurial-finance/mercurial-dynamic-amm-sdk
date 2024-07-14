@@ -77,7 +77,7 @@ pub fn compute_quote(
     let current_slot = clock.slot;
     if pool.alpha_vault.whitelisted_vault.ne(&Pubkey::default()) {
         ensure!(
-            pool.alpha_vault.activation_slot >= current_slot,
+            current_slot >= pool.alpha_vault.activation_slot,
             "Swap is disabled"
         );
     }
