@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## dynamic-amm [0.1.2] - PR #134
+
+### Changed
+
+- Pool state are now including activation_slot field. User can only trade and modify liquidity after the pool opens, the condition for the pool opens is:
+`current_slot >= pool_state.alpha_vault.activation_slot`. 
+
+
 ## @mercurial-finance/dynamic-amm-sdk [0.4.21] - PR #117
 
 ### Added
