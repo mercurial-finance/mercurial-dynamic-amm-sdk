@@ -638,13 +638,13 @@ export default class AmmImpl implements AmmImplementation {
 
         invariant(
           !!currentTime &&
-            !!vaultALpSupply &&
-            !!vaultBLpSupply &&
-            !!vaultAReserve &&
-            !!vaultBReserve &&
-            !!poolVaultALp &&
-            !!poolVaultBLp &&
-            !!poolLpSupply,
+          !!vaultALpSupply &&
+          !!vaultBLpSupply &&
+          !!vaultAReserve &&
+          !!vaultBReserve &&
+          !!poolVaultALp &&
+          !!poolVaultBLp &&
+          !!poolLpSupply,
           'Account Info not found',
         );
 
@@ -823,13 +823,13 @@ export default class AmmImpl implements AmmImplementation {
 
     invariant(
       !!currentTime &&
-        !!vaultALpSupply &&
-        !!vaultBLpSupply &&
-        !!vaultAReserve &&
-        !!vaultBReserve &&
-        !!poolVaultALp &&
-        !!poolVaultBLp &&
-        !!poolLpSupply,
+      !!vaultALpSupply &&
+      !!vaultBLpSupply &&
+      !!vaultAReserve &&
+      !!vaultBReserve &&
+      !!poolVaultALp &&
+      !!poolVaultBLp &&
+      !!poolLpSupply,
       'Account Info not found',
     );
 
@@ -983,13 +983,13 @@ export default class AmmImpl implements AmmImplementation {
 
     invariant(
       !!currentTime &&
-        !!vaultALpSupply &&
-        !!vaultBLpSupply &&
-        !!vaultAReserve &&
-        !!vaultBReserve &&
-        !!poolVaultALp &&
-        !!poolVaultBLp &&
-        !!poolLpSupply,
+      !!vaultALpSupply &&
+      !!vaultBLpSupply &&
+      !!vaultAReserve &&
+      !!vaultBReserve &&
+      !!poolVaultALp &&
+      !!poolVaultBLp &&
+      !!poolLpSupply,
       'Account Info not found',
     );
 
@@ -1154,7 +1154,7 @@ export default class AmmImpl implements AmmImplementation {
    * @param {PublicKey} inTokenMint - The mint of the token you're swapping from.
    * @param {BN} inAmountLamport - The amount of the input token you want to swap.
    * @param {BN} outAmountLamport - The minimum amount of the output token you want to receive.
-   * @param {PublicKey} [referrerToken] - The referrer fee token account. The mint of the token account must matches inTokenMint. 20% of admin trade fee.
+   * @param {PublicKey} [referralOwner] - The referrer wallet will receive the host fee, fee will be transferred to ATA of referrer wallet.
    * @returns A transaction object
    */
   public async swap(
@@ -1598,40 +1598,40 @@ export default class AmmImpl implements AmmImplementation {
     const programMethod =
       this.isStablePool && (tokenAOutAmount.isZero() || tokenBOutAmount.isZero())
         ? this.program.methods.removeLiquiditySingleSide(lpTokenAmount, new BN(0)).accounts({
-            aTokenVault: this.vaultA.vaultState.tokenVault,
-            aVault: this.poolState.aVault,
-            aVaultLp: this.poolState.aVaultLp,
-            aVaultLpMint: this.vaultA.vaultState.lpMint,
-            bTokenVault: this.vaultB.vaultState.tokenVault,
-            bVault: this.poolState.bVault,
-            bVaultLp: this.poolState.bVaultLp,
-            bVaultLpMint: this.vaultB.vaultState.lpMint,
-            lpMint: this.poolState.lpMint,
-            pool: this.address,
-            userDestinationToken: tokenBOutAmount.isZero() ? userAToken : userBToken,
-            userPoolLp,
-            user: owner,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            vaultProgram: this.vaultProgram.programId,
-          })
+          aTokenVault: this.vaultA.vaultState.tokenVault,
+          aVault: this.poolState.aVault,
+          aVaultLp: this.poolState.aVaultLp,
+          aVaultLpMint: this.vaultA.vaultState.lpMint,
+          bTokenVault: this.vaultB.vaultState.tokenVault,
+          bVault: this.poolState.bVault,
+          bVaultLp: this.poolState.bVaultLp,
+          bVaultLpMint: this.vaultB.vaultState.lpMint,
+          lpMint: this.poolState.lpMint,
+          pool: this.address,
+          userDestinationToken: tokenBOutAmount.isZero() ? userAToken : userBToken,
+          userPoolLp,
+          user: owner,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          vaultProgram: this.vaultProgram.programId,
+        })
         : this.program.methods.removeBalanceLiquidity(lpTokenAmount, tokenAOutAmount, tokenBOutAmount).accounts({
-            pool: this.address,
-            lpMint: this.poolState.lpMint,
-            aVault: this.poolState.aVault,
-            aTokenVault: this.vaultA.vaultState.tokenVault,
-            aVaultLp: this.poolState.aVaultLp,
-            aVaultLpMint: this.vaultA.vaultState.lpMint,
-            bVault: this.poolState.bVault,
-            bTokenVault: this.vaultB.vaultState.tokenVault,
-            bVaultLp: this.poolState.bVaultLp,
-            bVaultLpMint: this.vaultB.vaultState.lpMint,
-            userAToken,
-            userBToken,
-            user: owner,
-            userPoolLp,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            vaultProgram: this.vaultProgram.programId,
-          });
+          pool: this.address,
+          lpMint: this.poolState.lpMint,
+          aVault: this.poolState.aVault,
+          aTokenVault: this.vaultA.vaultState.tokenVault,
+          aVaultLp: this.poolState.aVaultLp,
+          aVaultLpMint: this.vaultA.vaultState.lpMint,
+          bVault: this.poolState.bVault,
+          bTokenVault: this.vaultB.vaultState.tokenVault,
+          bVaultLp: this.poolState.bVaultLp,
+          bVaultLpMint: this.vaultB.vaultState.lpMint,
+          userAToken,
+          userBToken,
+          user: owner,
+          userPoolLp,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          vaultProgram: this.vaultProgram.programId,
+        });
 
     const withdrawTx = await programMethod
       .remainingAccounts(this.swapCurve.getRemainingAccounts())
