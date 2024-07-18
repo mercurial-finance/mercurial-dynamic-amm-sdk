@@ -74,6 +74,8 @@ pub fn compute_quote(
         stake_data,
     } = quote_data;
 
+    ensure!(pool.enabled, "Swap is disabled");
+
     let current_slot = clock.slot;
     if pool.alpha_vault.whitelisted_vault.ne(&Pubkey::default()) {
         ensure!(
