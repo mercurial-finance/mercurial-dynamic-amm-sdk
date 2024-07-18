@@ -74,3 +74,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `AmmImpl.createPermissionlessConstantProductPoolWithConfig` to create constant product pool based on `config` account.
 - `AmmImpl.getFeeConfigurations` to get all fee configurations to be used in `AmmImpl.createPermissionlessConstantProductPoolWithConfig`
+
+## @mercurial-finance/dynamic-amm-sdk [0.4.25] - PR #132
+
+### Added
+
+- `getPoolConfig` to get pool config based on config pubkey
+- `checkPoolWithConfigsExists` now accepts array of config pubkey
