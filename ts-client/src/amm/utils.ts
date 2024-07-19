@@ -456,7 +456,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
     swapDestinationVaultLpSupply,
     tradeDirection,
   ] = isFromAToB
-    ? [
+      ? [
         inAmountLamport,
         poolVaultALp,
         tokenAAmount,
@@ -467,7 +467,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
         vaultBLpSupply,
         TradeDirection.AToB,
       ]
-    : [
+      : [
         inAmountLamport,
         poolVaultBLp,
         tokenBAmount,
@@ -805,11 +805,11 @@ export const DepegType = {
 export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, isStable: boolean) {
   return isStable
     ? {
-        stable: {
-          amp: PERMISSIONLESS_AMP,
-          tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
-          depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType: DepegType.none() },
-        },
-      }
+      stable: {
+        amp: PERMISSIONLESS_AMP,
+        tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
+        depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType: DepegType.none() },
+      },
+    }
     : { constantProduct: {} };
 }
