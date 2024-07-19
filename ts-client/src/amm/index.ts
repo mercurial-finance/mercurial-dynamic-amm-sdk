@@ -1679,7 +1679,15 @@ export default class AmmImpl implements AmmImplementation {
     };
   }
 
-  public async lockLiquidity(owner: PublicKey, amount: BN): Promise<Transaction> {
+  /**
+  * `lockLiquidity` is a function that lock liquidity in Meteora pool, owner is able to claim fee later,
+  * @param {PublicKey} owner - PublicKey - The public key of the escrow's owner, who get the locked liquidity, and can claim fee later
+  * @param {BN} amount - The amount of LP tokens to lock.
+  * @param {BN} feePayer - The payer of that lock liquidity.   
+  * @returns A transaction object
+  */
+  public async lockLiquidity(owner: PublicKey, amount: BN, feePayer?: PublicKey): Promise<Transaction> {
+    const payer = feePayer ? feePayer : owner;
     const [lockEscrowPK] = deriveLockEscrowPda(this.address, owner, this.program.programId);
 
     const preInstructions: TransactionInstruction[] = [];
@@ -1693,7 +1701,7 @@ export default class AmmImpl implements AmmImplementation {
           lockEscrow: lockEscrowPK,
           owner,
           lpMint: this.poolState.lpMint,
-          payer: owner,
+          payer,
           systemProgram: SystemProgram.programId,
         })
         .instruction();
@@ -1701,8 +1709,8 @@ export default class AmmImpl implements AmmImplementation {
     }
 
     const [[userAta, createUserAtaIx], [escrowAta, createEscrowAtaIx]] = await Promise.all([
-      getOrCreateATAInstruction(this.poolState.lpMint, owner, this.program.provider.connection, owner),
-      getOrCreateATAInstruction(this.poolState.lpMint, lockEscrowPK, this.program.provider.connection, owner),
+      getOrCreateATAInstruction(this.poolState.lpMint, payer, this.program.provider.connection, payer),
+      getOrCreateATAInstruction(this.poolState.lpMint, lockEscrowPK, this.program.provider.connection, payer),
     ]);
 
     createUserAtaIx && preInstructions.push(createUserAtaIx);
@@ -1713,7 +1721,7 @@ export default class AmmImpl implements AmmImplementation {
       .accounts({
         pool: this.address,
         lockEscrow: lockEscrowPK,
-        owner,
+        owner: payer,
         lpMint: this.poolState.lpMint,
         sourceTokens: userAta,
         escrowVault: escrowAta,
@@ -1729,7 +1737,7 @@ export default class AmmImpl implements AmmImplementation {
       .transaction();
 
     return new Transaction({
-      feePayer: owner,
+      feePayer: payer,
       ...(await this.program.provider.connection.getLatestBlockhash(this.program.provider.connection.commitment)),
     }).add(lockTx);
   }
