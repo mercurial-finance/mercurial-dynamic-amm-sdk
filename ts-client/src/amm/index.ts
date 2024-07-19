@@ -1687,7 +1687,7 @@ export default class AmmImpl implements AmmImplementation {
   * @returns A transaction object
   */
   public async lockLiquidity(owner: PublicKey, amount: BN, feePayer?: PublicKey): Promise<Transaction> {
-    let payer = feePayer ? feePayer : owner;
+    const payer = feePayer ? feePayer : owner;
     const [lockEscrowPK] = deriveLockEscrowPda(this.address, owner, this.program.programId);
 
     const preInstructions: TransactionInstruction[] = [];
