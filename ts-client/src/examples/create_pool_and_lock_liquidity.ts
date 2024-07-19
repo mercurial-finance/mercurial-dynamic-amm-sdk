@@ -21,7 +21,7 @@ function loadKeypairFromFile(filename: string): Keypair {
 }
 
 const mainnetConnection = new Connection('https://api.devnet.solana.com');
-const payerWallet = new Wallet(loadKeypairFromFile("~/.config/solana/id.json"));
+const payerKP = loadKeypairFromFile("~/.config/solana/id.json")
 const payerWallet = new Wallet(payerKP);
 console.log("payer %s", payerKP.publicKey);
 
