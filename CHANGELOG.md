@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-## @mercurial-finance/dynamic-amm-sdk [0.4.25] - PR #126
+## @mercurial-finance/dynamic-amm-sdk [0.4.25] - PR #139
 
 ### Changed
 
