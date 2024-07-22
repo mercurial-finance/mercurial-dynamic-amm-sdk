@@ -197,7 +197,7 @@ const swapTx = await constantProductPool.swap(
   inAmountLamport,
   minSwapOutAmount,
 );
-const swapResult = await provider.sendAndConfirm(withdrawTx);
+const swapResult = await provider.sendAndConfirm(swapTx);
 ```
 
 - Update pool state
