@@ -19,8 +19,6 @@ function loadKeypairFromFile(filename: string): Keypair {
 }
 const payerKP = loadKeypairFromFile("~/.config/solana/id.json")
 const payerWallet = new Wallet(payerKP);
-// or use mock wallet instead
-// const payerWallet = new Wallet(new Keypair());
 console.log("Wallet Address: %s \n", payerKP.publicKey);
 
 const mainnetConnection = new Connection('https://api.mainnet-beta.solana.com');
@@ -31,19 +29,13 @@ const provider = new AnchorProvider(mainnetConnection, payerWallet, {
 async function getPoolInfo(poolAddress: PublicKey) {
   const ammProgram = new Program<AmmIdl>(AmmIDL, PROGRAM_ID, provider);
   let poolState = await ammProgram.account.pool.fetch(poolAddress);
-  // console.log({poolState})
   const tokenList = await fetch('https://token.jup.ag/all').then(res => res.json());
-  // console.log({tokenList})
   const tokenAInfo = tokenList.find(token => token.address === poolState.tokenAMint.toString());
-  // console.log({tokenAInfo})
   const tokenBInfo = tokenList.find(token => token.address === poolState.tokenBMint.toString());
-  // console.log({tokenBInfo})
 
   const pool = await AmmImpl.create(provider.connection, poolAddress, tokenAInfo, tokenBInfo);
-  // console.log({pool})
 
   const poolInfo = pool.poolInfo
-  // console.log({poolInfo})
 
   console.log('Pool Address: %s', poolAddress.toString())
   const poolTokenAddress = await pool.getPoolTokenMint();
@@ -60,17 +52,9 @@ async function getPoolInfo(poolAddress: PublicKey) {
 }
 
 async function main() {
-  const poolAddressArray = [
-    // mainnet-beta, USDC-SOL
-    "5yuefgbJJpmFNK2iiYbLSpv1aZXq7F9AUKkZKErTYCvs",
-    // mainnet-beta, SOL-USDC
-    "6SWtsTzXrurtVWZdEHvnQdE9oM8tTtyg8rfEo3b4nM93",
-    // mainnet-beta, Yes Token-SOL
-    "CtghFLd4CPXL5GoDw9hyuDuh1ewmnUvBjyGzrLh46SKk",
-    // devnet, 9NG-SOL
-    "Bgf1Sy5kfeDgib4go4NgzHuZwek8wE8NZus56z6uizzi"
-  ]
-  await getPoolInfo(new PublicKey(poolAddressArray[1]));
+  // mainnet-beta, SOL-USDC
+  const poolAddress= "6SWtsTzXrurtVWZdEHvnQdE9oM8tTtyg8rfEo3b4nM93"
+  await getPoolInfo(new PublicKey(poolAddress));
 }
 
 main()
