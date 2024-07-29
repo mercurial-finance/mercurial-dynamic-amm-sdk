@@ -287,7 +287,10 @@ pub struct Config {
     pub pool_fees: PoolFees,
     pub activation_duration_in_slot: u64,
     pub vault_config_key: Pubkey,
-    pub _padding: [u8; 260],
+    // If pool_creator_authority == Pubkey::default() anyone can create a pool with the config,
+    // Otherwise only pool_creator_authority is able to create the pool
+    pub pool_creator_authority: Pubkey,
+    pub _padding: [u8; 228],
 }
 
 pub struct AlphaVaultConfig {

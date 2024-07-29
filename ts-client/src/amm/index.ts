@@ -178,6 +178,7 @@ export default class AmmImpl implements AmmImplementation {
     protocolFeeBps: BN,
     vaultConfigKey: PublicKey,
     activationDurationInSlot: BN,
+    poolCreatorAuthority: PublicKey,
     opt?: {
       cluster?: Cluster;
       programId?: string;
@@ -197,6 +198,7 @@ export default class AmmImpl implements AmmImplementation {
             protocolTradeFeeNumerator: protocolFeeBps.mul(new BN(10)),
             vaultConfigKey,
             activationDurationInSlot,
+            poolCreatorAuthority,
             index: new BN(index),
           })
           .accounts({
@@ -638,13 +640,13 @@ export default class AmmImpl implements AmmImplementation {
 
         invariant(
           !!currentTime &&
-          !!vaultALpSupply &&
-          !!vaultBLpSupply &&
-          !!vaultAReserve &&
-          !!vaultBReserve &&
-          !!poolVaultALp &&
-          !!poolVaultBLp &&
-          !!poolLpSupply,
+            !!vaultALpSupply &&
+            !!vaultBLpSupply &&
+            !!vaultAReserve &&
+            !!vaultBReserve &&
+            !!poolVaultALp &&
+            !!poolVaultBLp &&
+            !!poolLpSupply,
           'Account Info not found',
         );
 
@@ -712,6 +714,32 @@ export default class AmmImpl implements AmmImplementation {
     );
 
     return ammImpls;
+  }
+
+  /**
+   * Retrieves the pool configuration with the authority of the pool creator.
+   *
+   * @param {Connection} connection - The connection to the Solana network.
+   * @param {PublicKey} wallet - The public key of the wallet.
+   * @param {Object} [opt] - Optional parameters.
+   * @return {Promise<Array<Account<Config>>>} A promise that resolves to an array of pool configuration accounts which the wallet can used to create pools.
+   */
+  public static async getPoolConfigWithPoolCreatorAuthority(
+    connection: Connection,
+    wallet: PublicKey,
+    opt?: { programId?: string },
+  ) {
+    const { ammProgram } = createProgram(connection, opt?.programId);
+    const configAccounts = await ammProgram.account.config.all([
+      {
+        memcmp: {
+          offset: 8 + 72,
+          bytes: wallet.toBase58(),
+        },
+      },
+    ]);
+
+    return configAccounts;
   }
 
   public static async getPoolConfig(connection: Connection, config: PublicKey, opt?: { programId?: string }) {
@@ -830,13 +858,13 @@ export default class AmmImpl implements AmmImplementation {
 
     invariant(
       !!currentTime &&
-      !!vaultALpSupply &&
-      !!vaultBLpSupply &&
-      !!vaultAReserve &&
-      !!vaultBReserve &&
-      !!poolVaultALp &&
-      !!poolVaultBLp &&
-      !!poolLpSupply,
+        !!vaultALpSupply &&
+        !!vaultBLpSupply &&
+        !!vaultAReserve &&
+        !!vaultBReserve &&
+        !!poolVaultALp &&
+        !!poolVaultBLp &&
+        !!poolLpSupply,
       'Account Info not found',
     );
 
@@ -990,13 +1018,13 @@ export default class AmmImpl implements AmmImplementation {
 
     invariant(
       !!currentTime &&
-      !!vaultALpSupply &&
-      !!vaultBLpSupply &&
-      !!vaultAReserve &&
-      !!vaultBReserve &&
-      !!poolVaultALp &&
-      !!poolVaultBLp &&
-      !!poolLpSupply,
+        !!vaultALpSupply &&
+        !!vaultBLpSupply &&
+        !!vaultAReserve &&
+        !!vaultBReserve &&
+        !!poolVaultALp &&
+        !!poolVaultBLp &&
+        !!poolLpSupply,
       'Account Info not found',
     );
 
@@ -1605,40 +1633,40 @@ export default class AmmImpl implements AmmImplementation {
     const programMethod =
       this.isStablePool && (tokenAOutAmount.isZero() || tokenBOutAmount.isZero())
         ? this.program.methods.removeLiquiditySingleSide(lpTokenAmount, new BN(0)).accounts({
-          aTokenVault: this.vaultA.vaultState.tokenVault,
-          aVault: this.poolState.aVault,
-          aVaultLp: this.poolState.aVaultLp,
-          aVaultLpMint: this.vaultA.vaultState.lpMint,
-          bTokenVault: this.vaultB.vaultState.tokenVault,
-          bVault: this.poolState.bVault,
-          bVaultLp: this.poolState.bVaultLp,
-          bVaultLpMint: this.vaultB.vaultState.lpMint,
-          lpMint: this.poolState.lpMint,
-          pool: this.address,
-          userDestinationToken: tokenBOutAmount.isZero() ? userAToken : userBToken,
-          userPoolLp,
-          user: owner,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          vaultProgram: this.vaultProgram.programId,
-        })
+            aTokenVault: this.vaultA.vaultState.tokenVault,
+            aVault: this.poolState.aVault,
+            aVaultLp: this.poolState.aVaultLp,
+            aVaultLpMint: this.vaultA.vaultState.lpMint,
+            bTokenVault: this.vaultB.vaultState.tokenVault,
+            bVault: this.poolState.bVault,
+            bVaultLp: this.poolState.bVaultLp,
+            bVaultLpMint: this.vaultB.vaultState.lpMint,
+            lpMint: this.poolState.lpMint,
+            pool: this.address,
+            userDestinationToken: tokenBOutAmount.isZero() ? userAToken : userBToken,
+            userPoolLp,
+            user: owner,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            vaultProgram: this.vaultProgram.programId,
+          })
         : this.program.methods.removeBalanceLiquidity(lpTokenAmount, tokenAOutAmount, tokenBOutAmount).accounts({
-          pool: this.address,
-          lpMint: this.poolState.lpMint,
-          aVault: this.poolState.aVault,
-          aTokenVault: this.vaultA.vaultState.tokenVault,
-          aVaultLp: this.poolState.aVaultLp,
-          aVaultLpMint: this.vaultA.vaultState.lpMint,
-          bVault: this.poolState.bVault,
-          bTokenVault: this.vaultB.vaultState.tokenVault,
-          bVaultLp: this.poolState.bVaultLp,
-          bVaultLpMint: this.vaultB.vaultState.lpMint,
-          userAToken,
-          userBToken,
-          user: owner,
-          userPoolLp,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          vaultProgram: this.vaultProgram.programId,
-        });
+            pool: this.address,
+            lpMint: this.poolState.lpMint,
+            aVault: this.poolState.aVault,
+            aTokenVault: this.vaultA.vaultState.tokenVault,
+            aVaultLp: this.poolState.aVaultLp,
+            aVaultLpMint: this.vaultA.vaultState.lpMint,
+            bVault: this.poolState.bVault,
+            bTokenVault: this.vaultB.vaultState.tokenVault,
+            bVaultLp: this.poolState.bVaultLp,
+            bVaultLpMint: this.vaultB.vaultState.lpMint,
+            userAToken,
+            userBToken,
+            user: owner,
+            userPoolLp,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            vaultProgram: this.vaultProgram.programId,
+          });
 
     const withdrawTx = await programMethod
       .remainingAccounts(this.swapCurve.getRemainingAccounts())
@@ -1680,12 +1708,12 @@ export default class AmmImpl implements AmmImplementation {
   }
 
   /**
-  * `lockLiquidity` is a function that lock liquidity in Meteora pool, owner is able to claim fee later,
-  * @param {PublicKey} owner - PublicKey - The public key of the escrow's owner, who get the locked liquidity, and can claim fee later
-  * @param {BN} amount - The amount of LP tokens to lock.
-  * @param {BN} feePayer - The payer of that lock liquidity.   
-  * @returns A transaction object
-  */
+   * `lockLiquidity` is a function that lock liquidity in Meteora pool, owner is able to claim fee later,
+   * @param {PublicKey} owner - PublicKey - The public key of the escrow's owner, who get the locked liquidity, and can claim fee later
+   * @param {BN} amount - The amount of LP tokens to lock.
+   * @param {BN} feePayer - The payer of that lock liquidity.
+   * @returns A transaction object
+   */
   public async lockLiquidity(owner: PublicKey, amount: BN, feePayer?: PublicKey): Promise<Transaction> {
     const payer = feePayer ? feePayer : owner;
     const [lockEscrowPK] = deriveLockEscrowPda(this.address, owner, this.program.programId);
