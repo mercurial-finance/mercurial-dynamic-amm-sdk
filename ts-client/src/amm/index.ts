@@ -815,8 +815,6 @@ export default class AmmImpl implements AmmImplementation {
   public static async create(
     connection: Connection,
     pool: PublicKey,
-    tokenInfoA: TokenInfo,
-    tokenInfoB: TokenInfo,
     opt?: {
       programId?: string;
       vaultSeedBaseKey?: PublicKey;
@@ -827,11 +825,13 @@ export default class AmmImpl implements AmmImplementation {
     const { provider, vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
 
     const poolState = await getPoolState(pool, ammProgram);
-
-    invariant(tokenInfoA.address === poolState.tokenAMint.toBase58(), `TokenInfoA provided is incorrect`);
-    invariant(tokenInfoB.address === poolState.tokenBMint.toBase58(), `TokenInfoB provided is incorrect`);
-    invariant(tokenInfoA, `TokenInfo ${poolState.tokenAMint.toBase58()} A not found`);
-    invariant(tokenInfoB, `TokenInfo ${poolState.tokenBMint.toBase58()} A not found`);
+    const { tokenAMint, tokenBMint } = poolState
+    const [tokenASupply, tokenBSupply] = await Promise.all([
+      provider.connection.getTokenSupply(poolState.tokenAMint),
+      provider.connection.getTokenSupply(poolState.tokenBMint)
+    ])
+    const tokenInfoA = { address: tokenAMint.toString(), decimals: tokenASupply.value.decimals }
+    const tokenInfoB = { address: tokenBMint.toString(), decimals: tokenBSupply.value.decimals }
 
     const [vaultA, vaultB] = await Promise.all([
       VaultImpl.create(provider.connection, new PublicKey(tokenInfoA.address), { cluster, seedBaseKey: opt?.vaultSeedBaseKey }),
