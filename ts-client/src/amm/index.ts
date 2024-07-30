@@ -724,7 +724,7 @@ export default class AmmImpl implements AmmImplementation {
    * @param {Object} [opt] - Optional parameters.
    * @return {Promise<Array<Account<Config>>>} A promise that resolves to an array of pool configuration accounts which the wallet can used to create pools.
    */
-  public static async getPoolConfigWithPoolCreatorAuthority(
+  public static async getPoolConfigsWithPoolCreatorAuthority(
     connection: Connection,
     wallet: PublicKey,
     opt?: { programId?: string },

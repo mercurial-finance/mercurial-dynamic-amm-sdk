@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `getPoolConfigWithPoolCreatorAuthority` to get pool config based on the given wallet
+- Use `getPoolConfigsWithPoolCreatorAuthority` to retrieve the pool configuration for a specific user. When the pool configuration returned from `getPoolConfigsWithPoolCreatorAuthority` is passed into `createPermissionlessConstantProductPoolWithConfig`, only that user can create pools. Please contact meteora team if you're not whitelisted for the config.
 
 ## @mercurial-finance/dynamic-amm-sdk [0.4.26] - PR #139
 

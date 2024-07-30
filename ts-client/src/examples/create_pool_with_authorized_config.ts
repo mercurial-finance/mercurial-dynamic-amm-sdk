@@ -61,7 +61,7 @@ async function main() {
   };
 
   // Retrieve config accounts where authorized pool creator key is the payerKP
-  const configs = await AmmImpl.getPoolConfigWithPoolCreatorAuthority(connection, payerWallet.publicKey);
+  const configs = await AmmImpl.getPoolConfigsWithPoolCreatorAuthority(connection, payerWallet.publicKey);
 
   // Select config which the fees fit your requirement. Please contact meteora team if you're not whitelisted.
   const config = configs[0];
