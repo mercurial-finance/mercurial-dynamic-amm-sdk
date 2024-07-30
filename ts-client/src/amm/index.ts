@@ -34,6 +34,7 @@ import {
   PoolState,
   VaultProgram,
   WithdrawQuote,
+  tokenAddressAndDecimals,
 } from './types';
 import { ERROR, SEEDS, UNLOCK_AMOUNT_BUFFER, FEE_OWNER, METAPLEX_PROGRAM, U64_MAX } from './constants';
 import { StableSwap, SwapCurve, TradeDirection } from './curve';
@@ -154,7 +155,8 @@ export default class AmmImpl implements AmmImplementation {
     public address: PublicKey,
     private program: AmmProgram,
     private vaultProgram: VaultProgram,
-    private tokenInfos: Array<TokenInfo>,
+    private tokenInfos: Array<PublicKey>,
+    private tokenDecimals: Array<number>,
     public poolState: PoolState & { lpSupply: BN },
     public poolInfo: PoolInformation,
     public vaultA: VaultImpl,
@@ -546,7 +548,7 @@ export default class AmmImpl implements AmmImplementation {
     },
   ): Promise<AmmImpl[]> {
     const cluster = opt?.cluster ?? 'mainnet-beta';
-    const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
+    const { provider, vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
     const poolInfoMap = new Map<
       string,
       {
@@ -564,7 +566,7 @@ export default class AmmImpl implements AmmImplementation {
       ammProgram,
     );
 
-    const tokensInfoPda = poolList.reduce<
+    const PdaInfos = poolList.reduce<
       Array<{ tokenMint: PublicKey; vaultPda: PublicKey; tokenVaultPda: PublicKey; lpMintPda: PublicKey }>
     >((accList, { tokenInfoA, tokenInfoB }, index) => {
       const poolState = poolsState[index];
@@ -584,7 +586,7 @@ export default class AmmImpl implements AmmImplementation {
         },
       ];
     }, []);
-    const vaultsImpl = await VaultImpl.createMultipleWithPda(connection, tokensInfoPda);
+    const vaultsImpl = await VaultImpl.createMultipleWithPda(connection, PdaInfos);
 
     const accountsToFetch = await Promise.all(
       poolsState.map(async (poolState, index) => {
@@ -670,6 +672,13 @@ export default class AmmImpl implements AmmImplementation {
 
         const { pool, poolState, vaultA, vaultB, tokenInfoA, tokenInfoB } = poolInfoData;
 
+        const [tokenASupply, tokenBSupply] = await Promise.all([
+          provider.connection.getTokenSupply(poolState.tokenAMint),
+          provider.connection.getTokenSupply(poolState.tokenBMint)
+        ])
+        const tokenADecimals = tokenASupply.value.decimals
+        const tokenBDecimals = tokenBSupply.value.decimals
+
         let swapCurve;
         if ('stable' in poolState.curveType) {
           const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'] as any;
@@ -701,7 +710,8 @@ export default class AmmImpl implements AmmImplementation {
           pool,
           ammProgram,
           vaultProgram,
-          [tokenInfoA, tokenInfoB],
+          [vaultA.tokenMint, vaultB.tokenMint],
+          [tokenADecimals, tokenBDecimals],
           poolState,
           poolInfo,
           vaultA,
@@ -827,15 +837,15 @@ export default class AmmImpl implements AmmImplementation {
     const poolState = await getPoolState(pool, ammProgram);
     const { tokenAMint, tokenBMint } = poolState
     const [tokenASupply, tokenBSupply] = await Promise.all([
-      provider.connection.getTokenSupply(poolState.tokenAMint),
-      provider.connection.getTokenSupply(poolState.tokenBMint)
+      provider.connection.getTokenSupply(tokenAMint),
+      provider.connection.getTokenSupply(tokenBMint)
     ])
-    const tokenInfoA = { address: tokenAMint.toString(), decimals: tokenASupply.value.decimals }
-    const tokenInfoB = { address: tokenBMint.toString(), decimals: tokenBSupply.value.decimals }
+    const tokenADecimals = tokenASupply.value.decimals
+    const tokenBDecimals = tokenBSupply.value.decimals
 
     const [vaultA, vaultB] = await Promise.all([
-      VaultImpl.create(provider.connection, new PublicKey(tokenInfoA.address), { cluster, seedBaseKey: opt?.vaultSeedBaseKey }),
-      VaultImpl.create(provider.connection, new PublicKey(tokenInfoB.address), { cluster, seedBaseKey: opt?.vaultSeedBaseKey }),
+      VaultImpl.create(provider.connection, tokenAMint, { cluster, seedBaseKey: opt?.vaultSeedBaseKey }),
+      VaultImpl.create(provider.connection, tokenBMint, { cluster, seedBaseKey: opt?.vaultSeedBaseKey }),
     ]);
 
     const accountsBufferMap = await getAccountsBuffer(connection, [
@@ -908,7 +918,8 @@ export default class AmmImpl implements AmmImplementation {
       pool,
       ammProgram,
       vaultProgram,
-      [tokenInfoA, tokenInfoB],
+      [tokenAMint, tokenBMint],
+      [tokenADecimals, tokenBDecimals],
       poolState,
       poolInfo,
       vaultA,
@@ -922,12 +933,12 @@ export default class AmmImpl implements AmmImplementation {
     );
   }
 
-  get tokenA(): TokenInfo {
-    return this.tokenInfos[0];
+  get tokenA(): tokenAddressAndDecimals {
+    return { address: this.tokenInfos[0].toString(), decimals: this.tokenDecimals[0] };
   }
 
-  get tokenB(): TokenInfo {
-    return this.tokenInfos[1];
+  get tokenB(): tokenAddressAndDecimals {
+    return { address: this.tokenInfos[1].toString(), decimals: this.tokenDecimals[1] };
   }
 
   get decimals(): number {
@@ -948,7 +959,7 @@ export default class AmmImpl implements AmmImplementation {
     return this.poolState.fees.tradeFeeNumerator.mul(new BN(10000)).div(this.poolState.fees.tradeFeeDenominator);
   }
 
-  get depegToken(): TokenInfo | null {
+  get depegToken(): tokenAddressAndDecimals | null {
     if (!this.isStablePool) return null;
     const { tokenMultiplier } = this.poolState.curveType['stable'] as any;
     const tokenABalance = this.poolInfo.tokenAAmount.mul(tokenMultiplier.tokenAMultiplier);
