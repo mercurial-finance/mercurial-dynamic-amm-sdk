@@ -295,6 +295,7 @@ describe('Constant product pool', () => {
         new BN(protocolFeeBps),
         PublicKey.default,
         new BN(0),
+        PublicKey.default,
       );
       transaction.sign(mockWallet.payer);
       const txHash = await connection.sendRawTransaction(transaction.serialize());

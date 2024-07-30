@@ -15,6 +15,7 @@ on:
 
 env:
   SOLANA_CLI_VERSION: 1.16.3
+  RUST_TOOLCHAIN_VERSION: 1.76.0
 
 jobs:
   changed_files_rust:
@@ -45,7 +46,7 @@ jobs:
       # Install rust + toolchain
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_TOOLCHAIN_VERSION }}
           components: clippy
       # Cargo build cache
       - name: Cargo Cache
