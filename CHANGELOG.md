@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [0.4.28] - PR #145
+
+### Changed
+
+- `getUserLockEscrow` no longer need to pass `lockEscrowAccount` as param
+
 ## @mercurial-finance/dynamic-amm-sdk [0.4.27] - PR #142
 
 ### Added

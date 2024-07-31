@@ -1680,7 +1680,11 @@ export default class AmmImpl implements AmmImplementation {
     }).add(withdrawTx);
   }
 
-  public async getUserLockEscrow(owner: PublicKey, lockEscrowAccount: LockEscrowAccount): Promise<LockEscrow | null> {
+  public async getUserLockEscrow(owner: PublicKey): Promise<LockEscrow | null> {
+    const [lockEscrowPK] = deriveLockEscrowPda(this.address, owner, this.program.programId);
+    const lockEscrowAccount = await this.program.account.lockEscrow.fetchNullable(lockEscrowPK);
+    if (!lockEscrowAccount) return null;
+
     const [lockEscrow, _lockEscrowBump] = deriveLockEscrowPda(this.address, owner, this.program.programId);
     const unClaimedFee = calculateUnclaimedLockEscrowFee(
       lockEscrowAccount.totalLockedAmount,
