@@ -19,12 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [0.4.27] - PR #142
+
+### Added
+
+- Use `getPoolConfigsWithPoolCreatorAuthority` to retrieve the pool configuration for a specific user. When the pool configuration returned from `getPoolConfigsWithPoolCreatorAuthority` is passed into `createPermissionlessConstantProductPoolWithConfig`, only that user can create pools. Please contact meteora team if you're not whitelisted for the config.
+
 ## @mercurial-finance/dynamic-amm-sdk [0.4.26] - PR #139
 
 ### Changed
 
 -`lockLiquidity` function is able to specify feePayer
-
 
 ## @mercurial-finance/dynamic-amm-sdk [0.4.25] - PR #132
 
@@ -45,15 +50,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AmmImpl.createPermissionlessConstantProductPoolWithConfig` to create constant product pool based on `config` account.
 - `AmmImpl.getFeeConfigurations` to get all fee configurations to be used in `AmmImpl.createPermissionlessConstantProductPoolWithConfig`
 
-
 ## @mercurial-finance/dynamic-amm-sdk [0.4.22] - PR #117
 
 ### Added
+
 - `swap` method param `referrerToken` is non-ATA address.
 - `AmmImpl.lockLiquidityNewlyCreatedPool` method to help lock liquidity for pool that haven't been created yet
 - `skipAta` flag to help skipping check for create ata when creating the pool in `AmmImpl.createPermissionlessPool`
-
-
 
 ## dynamic-amm [0.1.1] - PR #125
 
@@ -73,7 +76,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `MigrateFeeAccount` and `SetAdminFeeAccount` event
 
-
 ## @mercurial-finance/dynamic-amm-sdk [0.4.21] - PR #117
 
 ### Added
@@ -84,7 +86,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AmmImpl.getUserLockEscrow` to obtain the user's lock escrow state.
 - `AmmImpl.lockLiquidity` to lock the user's LP into the lock escrow.
 - `AmmImpl.claimLockFee` to claim fees from locked LPs in the lock escrow.
-
 
 ## dynamic-amm [0.1.2] - PR #134
 

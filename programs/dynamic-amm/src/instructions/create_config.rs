@@ -9,6 +9,8 @@ use anchor_lang::prelude::*;
 pub struct ConfigParameters {
     pub trade_fee_numerator: u64,
     pub protocol_trade_fee_numerator: u64,
+    pub activation_duration_in_slot: u64,
+    pub pool_creator_authority: Pubkey,
     pub index: u64,
 }
 
