@@ -4,7 +4,7 @@ import {
   Keypair,
 } from "@solana/web3.js";
 import BN from "bn.js";
-import { Wallet, AnchorProvider, Program } from '@project-serum/anchor';
+import { Wallet, AnchorProvider, Program } from '@coral-xyz/anchor';
 import AmmImpl from '../amm';
 import { Amm as AmmIdl, IDL as AmmIDL } from '../amm/idl';
 import { PROGRAM_ID } from "../amm/constants";
@@ -30,8 +30,8 @@ async function swapQuote(poolAddress: PublicKey, swapAmount: BN, swapAtoB: boole
 
 async function main() {
   await swapQuote(new PublicKey(
-    "CtghFLd4CPXL5GoDw9hyuDuh1ewmnUvBjyGzrLh46SKk"
-  ), new BN(1_000_000), true);
+    "5yuefgbJJpmFNK2iiYbLSpv1aZXq7F9AUKkZKErTYCvs"
+  ), new BN(10_000_000_000), true);
 }
 
 

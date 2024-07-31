@@ -1,8 +1,7 @@
-import { BN, BorshCoder, Idl } from '@project-serum/anchor';
-import { Fees, computeD, computeY, normalizedTradeFee } from '@saberhq/stableswap-sdk';
-import { Fraction, Percent, ZERO } from '@saberhq/token-utils';
+import { BN } from '@coral-xyz/anchor';
+import { BorshCoder, Idl } from '@project-serum/anchor';
+import { Fraction, Percent, ZERO, Fees, computeD, computeY, normalizedTradeFee } from './stable-swap-math';
 import { AccountInfo, PublicKey } from '@solana/web3.js';
-import JSBI from 'jsbi';
 import { OutResult, SwapCurve, TradeDirection, getPriceImpact } from '.';
 import { CURVE_TYPE_ACCOUNTS } from '../constants';
 import MarinadeIDL from '../marinade-finance.json';
@@ -12,7 +11,7 @@ import { Depeg, DepegType, PoolFees, StakePool, StakePoolLayout, TokenMultiplier
 const PRECISION = new BN(1_000_000);
 const BASE_CACHE_EXPIRE = new BN(60 * 10);
 
-const N_COINS = JSBI.BigInt(2);
+const N_COINS = BigInt(2);
 
 export class StableSwap implements SwapCurve {
   constructor(
@@ -22,7 +21,7 @@ export class StableSwap implements SwapCurve {
     private extraAccounts: Map<String, AccountInfo<Buffer>>,
     private onChainTime: BN,
     private stakePoolPubkey: PublicKey,
-  ) {}
+  ) { }
 
   private getBasePoolVirtualPrice(depegType: DepegType): BN {
     if (depegType['marinade']) {
@@ -128,27 +127,24 @@ export class StableSwap implements SwapCurve {
     const [upscaledSourceAmount, upscaledSwapSourceAmount, upscaledSwapDestinationAmount] =
       tradeDirection == TradeDirection.AToB
         ? [
-            this.upscaleTokenA(sourceAmount),
-            this.upscaleTokenA(swapSourceAmount),
-            this.upscaleTokenB(swapDestinationAmount),
-          ]
+          this.upscaleTokenA(sourceAmount),
+          this.upscaleTokenA(swapSourceAmount),
+          this.upscaleTokenB(swapDestinationAmount),
+        ]
         : [
-            this.upscaleTokenB(sourceAmount),
-            this.upscaleTokenB(swapSourceAmount),
-            this.upscaleTokenA(swapDestinationAmount),
-          ];
+          this.upscaleTokenB(sourceAmount),
+          this.upscaleTokenB(swapSourceAmount),
+          this.upscaleTokenA(swapDestinationAmount),
+        ];
 
     const invariantD = computeD(
-      JSBI.BigInt(this.amp),
-      JSBI.BigInt(upscaledSwapSourceAmount.toString()),
-      JSBI.BigInt(upscaledSwapDestinationAmount.toString()),
+      BigInt(this.amp),
+      BigInt(upscaledSwapSourceAmount.toString()),
+      BigInt(upscaledSwapDestinationAmount.toString()),
     );
 
-    const newSwapSourceAmount = JSBI.add(
-      JSBI.BigInt(upscaledSwapSourceAmount.toString()),
-      JSBI.BigInt(upscaledSourceAmount.toString()),
-    );
-    const newSwapDestinationAmount = computeY(JSBI.BigInt(this.amp), newSwapSourceAmount, invariantD);
+    const newSwapSourceAmount = BigInt(upscaledSwapSourceAmount.toString()) + BigInt(upscaledSourceAmount.toString());
+    const newSwapDestinationAmount = computeY(BigInt(this.amp), newSwapSourceAmount, invariantD);
 
     let outAmount = upscaledSwapDestinationAmount.sub(new BN(newSwapDestinationAmount.toString())).sub(new BN(1));
 
@@ -176,9 +172,9 @@ export class StableSwap implements SwapCurve {
     const upscaledTokenBAmount = this.upscaleTokenB(tokenBAmount);
     const invariantD = new BN(
       computeD(
-        JSBI.BigInt(this.amp),
-        JSBI.BigInt(upscaledTokenAAmount.toString()),
-        JSBI.BigInt(upscaledTokenBAmount.toString()),
+        BigInt(this.amp),
+        BigInt(upscaledTokenAAmount.toString()),
+        BigInt(upscaledTokenBAmount.toString()),
       ).toString(),
     );
     if (!this.depeg.depegType['none']) {
@@ -192,27 +188,24 @@ export class StableSwap implements SwapCurve {
     const [upscaledDestAmount, upscaledSwapSourceAmount, upscaledSwapDestinationAmount] =
       tradeDirection == TradeDirection.AToB
         ? [
-            this.upscaleTokenB(destAmount),
-            this.upscaleTokenA(swapSourceAmount),
-            this.upscaleTokenB(swapDestinationAmount),
-          ]
+          this.upscaleTokenB(destAmount),
+          this.upscaleTokenA(swapSourceAmount),
+          this.upscaleTokenB(swapDestinationAmount),
+        ]
         : [
-            this.upscaleTokenA(destAmount),
-            this.upscaleTokenB(swapSourceAmount),
-            this.upscaleTokenA(swapDestinationAmount),
-          ];
+          this.upscaleTokenA(destAmount),
+          this.upscaleTokenB(swapSourceAmount),
+          this.upscaleTokenA(swapDestinationAmount),
+        ];
 
     const invariantD = computeD(
-      JSBI.BigInt(this.amp),
-      JSBI.BigInt(upscaledSwapSourceAmount.toString()),
-      JSBI.BigInt(upscaledSwapDestinationAmount.toString()),
+      BigInt(this.amp),
+      BigInt(upscaledSwapSourceAmount.toString()),
+      BigInt(upscaledSwapDestinationAmount.toString()),
     );
 
-    const newSwapDestAmount = JSBI.subtract(
-      JSBI.BigInt(upscaledSwapDestinationAmount.toString()),
-      JSBI.BigInt(upscaledDestAmount.toString()),
-    );
-    const newSwapSourceAmount = computeY(JSBI.BigInt(this.amp), newSwapDestAmount, invariantD);
+    const newSwapDestAmount = BigInt(upscaledSwapDestinationAmount.toString()) - BigInt(upscaledDestAmount.toString());
+    const newSwapSourceAmount = computeY(BigInt(this.amp), newSwapDestAmount, invariantD);
     const inAmount = new BN(newSwapSourceAmount.toString()).sub(swapSourceAmount);
 
     return tradeDirection == TradeDirection.AToB ? this.downscaleTokenA(inAmount) : this.downscaleTokenB(inAmount);
@@ -235,12 +228,12 @@ export class StableSwap implements SwapCurve {
       this.upscaleTokenB(swapTokenBAmount),
     ];
     const { mintAmount } = calculateEstimatedMintAmount(
-      JSBI.BigInt(this.amp),
+      BigInt(this.amp),
       Helper.toFees(fees),
-      JSBI.BigInt(lpSupply.toString()),
-      [JSBI.BigInt(upscaledSwapTokenAAmount.toString()), JSBI.BigInt(upscaledSwapTokenBAmount.toString())],
-      JSBI.BigInt(upscaledDepositAAmount.toString()),
-      JSBI.BigInt(upscaledDepositBAmount.toString()),
+      BigInt(lpSupply.toString()),
+      [BigInt(upscaledSwapTokenAAmount.toString()), BigInt(upscaledSwapTokenBAmount.toString())],
+      BigInt(upscaledDepositAAmount.toString()),
+      BigInt(upscaledDepositBAmount.toString()),
     );
 
     return new BN(mintAmount.toString());
@@ -261,11 +254,11 @@ export class StableSwap implements SwapCurve {
     ];
 
     const { withdrawAmountBeforeFees } = calculateEstimatedWithdrawOneAmount({
-      ampFactor: JSBI.BigInt(this.amp),
+      ampFactor: BigInt(this.amp),
       feeInfo: Helper.toFees(fees),
-      lpTotalSupply: JSBI.BigInt(lpSupply.toString()),
-      poolTokenAmount: JSBI.BigInt(lpAmount.toString()),
-      reserves: [JSBI.BigInt(upscaledSwapTokenAAmount.toString()), JSBI.BigInt(upscaledSwapTokenBAmount.toString())],
+      lpTotalSupply: BigInt(lpSupply.toString()),
+      poolTokenAmount: BigInt(lpAmount.toString()),
+      reserves: [BigInt(upscaledSwapTokenAAmount.toString()), BigInt(upscaledSwapTokenBAmount.toString())],
       tradeDirection,
     });
 
@@ -318,23 +311,23 @@ function calculateEstimatedWithdrawOneAmount({
   poolTokenAmount,
   tradeDirection,
 }: {
-  ampFactor: JSBI;
+  ampFactor: bigint;
   feeInfo: Fees;
-  lpTotalSupply: JSBI;
-  reserves: [JSBI, JSBI];
-  poolTokenAmount: JSBI;
+  lpTotalSupply: bigint;
+  reserves: [bigint, bigint];
+  poolTokenAmount: bigint;
   tradeDirection: TradeDirection;
 }): {
-  withdrawAmount: JSBI;
-  withdrawAmountBeforeFees: JSBI;
-  swapFee: JSBI;
-  withdrawFee: JSBI;
-  lpSwapFee: JSBI;
-  lpWithdrawFee: JSBI;
-  adminSwapFee: JSBI;
-  adminWithdrawFee: JSBI;
+  withdrawAmount: bigint;
+  withdrawAmountBeforeFees: bigint;
+  swapFee: bigint;
+  withdrawFee: bigint;
+  lpSwapFee: bigint;
+  lpWithdrawFee: bigint;
+  adminSwapFee: bigint;
+  adminWithdrawFee: bigint;
 } {
-  if (JSBI.equal(poolTokenAmount, ZERO)) {
+  if (poolTokenAmount == ZERO) {
     return {
       withdrawAmount: ZERO,
       withdrawAmountBeforeFees: ZERO,
@@ -351,14 +344,14 @@ function calculateEstimatedWithdrawOneAmount({
     tradeDirection == TradeDirection.BToA ? [reserves[0], reserves[1]] : [reserves[1], reserves[0]];
 
   const d_0 = computeD(ampFactor, baseReserves, quoteReserves);
-  const d_1 = JSBI.subtract(d_0, JSBI.divide(JSBI.multiply(poolTokenAmount, d_0), lpTotalSupply));
+  const d_1 = d_0 - poolTokenAmount * d_0 / lpTotalSupply;
 
   const new_y = computeY(ampFactor, quoteReserves, d_1);
 
   // expected_base_amount = swap_base_amount * d_1 / d_0 - new_y;
-  const expected_base_amount = JSBI.subtract(JSBI.divide(JSBI.multiply(baseReserves, d_1), d_0), new_y);
+  const expected_base_amount = baseReserves * d_1 / d_0 - new_y;
   // expected_quote_amount = swap_quote_amount - swap_quote_amount * d_1 / d_0;
-  const expected_quote_amount = JSBI.subtract(quoteReserves, JSBI.divide(JSBI.multiply(quoteReserves, d_1), d_0));
+  const expected_quote_amount = quoteReserves - quoteReserves * d_1 / d_0;
   // new_base_amount = swap_base_amount - expected_base_amount * fee / fee_denominator;
   const new_base_amount = new Fraction(baseReserves.toString(), 1).subtract(
     normalizedTradeFee(feeInfo, N_COINS, expected_base_amount),
@@ -367,8 +360,8 @@ function calculateEstimatedWithdrawOneAmount({
   const new_quote_amount = new Fraction(quoteReserves.toString(), 1).subtract(
     normalizedTradeFee(feeInfo, N_COINS, expected_quote_amount),
   );
-  const dy = new_base_amount.subtract(computeY(ampFactor, JSBI.BigInt(new_quote_amount.toFixed(0)), d_1).toString());
-  const dy_0 = JSBI.subtract(baseReserves, new_y);
+  const dy = new_base_amount.subtract(computeY(ampFactor, BigInt(new_quote_amount.toFixed(0)), d_1).toString());
+  const dy_0 = baseReserves - new_y;
 
   // lp fees
   const swapFee = new Fraction(dy_0.toString(), 1).subtract(dy);
@@ -387,30 +380,30 @@ function calculateEstimatedWithdrawOneAmount({
 
   // final quantities
   return {
-    withdrawAmount: JSBI.BigInt(withdrawAmount.toFixed(0)),
-    withdrawAmountBeforeFees: JSBI.BigInt(dy.toFixed(0)),
-    swapFee: JSBI.BigInt(swapFee.toFixed(0)),
-    withdrawFee: JSBI.BigInt(withdrawFee.toFixed(0)),
-    lpSwapFee: JSBI.BigInt(lpSwapFee.toFixed(0)),
-    lpWithdrawFee: JSBI.BigInt(lpWithdrawFee.toFixed(0)),
-    adminSwapFee: JSBI.BigInt(adminSwapFee.toFixed(0)),
-    adminWithdrawFee: JSBI.BigInt(adminWithdrawFee.toFixed(0)),
+    withdrawAmount: BigInt(withdrawAmount.toFixed(0)),
+    withdrawAmountBeforeFees: BigInt(dy.toFixed(0)),
+    swapFee: BigInt(swapFee.toFixed(0)),
+    withdrawFee: BigInt(withdrawFee.toFixed(0)),
+    lpSwapFee: BigInt(lpSwapFee.toFixed(0)),
+    lpWithdrawFee: BigInt(lpWithdrawFee.toFixed(0)),
+    adminSwapFee: BigInt(adminSwapFee.toFixed(0)),
+    adminWithdrawFee: BigInt(adminWithdrawFee.toFixed(0)),
   };
 }
 
 function calculateEstimatedMintAmount(
-  ampFactor: JSBI,
+  ampFactor: bigint,
   feeInfo: Fees,
-  lpTotalSupply: JSBI,
-  reserves: [JSBI, JSBI],
-  depositAmountA: JSBI,
-  depositAmountB: JSBI,
+  lpTotalSupply: bigint,
+  reserves: [bigint, bigint],
+  depositAmountA: bigint,
+  depositAmountB: bigint,
 ): {
-  mintAmountBeforeFees: JSBI;
-  mintAmount: JSBI;
-  fees: JSBI;
+  mintAmountBeforeFees: bigint;
+  mintAmount: bigint;
+  fees: bigint;
 } {
-  if (JSBI.equal(depositAmountA, ZERO) && JSBI.equal(depositAmountB, ZERO)) {
+  if (depositAmountA == ZERO && depositAmountB == ZERO) {
     return {
       mintAmountBeforeFees: ZERO,
       mintAmount: ZERO,
@@ -422,28 +415,28 @@ function calculateEstimatedMintAmount(
   const [reserveA, reserveB] = reserves;
   const d0 = computeD(amp, reserveA, reserveB);
 
-  const d1 = computeD(amp, JSBI.add(reserveA, depositAmountA), JSBI.add(reserveB, depositAmountB));
-  if (JSBI.lessThan(d1, d0)) {
+  const d1 = computeD(amp, reserveA + depositAmountA, reserveB + depositAmountB);
+  if (d1 < d0) {
     throw new Error('New D cannot be less than previous D');
   }
 
   const oldBalances = reserves.map((r) => r);
-  const newBalances = [JSBI.add(reserveA, depositAmountA), JSBI.add(reserveB, depositAmountB)] as const;
+  const newBalances = [reserveA + depositAmountA, reserveB + depositAmountB] as const;
   const adjustedBalances = newBalances.map((newBalance, i) => {
-    const oldBalance = oldBalances[i] as JSBI;
+    const oldBalance = oldBalances[i];
     const idealBalance = new Fraction(d1, d0).multiply(oldBalance);
     const difference = idealBalance.subtract(newBalance);
     const diffAbs = difference.greaterThan(0) ? difference : difference.multiply(-1);
-    const fee = normalizedTradeFee(feeInfo, N_COINS, JSBI.BigInt(diffAbs.toFixed(0)));
-    return JSBI.subtract(newBalance, JSBI.BigInt(fee.toFixed(0)));
-  }) as [JSBI, JSBI];
+    const fee = normalizedTradeFee(feeInfo, N_COINS, BigInt(diffAbs.toFixed(0)));
+    return newBalance - BigInt(fee.toFixed(0));
+  }) as [bigint, bigint];
   const d2 = computeD(amp, adjustedBalances[0], adjustedBalances[1]);
 
   const lpSupply = lpTotalSupply;
-  const mintAmountRaw = JSBI.divide(JSBI.multiply(lpSupply, JSBI.subtract(d2, d0)), d0);
-  const mintAmountRawBeforeFees = JSBI.divide(JSBI.multiply(lpSupply, JSBI.subtract(d1, d0)), d0);
+  const mintAmountRaw = lpSupply * (d2 - d0) / d0;
+  const mintAmountRawBeforeFees = lpSupply * (d1 - d0) / d0;
 
-  const fees = JSBI.subtract(mintAmountRawBeforeFees, mintAmountRaw);
+  const fees = mintAmountRawBeforeFees - mintAmountRaw;
 
   return {
     mintAmount: mintAmountRaw,

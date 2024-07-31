@@ -1,6 +1,5 @@
-import { createProgram } from './utils';
-import { IDL, Amm } from '../amm/idl';
-import { AnchorError, ProgramError } from '@project-serum/anchor';
+import { IDL } from '../amm/idl';
+import { AnchorError } from '@coral-xyz/anchor';
 import { PROGRAM_ID } from './constants';
 
 type Codes = (typeof IDL.errors)[number]['code'];

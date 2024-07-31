@@ -1,4 +1,4 @@
-import { Wallet } from '@project-serum/anchor';
+import { Wallet } from '@coral-xyz/anchor';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';

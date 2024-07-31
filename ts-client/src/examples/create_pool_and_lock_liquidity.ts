@@ -4,7 +4,7 @@ import {
   Keypair,
 } from "@solana/web3.js";
 import BN from "bn.js";
-import { Wallet, AnchorProvider } from '@project-serum/anchor';
+import { Wallet, AnchorProvider } from '@coral-xyz/anchor';
 import AmmImpl from '../amm';
 import { PROGRAM_ID, SEEDS } from "../amm/constants";
 import { TokenInfo } from '@solana/spl-token-registry';

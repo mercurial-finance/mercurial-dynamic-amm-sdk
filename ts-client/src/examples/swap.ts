@@ -4,7 +4,7 @@ import {
   Keypair,
 } from "@solana/web3.js";
 import BN from "bn.js";
-import { Wallet, AnchorProvider, Program } from '@project-serum/anchor';
+import { Wallet, AnchorProvider, Program } from '@coral-xyz/anchor';
 import AmmImpl from '../amm';
 import fs from "fs";
 import os from 'os'
@@ -25,7 +25,7 @@ const provider = new AnchorProvider(devnetConnection, payerWallet, {
   commitment: 'confirmed',
 });
 
-async function swap(poolAddress: PublicKey, swapAmount: BN, swapAtoB: boolean ) {
+async function swap(poolAddress: PublicKey, swapAmount: BN, swapAtoB: boolean) {
   let tokenAInfo = {
     chainId: 103,
     address: '9NGDi2tZtNmCCp8SVLKNuGjuWAVwNF3Vap5tT8km5er9',
