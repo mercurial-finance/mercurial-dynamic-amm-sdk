@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [0.4.29] - PR #146
+
+### Fixed
+
+- Fixed `Invalid option nextEpochFee` error when decode LST pool stake pool nextEpochFee
+
 ## @mercurial-finance/dynamic-amm-sdk [0.4.28] - PR #145
 
 ### Changed
