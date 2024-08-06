@@ -1,4 +1,4 @@
-use crate::{error::PoolError, get_lp_mint_decimal};
+use crate::get_lp_mint_decimal;
 use crate::{get_first_key, get_second_key, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::{
@@ -160,12 +160,4 @@ pub struct InitializePermissionlessConstantProductPoolWithConfig<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     /// System program.
     pub system_program: Program<'info, System>,
-}
-
-pub fn initialize_permissionless_constant_product_pool_with_config(
-    ctx: Context<InitializePermissionlessConstantProductPoolWithConfig>,
-    token_a_amount: u64,
-    token_b_amount: u64,
-) -> Result<()> {
-    Ok(())
 }

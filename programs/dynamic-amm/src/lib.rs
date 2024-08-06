@@ -153,11 +153,6 @@ pub mod dynamic_amm {
         Ok(())
     }
 
-    /// Transfer the admin of the pool to new admin.
-    pub fn transfer_admin(ctx: Context<TransferAdmin>) -> Result<()> {
-        Ok(())
-    }
-
     /// Create mint metadata account for old pools
     pub fn create_mint_metadata(ctx: Context<CreateMintMetadata>) -> Result<()> {
         Ok(())
@@ -168,12 +163,12 @@ pub mod dynamic_amm {
         ctx: Context<CreateConfig>,
         config_parameters: ConfigParameters,
     ) -> Result<()> {
-        instructions::create_config(ctx, config_parameters)
+        Ok(())
     }
 
     /// Close config
     pub fn close_config(ctx: Context<CloseConfig>) -> Result<()> {
-        instructions::close_config(ctx)
+        Ok(())
     }
 
     /// Initialize permissionless pool with config
@@ -182,10 +177,6 @@ pub mod dynamic_amm {
         token_a_amount: u64,
         token_b_amount: u64,
     ) -> Result<()> {
-        instructions::initialize_permissionless_constant_product_pool_with_config(
-            ctx,
-            token_a_amount,
-            token_b_amount,
-        )
+        Ok(())
     }
 }

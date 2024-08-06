@@ -1,5 +1,3 @@
-use crate::error::PoolError;
-use crate::event;
 use crate::state::Config;
 use anchor_lang::prelude::*;
 
@@ -17,8 +15,4 @@ pub struct CloseConfig<'info> {
     /// CHECK: Account to receive closed account rental SOL
     #[account(mut)]
     pub rent_receiver: UncheckedAccount<'info>,
-}
-
-pub fn close_config(ctx: Context<CloseConfig>) -> Result<()> {
-    Ok(())
 }

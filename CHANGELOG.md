@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## dynamic-amm [0.4.13] - PR #147
+
+### Deprecated
+- deprecated field `admin` in pool state
+
+### Changed
+- remove endpoint `transfer_admin`
+- All permissioned operations now can be signed from any address in the group of admins instead of a single admin key 
+
 ## @mercurial-finance/dynamic-amm-sdk [0.4.29] - PR #146
 
 ### Fixed

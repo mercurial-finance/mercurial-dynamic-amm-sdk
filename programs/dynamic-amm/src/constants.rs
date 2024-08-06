@@ -3,7 +3,7 @@
 /// Minimum seconds between last AMP changes
 pub static MIN_CHANGE_AMP_DURATION: u64 = 600; // 10 minutes
 
-#[deprecated]
+// #[deprecated]
 /// Store constants related to PDA seeds
 pub mod seeds {
     /// Prefix for apy PDA
