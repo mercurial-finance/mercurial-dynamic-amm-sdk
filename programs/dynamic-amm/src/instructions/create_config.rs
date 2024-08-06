@@ -1,7 +1,4 @@
-use crate::constants::fee::FEE_DENOMINATOR;
 use crate::constants::seeds::CONFIG_PREFIX;
-use crate::error::PoolError;
-use crate::event;
 use crate::state::Config;
 use anchor_lang::prelude::*;
 
@@ -33,11 +30,4 @@ pub struct CreateConfig<'info> {
     pub admin: Signer<'info>,
 
     pub system_program: Program<'info, System>,
-}
-
-pub fn create_config(
-    ctx: Context<CreateConfig>,
-    config_parameters: ConfigParameters,
-) -> Result<()> {
-    Ok(())
 }

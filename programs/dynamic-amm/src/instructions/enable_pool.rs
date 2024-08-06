@@ -7,7 +7,6 @@ use anchor_lang::prelude::*;
 pub struct EnableOrDisablePool<'info> {
     #[account(
         mut,
-        has_one = admin,
         constraint = pool.enabled != enable
     )]
     /// Pool account (PDA)

@@ -21,8 +21,6 @@ pub mod initialize_permissioned_pool;
 pub use initialize_permissioned_pool::*;
 pub mod enable_pool;
 pub use enable_pool::*;
-pub mod transfer_admin;
-pub use transfer_admin::*;
 pub mod override_curve_param;
 pub use override_curve_param::*;
 pub mod create_mint_metadata;
