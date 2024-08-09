@@ -1,11 +1,11 @@
-import { AnchorProvider, BN } from '@project-serum/anchor';
+import { AnchorProvider, BN } from '@coral-xyz/anchor';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { DEFAULT_SLIPPAGE, MAINNET_POOL, STABLE_SWAP_DEFAULT_TRADE_FEE_BPS } from '../constants';
 import AmmImpl from '../index';
 import { derivePoolAddress } from '../utils';
 import { airDropSol, getOrCreateATA, mockWallet } from './utils';
-import { TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+import { createMint, mintTo } from '@solana/spl-token';
 
 export const solTokenInfo: TokenInfo = {
   chainId: 101,
@@ -29,9 +29,6 @@ const provider = new AnchorProvider(connection, mockWallet, {
 });
 
 describe('Stable Swap pool', () => {
-  let usdtToken: Token;
-  let usdcToken: Token;
-
   let usdtTokenInfo: TokenInfo;
   let usdcTokenInfo: TokenInfo;
 
@@ -52,38 +49,35 @@ describe('Stable Swap pool', () => {
   beforeAll(async () => {
     await airDropSol(connection, mockWallet.publicKey, 10);
 
-    usdtToken = await Token.createMint(
+
+    USDT = await createMint(
       provider.connection,
       mockWallet.payer,
       mockWallet.publicKey,
       null,
       usdtDecimal,
-      TOKEN_PROGRAM_ID,
     );
 
-    USDT = usdtToken.publicKey;
     usdtTokenInfo = {
       chainId: 101,
-      address: usdtToken.publicKey.toString(),
+      address: USDT.toString(),
       symbol: 'USDT',
       decimals: usdtDecimal,
       name: 'Tether USD',
       logoURI: 'https://assets.coingecko.com/coins/images/325/large/Tether.png',
     };
 
-    usdcToken = await Token.createMint(
+
+    USDC = await createMint(
       provider.connection,
       mockWallet.payer,
       mockWallet.publicKey,
       null,
       usdcDecimal,
-      TOKEN_PROGRAM_ID,
     );
-
-    USDC = usdcToken.publicKey;
     usdcTokenInfo = {
       chainId: 101,
-      address: usdcToken.publicKey.toString(),
+      address: USDC.toString(),
       symbol: 'USDC',
       decimals: usdcDecimal,
       name: 'USD Coin',
@@ -93,8 +87,32 @@ describe('Stable Swap pool', () => {
     mockWalletUsdtATA = await getOrCreateATA(connection, USDT, mockWallet.publicKey, mockWallet.payer);
     mockWalletUsdcATA = await getOrCreateATA(connection, USDC, mockWallet.publicKey, mockWallet.payer);
 
-    await usdtToken.mintTo(mockWalletUsdtATA, mockWallet.payer, [], 1000000 * usdtMultiplier);
-    await usdcToken.mintTo(mockWalletUsdcATA, mockWallet.payer, [], 1000000 * usdcMultiplier);
+
+    await mintTo(
+      provider.connection,
+      mockWallet.payer,
+      USDT,
+      mockWalletUsdtATA,
+      mockWallet.payer.publicKey,
+      1000000 * usdtMultiplier,
+      [],
+      {
+        commitment: "confirmed",
+      },
+    );
+
+    await mintTo(
+      provider.connection,
+      mockWallet.payer,
+      USDC,
+      mockWalletUsdcATA,
+      mockWallet.payer.publicKey,
+      1000000 * usdcMultiplier,
+      [],
+      {
+        commitment: "confirmed",
+      },
+    );
   });
 
   describe('With fee tier', () => {

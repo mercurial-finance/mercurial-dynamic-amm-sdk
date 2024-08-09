@@ -19,14 +19,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-## dynamic-amm [0.4.13] - PR #147
+## @mercurial-finance/dynamic-amm-sdk [0.5.0] - PR [#144](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/144)
+
+### Changed
+
+- Pump "@solana/spl-token" to 0.4.6 and various relevant packages
+
+## @mercurial-finance/dynamic-amm-sdk [0.4.13] - PR #147
 
 ### Deprecated
+
 - deprecated field `admin` in pool state
 
 ### Changed
+
 - remove endpoint `transfer_admin`
-- All permissioned operations now can be signed from any address in the group of admins instead of a single admin key 
+- All permissioned operations now can be signed from any address in the group of admins instead of a single admin key
 
 ## @mercurial-finance/dynamic-amm-sdk [0.4.29] - PR #146
 

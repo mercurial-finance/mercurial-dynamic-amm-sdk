@@ -1,28 +1,21 @@
-import { AnchorProvider, BN } from '@project-serum/anchor';
-import { TokenInfo, TokenListProvider } from '@solana/spl-token-registry';
-import { Cluster, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { AnchorProvider, BN } from '@coral-xyz/anchor';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import {
   CONSTANT_PRODUCT_DEFAULT_TRADE_FEE_BPS,
   DEFAULT_SLIPPAGE,
-  DEVNET_COIN,
-  DEVNET_POOL,
-  MAINNET_POOL,
   PROGRAM_ID,
-  STAGING_PROGRAM_ID,
 } from '../constants';
 import AmmImpl from '../index';
-import { calculateSwapQuote, derivePoolAddress, derivePoolAddressWithConfig, getOnchainTime } from '../utils';
-import { airDropSol, airDropSolIfBalanceNotEnough, getOrCreateATA, mockWallet } from './utils';
-import { TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+import { derivePoolAddress, derivePoolAddressWithConfig, getOnchainTime } from '../utils';
+import { airDropSol, getOrCreateATA, mockWallet } from './utils';
+import { createMint, mintTo } from '@solana/spl-token';
 
 describe('Constant product pool', () => {
   const connection = new Connection('http://127.0.0.1:8899', 'confirmed');
   const provider = new AnchorProvider(connection, mockWallet, {
     commitment: connection.commitment,
   });
-
-  let btcToken: Token;
-  let usdcToken: Token;
 
   let btcTokenInfo: TokenInfo;
   let usdcTokenInfo: TokenInfo;
@@ -44,39 +37,35 @@ describe('Constant product pool', () => {
 
   beforeAll(async () => {
     await airDropSol(connection, mockWallet.publicKey, 10);
-
-    btcToken = await Token.createMint(
+    BTC = await createMint(
       provider.connection,
       mockWallet.payer,
       mockWallet.publicKey,
       null,
       btcDecimal,
-      TOKEN_PROGRAM_ID,
+
     );
 
-    BTC = btcToken.publicKey;
     btcTokenInfo = {
       chainId: 101,
-      address: btcToken.publicKey.toString(),
+      address: BTC.toString(),
       symbol: 'BTC',
       decimals: btcDecimal,
       name: 'Bitcoin',
       logoURI: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
     };
 
-    usdcToken = await Token.createMint(
+    USDC = await createMint(
       provider.connection,
       mockWallet.payer,
       mockWallet.publicKey,
       null,
       usdcDecimal,
-      TOKEN_PROGRAM_ID,
     );
 
-    USDC = usdcToken.publicKey;
     usdcTokenInfo = {
       chainId: 101,
-      address: usdcToken.publicKey.toString(),
+      address: USDC.toString(),
       symbol: 'USDC',
       decimals: usdcDecimal,
       name: 'USD Coin',
@@ -86,8 +75,34 @@ describe('Constant product pool', () => {
     mockWalletBtcATA = await getOrCreateATA(connection, BTC, mockWallet.publicKey, mockWallet.payer);
     mockWalletUsdcATA = await getOrCreateATA(connection, USDC, mockWallet.publicKey, mockWallet.payer);
 
-    await btcToken.mintTo(mockWalletBtcATA, mockWallet.payer, [], 10000 * btcMultiplier);
-    await usdcToken.mintTo(mockWalletUsdcATA, mockWallet.payer, [], 1000000 * usdcMultiplier);
+    await mintTo(
+      provider.connection,
+      mockWallet.payer,
+      BTC,
+      mockWalletBtcATA,
+      mockWallet.payer.publicKey,
+      10000 * btcMultiplier,
+      [],
+      {
+        commitment: "confirmed",
+      },
+    );
+
+    await mintTo(
+      provider.connection,
+      mockWallet.payer,
+      USDC,
+      mockWalletUsdcATA,
+      mockWallet.payer.publicKey,
+      1000000 * usdcMultiplier,
+      [],
+      {
+        commitment: "confirmed",
+      },
+    );
+
+    // await btcToken.mintTo(mockWalletBtcATA, mockWallet.payer, [], 10000 * btcMultiplier);
+    // await usdcToken.mintTo(mockWalletUsdcATA, mockWallet.payer, [], 1000000 * usdcMultiplier);
   });
 
   describe('With fee tier', () => {

@@ -4,7 +4,7 @@ import {
   Keypair,
 } from "@solana/web3.js";
 import BN from "bn.js";
-import { Wallet, AnchorProvider, Program } from '@project-serum/anchor';
+import { Wallet, AnchorProvider, Program } from '@coral-xyz/anchor';
 import AmmImpl from '../amm';
 import { Amm as AmmIdl, IDL as AmmIDL } from '../amm/idl';
 import { PROGRAM_ID } from "../amm/constants";
@@ -53,7 +53,7 @@ async function getPoolInfo(poolAddress: PublicKey) {
 
 async function main() {
   // mainnet-beta, SOL-USDC
-  const poolAddress= "6SWtsTzXrurtVWZdEHvnQdE9oM8tTtyg8rfEo3b4nM93"
+  const poolAddress = "6SWtsTzXrurtVWZdEHvnQdE9oM8tTtyg8rfEo3b4nM93"
   await getPoolInfo(new PublicKey(poolAddress));
 }
 

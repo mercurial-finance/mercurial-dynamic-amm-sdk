@@ -7,19 +7,19 @@ import {
   VaultIdl,
   PROGRAM_ID as VAULT_PROGRAM_ID,
 } from '@mercurial-finance/vault-sdk';
-import { AnchorProvider, BN, Program } from '@project-serum/anchor';
+import { AnchorProvider, BN, Program } from '@coral-xyz/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  Token,
   TOKEN_PROGRAM_ID,
-  AccountInfo as AccountInfoInt,
   AccountLayout,
-  u64,
   NATIVE_MINT,
+  createAssociatedTokenAccountInstruction,
+  getAssociatedTokenAddressSync,
+  RawAccount,
+  createCloseAccountInstruction,
 } from '@solana/spl-token';
 import {
   AccountInfo,
-  Cluster,
   Connection,
   ParsedAccountData,
   PublicKey,
@@ -92,8 +92,8 @@ export const getMinAmountWithSlippage = (amount: BN, slippageRate: number) => {
   return amount.mul(new BN(slippage)).div(new BN(10000));
 };
 
-export const getAssociatedTokenAccount = async (tokenMint: PublicKey, owner: PublicKey) => {
-  return await Token.getAssociatedTokenAddress(ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, tokenMint, owner, true);
+export const getAssociatedTokenAccount = (tokenMint: PublicKey, owner: PublicKey) => {
+  return getAssociatedTokenAddressSync(tokenMint, owner, true, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
 };
 
 export const getOrCreateATAInstruction = async (
@@ -107,13 +107,13 @@ export const getOrCreateATAInstruction = async (
     toAccount = await getAssociatedTokenAccount(tokenMint, owner);
     const account = await connection.getAccountInfo(toAccount);
     if (!account) {
-      const ix = Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        tokenMint,
+      const ix = createAssociatedTokenAccountInstruction(
+        payer || owner,
         toAccount,
         owner,
-        payer || owner,
+        tokenMint,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID,
       );
       return [toAccount, ix];
     }
@@ -156,8 +156,7 @@ export const wrapSOLInstruction = (from: PublicKey, to: PublicKey, amount: bigin
 export const unwrapSOLInstruction = async (owner: PublicKey) => {
   const wSolATAAccount = await getAssociatedTokenAccount(NATIVE_MINT, owner);
   if (wSolATAAccount) {
-    const closedWrappedSolInstruction = Token.createCloseAccountInstruction(
-      TOKEN_PROGRAM_ID,
+    const closedWrappedSolInstruction = createCloseAccountInstruction(
       wSolATAAccount,
       owner,
       owner,
@@ -168,40 +167,12 @@ export const unwrapSOLInstruction = async (owner: PublicKey) => {
   return null;
 };
 
-export const deserializeAccount = (data: Buffer | undefined): AccountInfoInt | undefined => {
+export const deserializeAccount = (data: Buffer | undefined): RawAccount | undefined => {
   if (data == undefined || data.length == 0) {
     return undefined;
   }
 
   const accountInfo = AccountLayout.decode(data);
-  accountInfo.mint = new PublicKey(accountInfo.mint);
-  accountInfo.owner = new PublicKey(accountInfo.owner);
-  accountInfo.amount = u64.fromBuffer(accountInfo.amount);
-
-  if (accountInfo.delegateOption === 0) {
-    accountInfo.delegate = null;
-    accountInfo.delegatedAmount = new u64(0);
-  } else {
-    accountInfo.delegate = new PublicKey(accountInfo.delegate);
-    accountInfo.delegatedAmount = u64.fromBuffer(accountInfo.delegatedAmount);
-  }
-
-  accountInfo.isInitialized = accountInfo.state !== 0;
-  accountInfo.isFrozen = accountInfo.state === 2;
-
-  if (accountInfo.isNativeOption === 1) {
-    accountInfo.rentExemptReserve = u64.fromBuffer(accountInfo.isNative);
-    accountInfo.isNative = true;
-  } else {
-    accountInfo.rentExemptReserve = null;
-    accountInfo.isNative = false;
-  }
-
-  if (accountInfo.closeAuthorityOption === 0) {
-    accountInfo.closeAuthority = null;
-  } else {
-    accountInfo.closeAuthority = new PublicKey(accountInfo.closeAuthority);
-  }
 
   return accountInfo;
 };
@@ -809,6 +780,7 @@ export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, 
         amp: PERMISSIONLESS_AMP,
         tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
         depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType: DepegType.none() },
+        lastAmpUpdatedTimestamp: new BN(0),
       },
     }
     : { constantProduct: {} };

@@ -1,5 +1,5 @@
 import sqrt from 'bn-sqrt';
-import { BN } from '@project-serum/anchor';
+import { BN } from '@coral-xyz/anchor';
 import { getPriceImpact, OutResult, SwapCurve, TradeDirection } from '.';
 import { PoolFees } from '../types';
 
@@ -27,7 +27,7 @@ function ceilDiv(lhs: BN, rhs: BN) {
 }
 
 export class ConstantProductSwap implements SwapCurve {
-  constructor() {}
+  constructor() { }
 
   private computeOutAmountWithoutSlippage(sourceAmount: BN, swapSourceAmount: BN, swapDestinationAmount: BN): BN {
     return sourceAmount.mul(swapDestinationAmount).div(swapSourceAmount);
