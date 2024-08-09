@@ -567,19 +567,19 @@ export default class AmmImpl implements AmmImplementation {
     );
 
     const PdaInfos = poolList.reduce<
-      Array<{ tokenMint: PublicKey; vaultPda: PublicKey; tokenVaultPda: PublicKey; lpMintPda: PublicKey }>
+      Array<{ tokenAddress: PublicKey; vaultPda: PublicKey; tokenVaultPda: PublicKey; lpMintPda: PublicKey }>
     >((accList, { tokenInfoA, tokenInfoB }, index) => {
       const poolState = poolsState[index];
       return [
         ...accList,
         {
-          tokenMint: new PublicKey(tokenInfoA.address),
+          tokenAddress: new PublicKey(tokenInfoA.address),
           vaultPda: poolState.aVault,
           tokenVaultPda: poolState.aVaultLp,
           lpMintPda: poolState.lpMint,
         },
         {
-          tokenMint: new PublicKey(tokenInfoB.address),
+          tokenAddress: new PublicKey(tokenInfoB.address),
           vaultPda: poolState.bVault,
           tokenVaultPda: poolState.bVaultLp,
           lpMintPda: poolState.lpMint,
@@ -710,7 +710,7 @@ export default class AmmImpl implements AmmImplementation {
           pool,
           ammProgram,
           vaultProgram,
-          [vaultA.tokenMint, vaultB.tokenMint],
+          [new PublicKey(vaultA.tokenMint), new PublicKey(vaultB.tokenMint)],
           [tokenADecimals, tokenBDecimals],
           poolState,
           poolInfo,
