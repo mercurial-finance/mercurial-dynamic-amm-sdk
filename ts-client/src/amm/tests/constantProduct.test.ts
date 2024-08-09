@@ -127,7 +127,7 @@ describe('Constant product pool', () => {
       await connection.confirmTransaction(txHash, 'finalized');
 
       const poolKey = derivePoolAddress(connection, btcTokenInfo, usdcTokenInfo, false, tradeFeeBps);
-      cpPoolFeeTiered = await AmmImpl.create(connection, poolKey, btcTokenInfo, usdcTokenInfo);
+      cpPoolFeeTiered = await AmmImpl.create(connection, poolKey);
 
       expect(poolKey.toBase58()).toBe(cpPoolFeeTiered.address.toBase58());
       expect(cpPoolFeeTiered.isStablePool).toBe(false);
@@ -345,7 +345,7 @@ describe('Constant product pool', () => {
         configs[0].publicKey,
         new PublicKey(PROGRAM_ID),
       );
-      cpPoolConfig = await AmmImpl.create(connection, poolKey, btcTokenInfo, usdcTokenInfo);
+      cpPoolConfig = await AmmImpl.create(connection, poolKey);
 
       expect(poolKey.toBase58()).toBe(cpPoolConfig.address.toBase58());
       expect(cpPoolConfig.isStablePool).toBe(false);

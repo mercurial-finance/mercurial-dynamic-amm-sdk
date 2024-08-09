@@ -44,6 +44,9 @@
   "peerDependencies": {
     "@solana/buffer-layout": "^3 || ^4"
   },
+  "resulutions": {
+    "@solana/buffer-layout": "^4"
+  },
   "directories": {
     "test": "tests"
   },

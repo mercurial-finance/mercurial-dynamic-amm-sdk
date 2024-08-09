@@ -27,14 +27,7 @@ const provider = new AnchorProvider(mainnetConnection, payerWallet, {
 });
 
 async function getPoolInfo(poolAddress: PublicKey) {
-  const ammProgram = new Program<AmmIdl>(AmmIDL, PROGRAM_ID, provider);
-  let poolState = await ammProgram.account.pool.fetch(poolAddress);
-  const tokenList = await fetch('https://token.jup.ag/all').then(res => res.json());
-  const tokenAInfo = tokenList.find(token => token.address === poolState.tokenAMint.toString());
-  const tokenBInfo = tokenList.find(token => token.address === poolState.tokenBMint.toString());
-
-  const pool = await AmmImpl.create(provider.connection, poolAddress, tokenAInfo, tokenBInfo);
-
+  const pool = await AmmImpl.create(provider.connection, poolAddress);
   const poolInfo = pool.poolInfo
 
   console.log('Pool Address: %s', poolAddress.toString())
@@ -45,8 +38,8 @@ async function getPoolInfo(poolAddress: PublicKey) {
   const lpSupply = await pool.getLpSupply();
   console.log('Pool LP Supply: %s \n', lpSupply.toNumber() / Math.pow(10, pool.decimals))
 
-  console.log("tokenA %s Amount: %s ", pool.tokenA.name, poolInfo.tokenAAmount.toNumber() / Math.pow(10, tokenAInfo.decimals))
-  console.log("tokenB %s Amount: %s", pool.tokenB.name, poolInfo.tokenBAmount.toNumber() / Math.pow(10, tokenBInfo.decimals))
+  console.log("tokenA %s Amount: %s ", pool.tokenA.address, poolInfo.tokenAAmount.toNumber() / Math.pow(10, pool.tokenA.decimals))
+  console.log("tokenB %s Amount: %s", pool.tokenB.address, poolInfo.tokenBAmount.toNumber() / Math.pow(10, pool.tokenB.decimals))
   console.log("virtualPrice: %s", poolInfo.virtualPrice)
   console.log("virtualPriceRaw to String: %s \n", poolInfo.virtualPriceRaw.toString())
 }

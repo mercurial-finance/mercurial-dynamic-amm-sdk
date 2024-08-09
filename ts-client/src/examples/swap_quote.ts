@@ -18,10 +18,7 @@ const provider = new AnchorProvider(mainnetConnection, mockWallet, {
 async function swapQuote(poolAddress: PublicKey, swapAmount: BN, swapAtoB: boolean) {
   const ammProgram = new Program<AmmIdl>(AmmIDL, PROGRAM_ID, provider);
   let poolState = await ammProgram.account.pool.fetch(poolAddress);
-  const tokenList = await fetch('https://token.jup.ag/all').then(res => res.json());
-  const tokenAInfo = tokenList.find(token => token.address === poolState.tokenAMint.toString());
-  const tokenBInfo = tokenList.find(token => token.address === poolState.tokenBMint.toString());
-  const pool = await AmmImpl.create(provider.connection, poolAddress, tokenAInfo, tokenBInfo);
+  const pool = await AmmImpl.create(provider.connection, poolAddress);
   let inTokenMint = swapAtoB ? poolState.tokenAMint : poolState.tokenBMint;
   let swapQuote = pool.getSwapQuote(inTokenMint, swapAmount, 100);
   console.log("🚀 ~ swapQuote:", swapQuote);

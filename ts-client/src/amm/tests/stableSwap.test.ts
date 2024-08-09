@@ -137,7 +137,7 @@ describe('Stable Swap pool', () => {
       await connection.confirmTransaction(txHash, 'finalized');
 
       const poolKey = derivePoolAddress(connection, usdtTokenInfo, usdcTokenInfo, true, tradeFeeBps);
-      stableSwapFeeTiered = await AmmImpl.create(connection, poolKey, usdtTokenInfo, usdcTokenInfo);
+      stableSwapFeeTiered = await AmmImpl.create(connection, poolKey);
 
       expect(poolKey.toBase58()).toBe(stableSwapFeeTiered.address.toBase58());
       expect(stableSwapFeeTiered.isStablePool).toBe(true);
@@ -416,7 +416,7 @@ describe('LST pool', () => {
       mockWallet.payer,
     );
 
-    lstPool = await AmmImpl.create(connection, MAINNET_POOL.SOL_MSOL, solTokenInfo, msolTokenInfo);
+    lstPool = await AmmImpl.create(connection, MAINNET_POOL.SOL_MSOL);
   });
 
   test('Is LST', () => {

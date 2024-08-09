@@ -133,7 +133,7 @@ describe('Error parsing', () => {
     await connection.confirmTransaction(txHash, 'finalized');
 
     let poolKey = derivePoolAddress(connection, usdtTokenInfo, usdcTokenInfo, true, tradeFeeBps);
-    stablePool = await AmmImpl.create(connection, poolKey, usdtTokenInfo, usdcTokenInfo);
+    stablePool = await AmmImpl.create(connection, poolKey);
 
     tradeFeeBps = new BN(CONSTANT_PRODUCT_DEFAULT_TRADE_FEE_BPS);
     transaction = await AmmImpl.createPermissionlessPool(
@@ -152,9 +152,9 @@ describe('Error parsing', () => {
     await connection.confirmTransaction(txHash, 'finalized');
 
     poolKey = derivePoolAddress(connection, usdtTokenInfo, usdcTokenInfo, false, tradeFeeBps);
-    cpPool = await AmmImpl.create(connection, poolKey, usdtTokenInfo, usdcTokenInfo);
+    cpPool = await AmmImpl.create(connection, poolKey);
 
-    lstPool = await AmmImpl.create(connection, MAINNET_POOL.SOL_MSOL, solTokenInfo, msolTokenInfo);
+    lstPool = await AmmImpl.create(connection, MAINNET_POOL.SOL_MSOL);
   });
 
   test('Should throw slippage error', async () => {
