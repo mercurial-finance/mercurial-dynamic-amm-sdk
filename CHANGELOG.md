@@ -58,9 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Refactor `AmmImpl.create` function to use only 2 arguments: provider, poolAddress
 - Add 2 examples for ts-client: swap, get_pool_info
-- Update @mercurial-finance/vault-sdk to version 1.0.0
+- Update @mercurial-finance/vault-sdk to version 2.0.0
 - Use tokenMint instead of tokenInfo in most cases
 - Provide address and decimals in tokenA and tokenB functions
+- Differentiate tokenMint and tokenAddress(PublickKey Only)
 
 
 ## @mercurial-finance/dynamic-amm-sdk [0.4.26] - PR #139
