@@ -43,14 +43,7 @@ describe('Error parsing', () => {
   beforeAll(async () => {
     await airDropSol(connection, mockWallet.publicKey, 10);
 
-
-    USDT = await createMint(
-      provider.connection,
-      mockWallet.payer,
-      mockWallet.publicKey,
-      null,
-      usdtDecimal,
-    );
+    USDT = await createMint(provider.connection, mockWallet.payer, mockWallet.publicKey, null, usdtDecimal);
 
     usdtTokenInfo = {
       chainId: 101,
@@ -61,14 +54,7 @@ describe('Error parsing', () => {
       logoURI: 'https://assets.coingecko.com/coins/images/325/large/Tether.png',
     };
 
-
-    USDC = await createMint(
-      provider.connection,
-      mockWallet.payer,
-      mockWallet.publicKey,
-      null,
-      usdcDecimal,
-    );
+    USDC = await createMint(provider.connection, mockWallet.payer, mockWallet.publicKey, null, usdcDecimal);
 
     usdcTokenInfo = {
       chainId: 101,
@@ -82,7 +68,6 @@ describe('Error parsing', () => {
     mockWalletUsdtATA = await getOrCreateATA(connection, USDT, mockWallet.publicKey, mockWallet.payer);
     mockWalletUsdcATA = await getOrCreateATA(connection, USDC, mockWallet.publicKey, mockWallet.payer);
 
-
     await mintTo(
       provider.connection,
       mockWallet.payer,
@@ -92,7 +77,7 @@ describe('Error parsing', () => {
       1000000 * usdtMultiplier,
       [],
       {
-        commitment: "confirmed",
+        commitment: 'confirmed',
       },
     );
 
@@ -105,7 +90,7 @@ describe('Error parsing', () => {
       1000000 * usdcMultiplier,
       [],
       {
-        commitment: "confirmed",
+        commitment: 'confirmed',
       },
     );
   });
@@ -158,7 +143,7 @@ describe('Error parsing', () => {
   });
 
   test('Should throw slippage error', async () => {
-    const inAmountBLamport = new BN(0.1 * 10 ** cpPool.tokenB.decimals);
+    const inAmountBLamport = new BN(0.1 * 10 ** cpPool.tokenBMint.decimals);
 
     const { tokenAInAmount: cpTokenAInAmount, tokenBInAmount: cpTokenBInAmount } = cpPool.getDepositQuote(
       new BN(0),
@@ -180,7 +165,7 @@ describe('Error parsing', () => {
       expect(ammError.errorCode).toBe(IDL.errors[4].code);
     });
 
-    const inLamportAmount = new BN(1 * 10 ** lstPool.tokenA.decimals);
+    const inLamportAmount = new BN(1 * 10 ** lstPool.tokenAMint.decimals);
     const { tokenAInAmount: depegTokenAInAmount, tokenBInAmount: depegTokenBInAmount } = lstPool.getDepositQuote(
       inLamportAmount,
       new BN(0),
