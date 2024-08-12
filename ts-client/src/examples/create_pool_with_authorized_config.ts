@@ -1,5 +1,4 @@
 import { Wallet } from '@coral-xyz/anchor';
-import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import fs from 'fs';
@@ -17,8 +16,8 @@ const payerWallet = new Wallet(payerKP);
 console.log('payer %s', payerKP.publicKey);
 
 async function createPool(
-  tokenAInfo: TokenInfo,
-  tokenBInfo: TokenInfo,
+  tokenAMint: PublicKey,
+  tokenBMint: PublicKey,
   tokenAAmount: BN,
   tokenBAmount: BN,
   config: PublicKey,
@@ -27,8 +26,8 @@ async function createPool(
   const transactions = await AmmImpl.createPermissionlessConstantProductPoolWithConfig(
     connection,
     payer.publicKey,
-    tokenAInfo,
-    tokenBInfo,
+    tokenAMint,
+    tokenBMint,
     tokenAAmount,
     tokenBAmount,
     config,
@@ -43,22 +42,8 @@ async function createPool(
 }
 
 async function main() {
-  let tokenAInfo = {
-    chainId: 101,
-    address: 'BjhBG7jkHYMBMos2HtRdFrw8rvSguBe5c3a3EJYXhyUf',
-    symbol: 'TA',
-    decimals: 6,
-    name: 'TokenATest',
-    logoURI: '',
-  };
-  let tokenBInfo = {
-    chainId: 101,
-    address: '9KMeJp868Pdk8PrJEkwoAHMA1ctdxfVhe2TjeS4BcWjs',
-    symbol: 'TB',
-    decimals: 6,
-    name: 'TokenBTest',
-    logoURI: '',
-  };
+  const tokenAMint = new PublicKey('BjhBG7jkHYMBMos2HtRdFrw8rvSguBe5c3a3EJYXhyUf');
+  const tokenBMint = new PublicKey('9KMeJp868Pdk8PrJEkwoAHMA1ctdxfVhe2TjeS4BcWjs');
 
   // Retrieve config accounts where authorized pool creator key is the payerKP
   const configs = await AmmImpl.getPoolConfigsWithPoolCreatorAuthority(connection, payerWallet.publicKey);
@@ -72,8 +57,8 @@ async function main() {
 
   // Create pool
   await createPool(
-    tokenAInfo,
-    tokenBInfo,
+    tokenAMint,
+    tokenBMint,
     tokenADepositAmount,
     tokenBDepositAmount,
     config.publicKey,

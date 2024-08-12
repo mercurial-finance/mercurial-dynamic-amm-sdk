@@ -1,18 +1,13 @@
-import {
-  Connection,
-  PublicKey,
-  Keypair,
-} from "@solana/web3.js";
-import BN from "bn.js";
+import { Connection, PublicKey, Keypair } from '@solana/web3.js';
+import BN from 'bn.js';
 import { Wallet, AnchorProvider } from '@coral-xyz/anchor';
 import AmmImpl from '../amm';
-import { PROGRAM_ID, SEEDS } from "../amm/constants";
-import { TokenInfo } from '@solana/spl-token-registry';
+import { PROGRAM_ID, SEEDS } from '../amm/constants';
 import {
   getAssociatedTokenAccount,
   derivePoolAddressWithConfig as deriveConstantProductPoolAddressWithConfig,
 } from '../amm/utils';
-import fs from "fs";
+import fs from 'fs';
 
 function loadKeypairFromFile(filename: string): Keypair {
   const secret = JSON.parse(fs.readFileSync(filename).toString()) as number[];
@@ -21,14 +16,13 @@ function loadKeypairFromFile(filename: string): Keypair {
 }
 
 const mainnetConnection = new Connection('https://api.devnet.solana.com');
-const payerKP = loadKeypairFromFile("~/.config/solana/id.json")
+const payerKP = loadKeypairFromFile('~/.config/solana/id.json');
 const payerWallet = new Wallet(payerKP);
-console.log("payer %s", payerKP.publicKey);
+console.log('payer %s', payerKP.publicKey);
 
 const provider = new AnchorProvider(mainnetConnection, payerWallet, {
   commitment: 'confirmed',
 });
-
 
 type AllocationByPercentage = {
   address: PublicKey;
@@ -43,7 +37,7 @@ type AllocationByAmount = {
 function fromAllocationsToAmount(lpAmount: BN, allocations: AllocationByPercentage[]): AllocationByAmount[] {
   const sumPercentage = allocations.reduce((partialSum, a) => partialSum + a.percentage, 0);
   if (sumPercentage === 0) {
-    throw Error("sumPercentage is zero");
+    throw Error('sumPercentage is zero');
   }
 
   let amounts: AllocationByAmount[] = [];
@@ -61,82 +55,72 @@ function fromAllocationsToAmount(lpAmount: BN, allocations: AllocationByPercenta
     address: allocations[allocations.length - 1].address,
     amount: lpAmount.sub(sum),
   });
-  return amounts
+  return amounts;
 }
 
-async function createPoolAndLockLiquidity(tokenAInfo: TokenInfo, tokenBInfo: TokenInfo, tokenAAmount: BN, tokenBAmount: BN, config: PublicKey, allocations: AllocationByPercentage[]) {
+async function createPoolAndLockLiquidity(
+  tokenAMint: PublicKey,
+  tokenBMint: PublicKey,
+  tokenAAmount: BN,
+  tokenBAmount: BN,
+  config: PublicKey,
+  allocations: AllocationByPercentage[],
+) {
   const programID = new PublicKey(PROGRAM_ID);
-  const poolPubkey = deriveConstantProductPoolAddressWithConfig(new PublicKey(tokenAInfo.address), new PublicKey(tokenBInfo.address), config, programID);
-  console.log("create pool %s", poolPubkey);
-  let transactions = await AmmImpl.createPermissionlessConstantProductPoolWithConfig(provider.connection, payerWallet.publicKey, tokenAInfo, tokenBInfo, tokenAAmount, tokenBAmount, config);
+  const poolPubkey = deriveConstantProductPoolAddressWithConfig(tokenAMint, tokenBMint, config, programID);
+  console.log('create pool %s', poolPubkey);
+  let transactions = await AmmImpl.createPermissionlessConstantProductPoolWithConfig(
+    provider.connection,
+    payerWallet.publicKey,
+    tokenAMint,
+    tokenBMint,
+    tokenAAmount,
+    tokenBAmount,
+    config,
+  );
   for (const transaction of transactions) {
     transaction.sign(payerWallet.payer);
     const txHash = await provider.connection.sendRawTransaction(transaction.serialize());
     await provider.connection.confirmTransaction(txHash, 'finalized');
-    console.log("transaction %s", txHash);
+    console.log('transaction %s', txHash);
   }
 
-  const [lpMint] = PublicKey.findProgramAddressSync(
-    [Buffer.from(SEEDS.LP_MINT), poolPubkey.toBuffer()],
-    programID,
-  );
+  const [lpMint] = PublicKey.findProgramAddressSync([Buffer.from(SEEDS.LP_MINT), poolPubkey.toBuffer()], programID);
   const payerPoolLp = await getAssociatedTokenAccount(lpMint, payerWallet.publicKey);
   const payerPoolLpBalance = (await provider.connection.getTokenAccountBalance(payerPoolLp)).value.amount;
-  console.log("payerPoolLpBalance %s", payerPoolLpBalance.toString());
-
+  console.log('payerPoolLpBalance %s', payerPoolLpBalance.toString());
 
   let allocationByAmounts = fromAllocationsToAmount(new BN(payerPoolLpBalance), allocations);
-  const pool = await AmmImpl.create(provider.connection, poolPubkey, tokenAInfo, tokenBInfo);
+  const pool = await AmmImpl.create(provider.connection, poolPubkey);
   for (const allocation of allocationByAmounts) {
-    console.log("Lock liquidity %s", allocation.address.toString());
+    console.log('Lock liquidity %s', allocation.address.toString());
     let transaction = await pool.lockLiquidity(allocation.address, allocation.amount, payerWallet.publicKey);
     transaction.sign(payerWallet.payer);
     const txHash = await provider.connection.sendRawTransaction(transaction.serialize());
     await provider.connection.confirmTransaction(txHash, 'finalized');
-    console.log("transaction %s", txHash);
+    console.log('transaction %s', txHash);
   }
 }
 
 async function main() {
-  let tokenAInfo = {
-    chainId: 101,
-    address: "BjhBG7jkHYMBMos2HtRdFrw8rvSguBe5c3a3EJYXhyUf",
-    symbol: 'TA',
-    decimals: 6,
-    name: 'TokenATest',
-    logoURI: '',
-  }
-  let tokenBInfo = {
-    chainId: 101,
-    address: "9KMeJp868Pdk8PrJEkwoAHMA1ctdxfVhe2TjeS4BcWjs",
-    symbol: 'TB',
-    decimals: 6,
-    name: 'TokenBTest',
-    logoURI: '',
-  }
-  let config = new PublicKey(
-    "21PjsfQVgrn56jSypUT5qXwwSjwKWvuoBCKbVZrgTLz4"
-  );
+  const tokenAMint = new PublicKey('BjhBG7jkHYMBMos2HtRdFrw8rvSguBe5c3a3EJYXhyUf');
+  const tokenBMint = new PublicKey('9KMeJp868Pdk8PrJEkwoAHMA1ctdxfVhe2TjeS4BcWjs');
+  let config = new PublicKey('21PjsfQVgrn56jSypUT5qXwwSjwKWvuoBCKbVZrgTLz4');
 
   let allocations = [
     {
-      address: new PublicKey(
-        "4sBMz7zmDWPzdEnECJW3NA9mEcNwkjYtVnL2KySaWYAf"
-      ),
+      address: new PublicKey('4sBMz7zmDWPzdEnECJW3NA9mEcNwkjYtVnL2KySaWYAf'),
       percentage: 80,
     },
     {
-      address: new PublicKey(
-        "CVV5MxfwA24PsM7iuS2ddssYgySf5SxVJ8PpAwGN2yVy"
-      ),
+      address: new PublicKey('CVV5MxfwA24PsM7iuS2ddssYgySf5SxVJ8PpAwGN2yVy'),
       percentage: 20,
     },
   ];
   let tokenAAmount = new BN(100_000);
   let tokenBAmount = new BN(500_000);
 
-  await createPoolAndLockLiquidity(tokenAInfo, tokenBInfo, tokenAAmount, tokenBAmount, config, allocations);
+  await createPoolAndLockLiquidity(tokenAMint, tokenBMint, tokenAAmount, tokenBAmount, config, allocations);
 }
 
-
-main()
+main();

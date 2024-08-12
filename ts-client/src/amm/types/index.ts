@@ -11,8 +11,6 @@ export type AmmProgram = Program<AmmIdl>;
 export type VaultProgram = Program<VaultIdl>;
 
 export interface AmmImplementation {
-  tokenA: tokenAddressAndDecimals;
-  tokenB: tokenAddressAndDecimals;
   decimals: number;
   isStablePool: boolean;
   updateState: () => Promise<void>;
@@ -40,8 +38,8 @@ type Fees = {
 };
 
 export type tokenAddressAndDecimals = {
-  address: string,
-  decimals: number
+  address: string;
+  decimals: number;
 };
 
 export interface LockEscrow {
@@ -118,7 +116,7 @@ export type StableSwapCurve = {
     amp: BN;
     tokenMultiplier: TokenMultiplier;
     depeg: Depeg;
-    lastAmpUpdatedTimestamp: BN,
+    lastAmpUpdatedTimestamp: BN;
   };
 };
 
