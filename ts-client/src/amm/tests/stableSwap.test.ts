@@ -49,14 +49,7 @@ describe('Stable Swap pool', () => {
   beforeAll(async () => {
     await airDropSol(connection, mockWallet.publicKey, 10);
 
-
-    USDT = await createMint(
-      provider.connection,
-      mockWallet.payer,
-      mockWallet.publicKey,
-      null,
-      usdtDecimal,
-    );
+    USDT = await createMint(provider.connection, mockWallet.payer, mockWallet.publicKey, null, usdtDecimal);
 
     usdtTokenInfo = {
       chainId: 101,
@@ -67,14 +60,7 @@ describe('Stable Swap pool', () => {
       logoURI: 'https://assets.coingecko.com/coins/images/325/large/Tether.png',
     };
 
-
-    USDC = await createMint(
-      provider.connection,
-      mockWallet.payer,
-      mockWallet.publicKey,
-      null,
-      usdcDecimal,
-    );
+    USDC = await createMint(provider.connection, mockWallet.payer, mockWallet.publicKey, null, usdcDecimal);
     usdcTokenInfo = {
       chainId: 101,
       address: USDC.toString(),
@@ -87,7 +73,6 @@ describe('Stable Swap pool', () => {
     mockWalletUsdtATA = await getOrCreateATA(connection, USDT, mockWallet.publicKey, mockWallet.payer);
     mockWalletUsdcATA = await getOrCreateATA(connection, USDC, mockWallet.publicKey, mockWallet.payer);
 
-
     await mintTo(
       provider.connection,
       mockWallet.payer,
@@ -97,7 +82,7 @@ describe('Stable Swap pool', () => {
       1000000 * usdtMultiplier,
       [],
       {
-        commitment: "confirmed",
+        commitment: 'confirmed',
       },
     );
 
@@ -110,7 +95,7 @@ describe('Stable Swap pool', () => {
       1000000 * usdcMultiplier,
       [],
       {
-        commitment: "confirmed",
+        commitment: 'confirmed',
       },
     );
   });
@@ -141,8 +126,8 @@ describe('Stable Swap pool', () => {
 
       expect(poolKey.toBase58()).toBe(stableSwapFeeTiered.address.toBase58());
       expect(stableSwapFeeTiered.isStablePool).toBe(true);
-      expect(stableSwapFeeTiered.tokenA.address.toString()).toBe(USDT.toString());
-      expect(stableSwapFeeTiered.tokenB.address.toString()).toBe(USDC.toString());
+      expect(stableSwapFeeTiered.tokenAMint.address.toString()).toBe(USDT.toString());
+      expect(stableSwapFeeTiered.tokenBMint.address.toString()).toBe(USDC.toString());
     });
 
     test('Get pool mint and supply', async () => {
@@ -323,8 +308,8 @@ describe('Stable Swap pool', () => {
 
     test('Swap A → B', async () => {
       await stableSwapFeeTiered.updateState();
-      const inAmountLamport = new BN(0.1 * 10 ** stableSwapFeeTiered.tokenA.decimals);
-      const inTokenMint = new PublicKey(stableSwapFeeTiered.tokenA.address);
+      const inAmountLamport = new BN(0.1 * 10 ** stableSwapFeeTiered.tokenAMint.decimals);
+      const inTokenMint = new PublicKey(stableSwapFeeTiered.tokenAMint.address);
 
       const { swapOutAmount, minSwapOutAmount } = stableSwapFeeTiered.getSwapQuote(
         inTokenMint,
@@ -362,8 +347,8 @@ describe('Stable Swap pool', () => {
 
     test('Swap B → A', async () => {
       await stableSwapFeeTiered.updateState();
-      const inAmountLamport = new BN(0.1 * 10 ** stableSwapFeeTiered.tokenB.decimals);
-      const inTokenMint = new PublicKey(stableSwapFeeTiered.tokenB.address);
+      const inAmountLamport = new BN(0.1 * 10 ** stableSwapFeeTiered.tokenBMint.decimals);
+      const inTokenMint = new PublicKey(stableSwapFeeTiered.tokenBMint.address);
 
       const { swapOutAmount, minSwapOutAmount } = stableSwapFeeTiered.getSwapQuote(
         inTokenMint,
