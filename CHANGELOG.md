@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [1.0.0] - PR [#148](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/148)
+
+### Changed
+
+- Refactor `AmmImpl.create` function to use only 2 arguments: provider, poolAddress
+- Add 2 examples for ts-client: swap, get_pool_info
+- Update @mercurial-finance/vault-sdk to version 2.0.0
+- Use tokenMint instead of tokenInfo in most cases
+- Provide address and decimals in tokenA and tokenB functions
+- Differentiate tokenMint and tokenAddress(PublickKey Only)
+
 ## @mercurial-finance/dynamic-amm-sdk [0.5.0] - PR [#144](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/144)
 
 ### Changed
@@ -53,16 +64,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Use `getPoolConfigsWithPoolCreatorAuthority` to retrieve the pool configuration for a specific user. When the pool configuration returned from `getPoolConfigsWithPoolCreatorAuthority` is passed into `createPermissionlessConstantProductPoolWithConfig`, only that user can create pools. Please contact meteora team if you're not whitelisted for the config.
-
-### Changed
-
-- Refactor `AmmImpl.create` function to use only 2 arguments: provider, poolAddress
-- Add 2 examples for ts-client: swap, get_pool_info
-- Update @mercurial-finance/vault-sdk to version 2.0.0
-- Use tokenMint instead of tokenInfo in most cases
-- Provide address and decimals in tokenA and tokenB functions
-- Differentiate tokenMint and tokenAddress(PublickKey Only)
-
 
 ## @mercurial-finance/dynamic-amm-sdk [0.4.26] - PR #139
 
