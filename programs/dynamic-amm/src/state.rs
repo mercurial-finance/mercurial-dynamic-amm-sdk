@@ -83,9 +83,10 @@ pub struct Pool {
     pub protocol_token_a_fee: Pubkey, //32
     /// Protocol fee token account for token B. Used to receive trading fee.
     pub protocol_token_b_fee: Pubkey, //32
-    /// Owner of the pool.
-    #[deprecated]
-    pub admin: Pubkey, //32
+    /// Fee last updated timestamp
+    pub fee_last_updated_at: u64,
+    // Padding leftover from deprecated admin pubkey. Beware of tombstone when reusing it.
+    pub _padding0: [u8; 24],
     /// Store the fee charges setting.
     pub fees: PoolFees, //48
     /// Pool type
