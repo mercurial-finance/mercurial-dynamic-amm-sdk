@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `searchPoolByToken`, search pool by passing token mint address
+- `searchPoolsByToken`, search pool by passing token mint address
 
 ## @mercurial-finance/dynamic-amm-sdk [1.0.0] - PR [#148](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/148)
 
