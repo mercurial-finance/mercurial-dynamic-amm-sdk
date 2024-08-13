@@ -19,11 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-## @mercurial-finance/dynamic-amm-sdk [1.0.1] - PR [#150](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/150)
-
-### Added
-
-- `searchPoolsByToken`, search pool by passing token mint address
 ## dynamic-amm [0.5.0] - PR[#149](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/149)
 
 ### Changed
@@ -31,11 +26,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename `admin` to `fee_operator` in `set_pool_fee` account context.
 - Removed deprecated field `admin` in pool state. It has been replaced by `fee_last_updated_at`.
 
-## @mercurial-finance/dynamic-amm-sdk [1.0.1] - PR PR[#149](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/149)
+## @mercurial-finance/dynamic-amm-sdk [1.0.2] - PR PR[#149](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/149)
 
 ### Changed
 
 - Update idl
+
+## @mercurial-finance/dynamic-amm-sdk [1.0.1] - PR [#150](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/150)
+
+### Added
+
+- `searchPoolsByToken`, search pool by passing token mint address
 
 ## @mercurial-finance/dynamic-amm-sdk [1.0.0] - PR [#148](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/148)
 
