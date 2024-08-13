@@ -156,12 +156,7 @@ export const wrapSOLInstruction = (from: PublicKey, to: PublicKey, amount: bigin
 export const unwrapSOLInstruction = async (owner: PublicKey) => {
   const wSolATAAccount = await getAssociatedTokenAccount(NATIVE_MINT, owner);
   if (wSolATAAccount) {
-    const closedWrappedSolInstruction = createCloseAccountInstruction(
-      wSolATAAccount,
-      owner,
-      owner,
-      [],
-    );
+    const closedWrappedSolInstruction = createCloseAccountInstruction(wSolATAAccount, owner, owner, []);
     return closedWrappedSolInstruction;
   }
   return null;
@@ -427,7 +422,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
     swapDestinationVaultLpSupply,
     tradeDirection,
   ] = isFromAToB
-      ? [
+    ? [
         inAmountLamport,
         poolVaultALp,
         tokenAAmount,
@@ -438,7 +433,7 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
         vaultBLpSupply,
         TradeDirection.AToB,
       ]
-      : [
+    : [
         inAmountLamport,
         poolVaultBLp,
         tokenBAmount,
@@ -776,12 +771,12 @@ export const DepegType = {
 export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, isStable: boolean) {
   return isStable
     ? {
-      stable: {
-        amp: PERMISSIONLESS_AMP,
-        tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
-        depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType: DepegType.none() },
-        lastAmpUpdatedTimestamp: new BN(0),
-      },
-    }
+        stable: {
+          amp: PERMISSIONLESS_AMP,
+          tokenMultiplier: computeTokenMultiplier(tokenInfoA.decimals, tokenInfoB.decimals),
+          depeg: { baseVirtualPrice: new BN(0), baseCacheUpdated: new BN(0), depegType: DepegType.none() },
+          lastAmpUpdatedTimestamp: new BN(0),
+        },
+      }
     : { constantProduct: {} };
 }

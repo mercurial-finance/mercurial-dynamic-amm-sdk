@@ -7,6 +7,6 @@ pub struct SetPoolFees<'info> {
     #[account(mut)]
     /// Pool account (PDA)
     pub pool: Box<Account<'info, Pool>>,
-    /// Admin account. Must be owner of the pool.
-    pub admin: Signer<'info>,
+    /// Fee operator account
+    pub fee_operator: Signer<'info>,
 }
