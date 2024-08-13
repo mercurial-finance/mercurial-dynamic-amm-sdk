@@ -221,6 +221,30 @@ export default class AmmImpl implements AmmImplementation {
     }
   }
 
+  public static async searchPoolsByToken(connection: Connection, tokenMint: PublicKey) {
+    const { ammProgram } = createProgram(connection);
+    const [poolsForTokenAMint, poolsForTokenBMint] = await Promise.all([
+      ammProgram.account.pool.all([
+        {
+          memcmp: {
+            offset: 8 + 32,
+            bytes: tokenMint.toBase58(),
+          },
+        },
+      ]),
+      ammProgram.account.pool.all([
+        {
+          memcmp: {
+            offset: 8 + 32 + 32,
+            bytes: tokenMint.toBase58(),
+          },
+        },
+      ]),
+    ]);
+
+    return [...poolsForTokenAMint, ...poolsForTokenBMint];
+  }
+
   public static async createPermissionlessConstantProductPoolWithConfig(
     connection: Connection,
     payer: PublicKey,
