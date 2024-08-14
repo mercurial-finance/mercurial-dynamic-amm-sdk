@@ -82,6 +82,7 @@ pub fn compute_quote(
         ActivationType::Timestamp => clock.unix_timestamp as u64,
     };
 
+    ensure!(pool.enabled, "Pool disabled");
     ensure!(
         current_point >= pool.bootstrapping.activation_point,
         "Swap is disabled"
