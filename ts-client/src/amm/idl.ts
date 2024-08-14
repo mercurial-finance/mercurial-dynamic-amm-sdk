@@ -1,5 +1,5 @@
 export type Amm = {
-  version: '0.4.14';
+  version: '0.5.0';
   name: 'amm';
   docs: ['Program for AMM'];
   instructions: [
@@ -1918,7 +1918,185 @@ export type Amm = {
       ];
     },
     {
-      name: 'updateActivationSlot';
+      name: 'initializePermissionlessConstantProductPoolWithConfig2';
+      docs: ['Initialize permissionless pool with config 2'];
+      accounts: [
+        {
+          name: 'pool';
+          isMut: true;
+          isSigner: false;
+          docs: ['Pool account (PDA address)'];
+        },
+        {
+          name: 'config';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'lpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of the pool'];
+        },
+        {
+          name: 'tokenAMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token A mint of the pool. Eg: USDT'];
+        },
+        {
+          name: 'tokenBMint';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token B mint of the pool. Eg: USDC'];
+        },
+        {
+          name: 'aVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.'];
+        },
+        {
+          name: 'bVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.'];
+        },
+        {
+          name: 'aTokenVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Token vault account of vault A'];
+        },
+        {
+          name: 'bTokenVault';
+          isMut: true;
+          isSigner: false;
+          docs: ['Token vault account of vault B'];
+        },
+        {
+          name: 'aVaultLpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of vault A'];
+        },
+        {
+          name: 'bVaultLpMint';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token mint of vault B'];
+        },
+        {
+          name: 'aVaultLp';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ];
+        },
+        {
+          name: 'bVaultLp';
+          isMut: true;
+          isSigner: false;
+          docs: ['LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault.'];
+        },
+        {
+          name: 'payerTokenA';
+          isMut: true;
+          isSigner: false;
+          docs: ['Payer token account for pool token A mint. Used to bootstrap the pool with initial liquidity.'];
+        },
+        {
+          name: 'payerTokenB';
+          isMut: true;
+          isSigner: false;
+          docs: ['Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity.'];
+        },
+        {
+          name: 'payerPoolLp';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'protocolTokenAFee';
+          isMut: true;
+          isSigner: false;
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'];
+        },
+        {
+          name: 'protocolTokenBFee';
+          isMut: true;
+          isSigner: false;
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'];
+        },
+        {
+          name: 'payer';
+          isMut: true;
+          isSigner: true;
+          docs: [
+            'Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.',
+          ];
+        },
+        {
+          name: 'rent';
+          isMut: false;
+          isSigner: false;
+          docs: ['Rent account.'];
+        },
+        {
+          name: 'mintMetadata';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'metadataProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'vaultProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Vault program. The pool will deposit/withdraw liquidity from the vault.'];
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Token program.'];
+        },
+        {
+          name: 'associatedTokenProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['Associated token program.'];
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+          docs: ['System program.'];
+        },
+      ];
+      args: [
+        {
+          name: 'tokenAAmount';
+          type: 'u64';
+        },
+        {
+          name: 'tokenBAmount';
+          type: 'u64';
+        },
+        {
+          name: 'activationPoint';
+          type: {
+            option: 'u64';
+          };
+        },
+      ];
+    },
+    {
+      name: 'updateActivationPoint';
       docs: ['Update activation slot'];
       accounts: [
         {
@@ -1936,7 +2114,7 @@ export type Amm = {
       ];
       args: [
         {
-          name: 'newActivationSlot';
+          name: 'newActivationPoint';
           type: 'u64';
         },
       ];
@@ -1998,7 +2176,7 @@ export type Amm = {
             };
           },
           {
-            name: 'activationDurationInSlot';
+            name: 'activationDuration';
             type: 'u64';
           },
           {
@@ -2010,9 +2188,13 @@ export type Amm = {
             type: 'publicKey';
           },
           {
+            name: 'activationType';
+            type: 'u8';
+          },
+          {
             name: 'padding';
             type: {
-              array: ['u8', 228];
+              array: ['u8', 227];
             };
           },
         ];
@@ -2177,10 +2359,10 @@ export type Amm = {
             type: 'u64';
           },
           {
-            name: 'alphaVault';
-            docs: ['Alpha vault config'];
+            name: 'bootstrapping';
+            docs: ['bootstrapping config'];
             type: {
-              defined: 'AlphaVault';
+              defined: 'Bootstrapping';
             };
           },
           {
@@ -2306,7 +2488,7 @@ export type Amm = {
             type: 'u64';
           },
           {
-            name: 'activationDurationInSlot';
+            name: 'activationDuration';
             type: 'u64';
           },
           {
@@ -2316,6 +2498,10 @@ export type Amm = {
           {
             name: 'poolCreatorAuthority';
             type: 'publicKey';
+          },
+          {
+            name: 'activationType';
+            type: 'u8';
           },
           {
             name: 'index';
@@ -2334,7 +2520,7 @@ export type Amm = {
             name: 'padding0';
             docs: ['Padding 0'];
             type: {
-              array: ['u8', 15];
+              array: ['u8', 14];
             };
           },
           {
@@ -2348,24 +2534,44 @@ export type Amm = {
       };
     },
     {
-      name: 'AlphaVault';
+      name: 'Bootstrapping';
       type: {
         kind: 'struct';
         fields: [
           {
-            name: 'activationSlot';
-            docs: ['Activation slot'];
+            name: 'activationPoint';
+            docs: ['Activation point, can be slot or timestamp'];
             type: 'u64';
           },
           {
             name: 'whitelistedVault';
-            docs: ['Whitelisted vault to be able to buy pool before open slot'];
+            docs: ['Whitelisted vault to be able to buy pool before activation_point'];
             type: 'publicKey';
           },
           {
             name: 'poolCreator';
-            docs: ['Need to store pool creator in lauch pool, so they can modify liquidity before activation slot'];
+            docs: ['Need to store pool creator in lauch pool, so they can modify liquidity before activation_point'];
             type: 'publicKey';
+          },
+          {
+            name: 'activationType';
+            docs: ['Activation type, 0 means by slot, 1 means by timestamp'];
+            type: 'u8';
+          },
+        ];
+      };
+    },
+    {
+      name: 'ActivationType';
+      docs: ['Type of the activation'];
+      type: {
+        kind: 'enum';
+        variants: [
+          {
+            name: 'Slot';
+          },
+          {
+            name: 'Timestamp';
           },
         ];
       };
@@ -3176,8 +3382,8 @@ export type Amm = {
     },
     {
       code: 6044;
-      name: 'InvalidActivationSlotInDuration';
-      msg: 'Invalid activation slot in duration';
+      name: 'InvalidActivationDuration';
+      msg: 'Invalid activation duration';
     },
     {
       code: 6045;
@@ -3186,19 +3392,29 @@ export type Amm = {
     },
     {
       code: 6046;
-      name: 'UnableToModifyActivationSlot';
-      msg: 'Unable to modify activation slot';
+      name: 'UnableToModifyActivationPoint';
+      msg: 'Unable to modify activation point';
     },
     {
       code: 6047;
       name: 'InvalidAuthorityToCreateThePool';
       msg: 'Invalid authority to create the pool';
     },
+    {
+      code: 6048;
+      name: 'InvalidActivationType';
+      msg: 'Invalid activation type';
+    },
+    {
+      code: 6049;
+      name: 'InvalidActivationPoint';
+      msg: 'Invalid activation point';
+    },
   ];
 };
 
 export const IDL: Amm = {
-  version: '0.4.14',
+  version: '0.5.0',
   name: 'amm',
   docs: ['Program for AMM'],
   instructions: [
@@ -5117,7 +5333,185 @@ export const IDL: Amm = {
       ],
     },
     {
-      name: 'updateActivationSlot',
+      name: 'initializePermissionlessConstantProductPoolWithConfig2',
+      docs: ['Initialize permissionless pool with config 2'],
+      accounts: [
+        {
+          name: 'pool',
+          isMut: true,
+          isSigner: false,
+          docs: ['Pool account (PDA address)'],
+        },
+        {
+          name: 'config',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'lpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of the pool'],
+        },
+        {
+          name: 'tokenAMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token A mint of the pool. Eg: USDT'],
+        },
+        {
+          name: 'tokenBMint',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token B mint of the pool. Eg: USDC'],
+        },
+        {
+          name: 'aVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Vault account for token A. Token A of the pool will be deposit / withdraw from this vault account.'],
+        },
+        {
+          name: 'bVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Vault account for token B. Token B of the pool will be deposit / withdraw from this vault account.'],
+        },
+        {
+          name: 'aTokenVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Token vault account of vault A'],
+        },
+        {
+          name: 'bTokenVault',
+          isMut: true,
+          isSigner: false,
+          docs: ['Token vault account of vault B'],
+        },
+        {
+          name: 'aVaultLpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of vault A'],
+        },
+        {
+          name: 'bVaultLpMint',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token mint of vault B'],
+        },
+        {
+          name: 'aVaultLp',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.',
+          ],
+        },
+        {
+          name: 'bVaultLp',
+          isMut: true,
+          isSigner: false,
+          docs: ['LP token account of vault B. Used to receive/burn vault LP upon deposit/withdraw from the vault.'],
+        },
+        {
+          name: 'payerTokenA',
+          isMut: true,
+          isSigner: false,
+          docs: ['Payer token account for pool token A mint. Used to bootstrap the pool with initial liquidity.'],
+        },
+        {
+          name: 'payerTokenB',
+          isMut: true,
+          isSigner: false,
+          docs: ['Admin token account for pool token B mint. Used to bootstrap the pool with initial liquidity.'],
+        },
+        {
+          name: 'payerPoolLp',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'protocolTokenAFee',
+          isMut: true,
+          isSigner: false,
+          docs: ['Protocol fee token account for token A. Used to receive trading fee.'],
+        },
+        {
+          name: 'protocolTokenBFee',
+          isMut: true,
+          isSigner: false,
+          docs: ['Protocol fee token account for token B. Used to receive trading fee.'],
+        },
+        {
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
+          docs: [
+            'Admin account. This account will be the admin of the pool, and the payer for PDA during initialize pool.',
+          ],
+        },
+        {
+          name: 'rent',
+          isMut: false,
+          isSigner: false,
+          docs: ['Rent account.'],
+        },
+        {
+          name: 'mintMetadata',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'metadataProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'vaultProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Vault program. The pool will deposit/withdraw liquidity from the vault.'],
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Token program.'],
+        },
+        {
+          name: 'associatedTokenProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['Associated token program.'],
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+          docs: ['System program.'],
+        },
+      ],
+      args: [
+        {
+          name: 'tokenAAmount',
+          type: 'u64',
+        },
+        {
+          name: 'tokenBAmount',
+          type: 'u64',
+        },
+        {
+          name: 'activationPoint',
+          type: {
+            option: 'u64',
+          },
+        },
+      ],
+    },
+    {
+      name: 'updateActivationPoint',
       docs: ['Update activation slot'],
       accounts: [
         {
@@ -5135,7 +5529,7 @@ export const IDL: Amm = {
       ],
       args: [
         {
-          name: 'newActivationSlot',
+          name: 'newActivationPoint',
           type: 'u64',
         },
       ],
@@ -5197,7 +5591,7 @@ export const IDL: Amm = {
             },
           },
           {
-            name: 'activationDurationInSlot',
+            name: 'activationDuration',
             type: 'u64',
           },
           {
@@ -5209,9 +5603,13 @@ export const IDL: Amm = {
             type: 'publicKey',
           },
           {
+            name: 'activationType',
+            type: 'u8',
+          },
+          {
             name: 'padding',
             type: {
-              array: ['u8', 228],
+              array: ['u8', 227],
             },
           },
         ],
@@ -5376,10 +5774,10 @@ export const IDL: Amm = {
             type: 'u64',
           },
           {
-            name: 'alphaVault',
-            docs: ['Alpha vault config'],
+            name: 'bootstrapping',
+            docs: ['bootstrapping config'],
             type: {
-              defined: 'AlphaVault',
+              defined: 'Bootstrapping',
             },
           },
           {
@@ -5505,7 +5903,7 @@ export const IDL: Amm = {
             type: 'u64',
           },
           {
-            name: 'activationDurationInSlot',
+            name: 'activationDuration',
             type: 'u64',
           },
           {
@@ -5515,6 +5913,10 @@ export const IDL: Amm = {
           {
             name: 'poolCreatorAuthority',
             type: 'publicKey',
+          },
+          {
+            name: 'activationType',
+            type: 'u8',
           },
           {
             name: 'index',
@@ -5533,7 +5935,7 @@ export const IDL: Amm = {
             name: 'padding0',
             docs: ['Padding 0'],
             type: {
-              array: ['u8', 15],
+              array: ['u8', 14],
             },
           },
           {
@@ -5547,24 +5949,44 @@ export const IDL: Amm = {
       },
     },
     {
-      name: 'AlphaVault',
+      name: 'Bootstrapping',
       type: {
         kind: 'struct',
         fields: [
           {
-            name: 'activationSlot',
-            docs: ['Activation slot'],
+            name: 'activationPoint',
+            docs: ['Activation point, can be slot or timestamp'],
             type: 'u64',
           },
           {
             name: 'whitelistedVault',
-            docs: ['Whitelisted vault to be able to buy pool before open slot'],
+            docs: ['Whitelisted vault to be able to buy pool before activation_point'],
             type: 'publicKey',
           },
           {
             name: 'poolCreator',
-            docs: ['Need to store pool creator in lauch pool, so they can modify liquidity before activation slot'],
+            docs: ['Need to store pool creator in lauch pool, so they can modify liquidity before activation_point'],
             type: 'publicKey',
+          },
+          {
+            name: 'activationType',
+            docs: ['Activation type, 0 means by slot, 1 means by timestamp'],
+            type: 'u8',
+          },
+        ],
+      },
+    },
+    {
+      name: 'ActivationType',
+      docs: ['Type of the activation'],
+      type: {
+        kind: 'enum',
+        variants: [
+          {
+            name: 'Slot',
+          },
+          {
+            name: 'Timestamp',
           },
         ],
       },
@@ -6375,8 +6797,8 @@ export const IDL: Amm = {
     },
     {
       code: 6044,
-      name: 'InvalidActivationSlotInDuration',
-      msg: 'Invalid activation slot in duration',
+      name: 'InvalidActivationDuration',
+      msg: 'Invalid activation duration',
     },
     {
       code: 6045,
@@ -6385,13 +6807,23 @@ export const IDL: Amm = {
     },
     {
       code: 6046,
-      name: 'UnableToModifyActivationSlot',
-      msg: 'Unable to modify activation slot',
+      name: 'UnableToModifyActivationPoint',
+      msg: 'Unable to modify activation point',
     },
     {
       code: 6047,
       name: 'InvalidAuthorityToCreateThePool',
       msg: 'Invalid authority to create the pool',
+    },
+    {
+      code: 6048,
+      name: 'InvalidActivationType',
+      msg: 'Invalid activation type',
+    },
+    {
+      code: 6049,
+      name: 'InvalidActivationPoint',
+      msg: 'Invalid activation point',
     },
   ],
 };

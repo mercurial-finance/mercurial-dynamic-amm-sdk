@@ -5,7 +5,7 @@ import BN from 'bn.js';
 import { Amm as AmmIdl } from '../idl';
 import { VaultState, VaultIdl } from '@mercurial-finance/vault-sdk';
 import Decimal from 'decimal.js';
-import { publicKey, struct, u64, u8, option } from '@coral-xyz/borsh';
+import { publicKey, struct, u64, u8, option, i64 } from '@coral-xyz/borsh';
 
 export type AmmProgram = Program<AmmIdl>;
 export type VaultProgram = Program<VaultIdl>;
@@ -166,7 +166,7 @@ export type PoolState = Omit<IdlAccounts<AmmIdl>['pool'], 'curveType' | 'fees' |
 
 export type Depeg = Omit<IdlTypes<AmmIdl>['Depeg'], 'depegType'> & { depegType: DepegType };
 export type PoolFees = IdlTypes<AmmIdl>['PoolFees'];
-export type AlphaVault = IdlTypes<AmmIdl>['AlphaVault'];
+export type Bootstrapping = IdlTypes<AmmIdl>['Bootstrapping'];
 export type LockEscrowAccount = IdlAccounts<AmmIdl>['lockEscrow'];
 
 export type PoolInformation = {
@@ -185,6 +185,7 @@ export type AccountsInfo = {
   poolVaultBLp: BN;
   poolLpSupply: BN;
   currentTime: BN;
+  currentSlot: BN;
 };
 
 export interface StakePool {
@@ -206,6 +207,22 @@ export const StakePoolLayout = struct([
   u64('totalLamports'),
   u64('poolTokenSupply'),
   u64('lastUpdateEpoch'),
+]);
+
+export interface Clock {
+  slot: BN;
+  epochStartTimestamp: BN;
+  epoch: BN;
+  leaderScheduleEpoch: BN;
+  unixTimestamp: BN;
+}
+
+export const ClockLayout = struct([
+  u64('slot'),
+  i64('epochStartTimestamp'),
+  u64('epoch'),
+  u64('leaderScheduleEpoch'),
+  i64('unixTimestamp'),
 ]);
 
 /** Utils */
@@ -233,5 +250,11 @@ export type SwapQuoteParam = {
   vaultAReserve: BN;
   vaultBReserve: BN;
   currentTime: number;
+  currentSlot: number;
   depegAccounts: Map<String, AccountInfo<Buffer>>;
 };
+
+export enum ActivationType {
+  Slot,
+  Timestamp,
+}

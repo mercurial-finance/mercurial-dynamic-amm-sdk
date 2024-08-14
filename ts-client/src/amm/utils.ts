@@ -41,6 +41,7 @@ import {
 } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
+  ActivationType,
   AmmProgram,
   ConstantProductCurve,
   DepegLido,
@@ -369,6 +370,7 @@ export const getDepegAccounts = async (
  * @param {BN} params.vaultAReserve - vault A reserve (`VaultState.tokenVault` accountInfo)
  * @param {BN} params.vaultBReserve - vault B reserve (`VaultState.tokenVault` accountInfo)
  * @param {BN} params.currentTime - on chain time (use `SYSVAR_CLOCK_PUBKEY`)
+ * @param {BN} params.currentSlot - on chain slot (use `SYSVAR_CLOCK_PUBKEY`)
  * @param {BN} params.depegAccounts - A map of the depeg accounts. (get from `getDepegAccounts` util)
  * @returns The amount of tokens that will be received after the swap.
  */
@@ -385,9 +387,12 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
     depegAccounts,
     vaultAReserve,
     vaultBReserve,
+    currentSlot,
   } = params;
+
   const { tokenAMint, tokenBMint } = poolState;
   invariant(inTokenMint.equals(tokenAMint) || inTokenMint.equals(tokenBMint), ERROR.INVALID_MINT);
+  invariant(poolState.enabled, 'Pool disabled');
 
   let swapCurve: SwapCurve;
   if ('stable' in poolState.curveType) {
@@ -401,6 +406,11 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
       poolState.stake,
     );
   } else {
+    // Bootstrapping pool
+    const activationType = poolState.bootstrapping.activationType;
+    const currentPoint = activationType == ActivationType.Timestamp ? new BN(currentTime) : new BN(currentSlot);
+    invariant(currentPoint.gte(poolState.bootstrapping.activationPoint), 'Swap is disabled');
+
     swapCurve = new ConstantProductSwap();
   }
 

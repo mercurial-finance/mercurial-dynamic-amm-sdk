@@ -6,6 +6,7 @@ import AmmImpl from '../index';
 import { derivePoolAddress, derivePoolAddressWithConfig, getOnchainTime } from '../utils';
 import { airDropSol, getOrCreateATA, mockWallet } from './utils';
 import { createMint, mintTo } from '@solana/spl-token';
+import { ActivationType } from '../types';
 
 describe('Constant product pool', () => {
   const connection = new Connection('http://127.0.0.1:8899', 'confirmed');
@@ -294,6 +295,7 @@ describe('Constant product pool', () => {
         PublicKey.default,
         new BN(0),
         PublicKey.default,
+        ActivationType.Slot,
       );
       transaction.sign(mockWallet.payer);
       const txHash = await connection.sendRawTransaction(transaction.serialize());
