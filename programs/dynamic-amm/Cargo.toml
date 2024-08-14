@@ -1,6 +1,6 @@
 [package]
 name = "dynamic-amm"
-version = "0.5.0"
+version = "0.6.0"
 description = "Created with Anchor"
 edition = "2021"
 

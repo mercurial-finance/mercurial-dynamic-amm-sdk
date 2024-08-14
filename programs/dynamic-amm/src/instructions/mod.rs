@@ -33,3 +33,5 @@ pub mod create_config;
 pub use create_config::*;
 pub mod close_config;
 pub use close_config::*;
+pub mod update_activation_point;
+pub use update_activation_point::*;
