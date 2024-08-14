@@ -19,6 +19,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## dynamic-amm-quote [0.0.3] - PR[#151](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/151)
+
+### Changed
+
+- Throw error if the pool is disabled, or not activated for trading yet.
+
+## dynamic-amm [0.6.0] - PR[#151](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/151)
+
+### Added
+
+- Added `activation_type` field to `Bootstrapping` (previously known as `AlphaVault`). Used to determine whether the pool is activated by slot or timestamp.
+- Added `update_activation_point` endpoint. Admin only.
+- Added `initialize_permissionless_constant_product_pool_with_config2` endpoint. Allow user to create constant product pool with `activation_point` set earlier than the default `activation_point` derived from the config.
+
+### Changed
+
+- Renamed `AlphaVault` structure to `Bootstrapping`
+- Renamed `AlphaVaultConfig` to `BootstrappingConfig`
+- Renamed `activation_duration_in_slot` to `activation_duration`. The duration will be in slot or timestamp, based on `activation_type`
+
+### Deprecated
+
+- `pool_creator` field of `AlphaVault` structure.
+
+## @mercurial-finance/dynamic-amm-sdk [1.1.0] - PR[#151](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/151)
+
+### Added
+
+- Added `createPermissionlessConstantProductPoolWithConfig2`. Allow user to create constant product pool with `activation_point` set earlier than the default `activation_point` derived from the config.
+
+### Changed
+
+- `createConfig` require new parameter `ActivationType`
+- Renamed `AlphaVault` to `Bootstrapping`
+- Renamed `ActivationDurationInSlot` to `ActivationDuration`
+- `calculateSwapQuote` require new parameter `currentSlot`
+- Swap quote throw error if the pool is disabled, or not activated for trading yet.
+
 ## dynamic-amm [0.5.0] - PR[#149](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/149)
 
 ### Changed
@@ -26,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename `admin` to `fee_operator` in `set_pool_fee` account context.
 - Removed deprecated field `admin` in pool state. It has been replaced by `fee_last_updated_at`.
 
-## @mercurial-finance/dynamic-amm-sdk [1.0.2] - PR PR[#149](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/149)
+## @mercurial-finance/dynamic-amm-sdk [1.0.2] - PR[#149](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/149)
 
 ### Changed
 
