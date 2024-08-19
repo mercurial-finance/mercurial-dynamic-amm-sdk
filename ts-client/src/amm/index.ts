@@ -704,13 +704,6 @@ export default class AmmImpl implements AmmImplementation {
 
         const { pool, poolState, vaultA, vaultB, tokenAMint, tokenBMint } = poolInfoData;
 
-        const [tokenASupply, tokenBSupply] = await Promise.all([
-          provider.connection.getTokenSupply(poolState.tokenAMint),
-          provider.connection.getTokenSupply(poolState.tokenBMint),
-        ]);
-        const tokenADecimals = tokenASupply.value.decimals;
-        const tokenBDecimals = tokenBSupply.value.decimals;
-
         let swapCurve;
         if ('stable' in poolState.curveType) {
           const { amp, depeg, tokenMultiplier } = poolState.curveType['stable'] as any;
@@ -873,10 +866,24 @@ export default class AmmImpl implements AmmImplementation {
       getMint(provider.connection, tokenBAddress),
     ]);
 
-    const [vaultA, vaultB] = await Promise.all([
-      VaultImpl.create(provider.connection, tokenAAddress, { cluster, seedBaseKey: opt?.vaultSeedBaseKey }),
-      VaultImpl.create(provider.connection, tokenBAddress, { cluster, seedBaseKey: opt?.vaultSeedBaseKey }),
-    ]);
+    const pdaInfos = [
+      {
+        tokenAddress: poolState.tokenAMint,
+        vaultPda: poolState.aVault,
+        tokenVaultPda: poolState.aVaultLp,
+        lpMintPda: poolState.lpMint,
+      },
+      {
+        tokenAddress: poolState.tokenBMint,
+        vaultPda: poolState.bVault,
+        tokenVaultPda: poolState.bVaultLp,
+        lpMintPda: poolState.lpMint,
+      },
+    ];
+
+    const [vaultA, vaultB] = await VaultImpl.createMultipleWithPda(connection, pdaInfos, {
+      seedBaseKey: opt?.vaultSeedBaseKey,
+    });
 
     const accountsBufferMap = await getAccountsBuffer(connection, [
       { pubkey: vaultA.vaultState.tokenVault, type: AccountType.VAULT_A_RESERVE },
@@ -1514,6 +1521,7 @@ export default class AmmImpl implements AmmImplementation {
       return this.program.methods.addBalanceLiquidity(poolTokenAmount, tokenAInAmount, tokenBInAmount);
     };
 
+    console.log('🚀 ~ AmmImpl ~ this.address:', this.address.toBase58(), this.poolState.lpMint.toBase58());
     const depositTx = await programMethod()
       .accounts({
         aTokenVault: this.vaultA.vaultState.tokenVault,
