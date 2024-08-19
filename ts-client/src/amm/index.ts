@@ -1492,7 +1492,6 @@ export default class AmmImpl implements AmmImplementation {
       return this.program.methods.addBalanceLiquidity(poolTokenAmount, tokenAInAmount, tokenBInAmount);
     };
 
-    console.log('🚀 ~ AmmImpl ~ this.address:', this.address.toBase58(), this.poolState.lpMint.toBase58());
     const depositTx = await programMethod()
       .accounts({
         aTokenVault: this.vaultA.vaultState.tokenVault,
