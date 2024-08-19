@@ -594,26 +594,10 @@ export default class AmmImpl implements AmmImplementation {
 
     const poolsState: Array<PoolState & { lpSupply: BN }> = await getAllPoolState(poolList, ammProgram);
 
-    const PdaInfos = poolList.reduce<
-      Array<{ tokenAddress: PublicKey; vaultPda: PublicKey; tokenVaultPda: PublicKey; lpMintPda: PublicKey }>
-    >((accList, _, index) => {
+    const PdaInfos = poolList.reduce<Array<PublicKey>>((accList, _, index) => {
       const poolState = poolsState[index];
 
-      return [
-        ...accList,
-        {
-          tokenAddress: poolState.tokenAMint,
-          vaultPda: poolState.aVault,
-          tokenVaultPda: poolState.aVaultLp,
-          lpMintPda: poolState.lpMint,
-        },
-        {
-          tokenAddress: poolState.tokenBMint,
-          vaultPda: poolState.bVault,
-          tokenVaultPda: poolState.bVaultLp,
-          lpMintPda: poolState.lpMint,
-        },
-      ];
+      return [...accList, poolState.aVault, poolState.bVault];
     }, []);
     const vaultsImpl = await VaultImpl.createMultipleWithPda(connection, PdaInfos);
 
@@ -677,13 +661,13 @@ export default class AmmImpl implements AmmImplementation {
 
         invariant(
           !!currentTime &&
-          !!vaultALpSupply &&
-          !!vaultBLpSupply &&
-          !!vaultAReserve &&
-          !!vaultBReserve &&
-          !!poolVaultALp &&
-          !!poolVaultBLp &&
-          !!poolLpSupply,
+            !!vaultALpSupply &&
+            !!vaultBLpSupply &&
+            !!vaultAReserve &&
+            !!vaultBReserve &&
+            !!poolVaultALp &&
+            !!poolVaultBLp &&
+            !!poolLpSupply,
           'Account Info not found',
         );
 
@@ -703,13 +687,6 @@ export default class AmmImpl implements AmmImplementation {
         invariant(poolInfoData, 'Cannot find pool info');
 
         const { pool, poolState, vaultA, vaultB, tokenAMint, tokenBMint } = poolInfoData;
-
-        const [tokenASupply, tokenBSupply] = await Promise.all([
-          provider.connection.getTokenSupply(poolState.tokenAMint),
-          provider.connection.getTokenSupply(poolState.tokenBMint),
-        ]);
-        const tokenADecimals = tokenASupply.value.decimals;
-        const tokenBDecimals = tokenBSupply.value.decimals;
 
         let swapCurve;
         if ('stable' in poolState.curveType) {
@@ -873,10 +850,11 @@ export default class AmmImpl implements AmmImplementation {
       getMint(provider.connection, tokenBAddress),
     ]);
 
-    const [vaultA, vaultB] = await Promise.all([
-      VaultImpl.create(provider.connection, tokenAAddress, { cluster, seedBaseKey: opt?.vaultSeedBaseKey }),
-      VaultImpl.create(provider.connection, tokenBAddress, { cluster, seedBaseKey: opt?.vaultSeedBaseKey }),
-    ]);
+    const pdaInfos = [poolState.aVault, poolState.bVault];
+
+    const [vaultA, vaultB] = await VaultImpl.createMultipleWithPda(connection, pdaInfos, {
+      seedBaseKey: opt?.vaultSeedBaseKey,
+    });
 
     const accountsBufferMap = await getAccountsBuffer(connection, [
       { pubkey: vaultA.vaultState.tokenVault, type: AccountType.VAULT_A_RESERVE },
@@ -901,13 +879,13 @@ export default class AmmImpl implements AmmImplementation {
 
     invariant(
       !!currentTime &&
-      !!vaultALpSupply &&
-      !!vaultBLpSupply &&
-      !!vaultAReserve &&
-      !!vaultBReserve &&
-      !!poolVaultALp &&
-      !!poolVaultBLp &&
-      !!poolLpSupply,
+        !!vaultALpSupply &&
+        !!vaultBLpSupply &&
+        !!vaultAReserve &&
+        !!vaultBReserve &&
+        !!poolVaultALp &&
+        !!poolVaultBLp &&
+        !!poolLpSupply,
       'Account Info not found',
     );
 
@@ -1054,13 +1032,13 @@ export default class AmmImpl implements AmmImplementation {
 
     invariant(
       !!currentTime &&
-      !!vaultALpSupply &&
-      !!vaultBLpSupply &&
-      !!vaultAReserve &&
-      !!vaultBReserve &&
-      !!poolVaultALp &&
-      !!poolVaultBLp &&
-      !!poolLpSupply,
+        !!vaultALpSupply &&
+        !!vaultBLpSupply &&
+        !!vaultAReserve &&
+        !!vaultBReserve &&
+        !!poolVaultALp &&
+        !!poolVaultBLp &&
+        !!poolLpSupply,
       'Account Info not found',
     );
 
@@ -1667,40 +1645,40 @@ export default class AmmImpl implements AmmImplementation {
     const programMethod =
       this.isStablePool && (tokenAOutAmount.isZero() || tokenBOutAmount.isZero())
         ? this.program.methods.removeLiquiditySingleSide(lpTokenAmount, new BN(0)).accounts({
-          aTokenVault: this.vaultA.vaultState.tokenVault,
-          aVault: this.poolState.aVault,
-          aVaultLp: this.poolState.aVaultLp,
-          aVaultLpMint: this.vaultA.vaultState.lpMint,
-          bTokenVault: this.vaultB.vaultState.tokenVault,
-          bVault: this.poolState.bVault,
-          bVaultLp: this.poolState.bVaultLp,
-          bVaultLpMint: this.vaultB.vaultState.lpMint,
-          lpMint: this.poolState.lpMint,
-          pool: this.address,
-          userDestinationToken: tokenBOutAmount.isZero() ? userAToken : userBToken,
-          userPoolLp,
-          user: owner,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          vaultProgram: this.vaultProgram.programId,
-        })
+            aTokenVault: this.vaultA.vaultState.tokenVault,
+            aVault: this.poolState.aVault,
+            aVaultLp: this.poolState.aVaultLp,
+            aVaultLpMint: this.vaultA.vaultState.lpMint,
+            bTokenVault: this.vaultB.vaultState.tokenVault,
+            bVault: this.poolState.bVault,
+            bVaultLp: this.poolState.bVaultLp,
+            bVaultLpMint: this.vaultB.vaultState.lpMint,
+            lpMint: this.poolState.lpMint,
+            pool: this.address,
+            userDestinationToken: tokenBOutAmount.isZero() ? userAToken : userBToken,
+            userPoolLp,
+            user: owner,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            vaultProgram: this.vaultProgram.programId,
+          })
         : this.program.methods.removeBalanceLiquidity(lpTokenAmount, tokenAOutAmount, tokenBOutAmount).accounts({
-          pool: this.address,
-          lpMint: this.poolState.lpMint,
-          aVault: this.poolState.aVault,
-          aTokenVault: this.vaultA.vaultState.tokenVault,
-          aVaultLp: this.poolState.aVaultLp,
-          aVaultLpMint: this.vaultA.vaultState.lpMint,
-          bVault: this.poolState.bVault,
-          bTokenVault: this.vaultB.vaultState.tokenVault,
-          bVaultLp: this.poolState.bVaultLp,
-          bVaultLpMint: this.vaultB.vaultState.lpMint,
-          userAToken,
-          userBToken,
-          user: owner,
-          userPoolLp,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          vaultProgram: this.vaultProgram.programId,
-        });
+            pool: this.address,
+            lpMint: this.poolState.lpMint,
+            aVault: this.poolState.aVault,
+            aTokenVault: this.vaultA.vaultState.tokenVault,
+            aVaultLp: this.poolState.aVaultLp,
+            aVaultLpMint: this.vaultA.vaultState.lpMint,
+            bVault: this.poolState.bVault,
+            bTokenVault: this.vaultB.vaultState.tokenVault,
+            bVaultLp: this.poolState.bVaultLp,
+            bVaultLpMint: this.vaultB.vaultState.lpMint,
+            userAToken,
+            userBToken,
+            user: owner,
+            userPoolLp,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            vaultProgram: this.vaultProgram.programId,
+          });
 
     const withdrawTx = await programMethod
       .remainingAccounts(this.swapCurve.getRemainingAccounts())
