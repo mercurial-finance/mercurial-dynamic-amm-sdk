@@ -604,14 +604,6 @@ export default class AmmImpl implements AmmImplementation {
     const accountsToFetch = await Promise.all(
       poolsState.map(async (poolState, index) => {
         const pool = poolList[index];
-        const { tokenAMint: tokenAAddress, tokenBMint: tokenBAddress } = poolState;
-        const [tokenAMint, tokenBMint] = await Promise.all([
-          getMint(provider.connection, tokenAAddress),
-          getMint(provider.connection, tokenBAddress),
-        ]);
-
-        invariant(tokenAMint.address.equals(poolState.tokenAMint), `TokenInfoA provided is incorrect`);
-        invariant(tokenBMint.address.equals(poolState.tokenBMint), `TokenInfoB provided is incorrect`);
 
         const vaultA = vaultsImpl.find(({ vaultPda }) => vaultPda.equals(poolState.aVault));
         const vaultB = vaultsImpl.find(({ vaultPda }) => vaultPda.equals(poolState.bVault));
@@ -624,8 +616,8 @@ export default class AmmImpl implements AmmImplementation {
           poolState,
           vaultA,
           vaultB,
-          tokenAMint,
-          tokenBMint,
+          tokenAMint: vaultA.tokenMint,
+          tokenBMint: vaultB.tokenMint,
         });
         return [
           { pubkey: vaultA.vaultState.tokenVault, type: AccountType.VAULT_A_RESERVE },
@@ -841,14 +833,9 @@ export default class AmmImpl implements AmmImplementation {
     },
   ): Promise<AmmImpl> {
     const cluster = opt?.cluster ?? 'mainnet-beta';
-    const { provider, vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
+    const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
 
     const poolState = await getPoolState(pool, ammProgram);
-    const { tokenAMint: tokenAAddress, tokenBMint: tokenBAddress } = poolState;
-    const [tokenAMint, tokenBMint] = await Promise.all([
-      getMint(provider.connection, tokenAAddress),
-      getMint(provider.connection, tokenBAddress),
-    ]);
 
     const pdaInfos = [poolState.aVault, poolState.bVault];
 
@@ -926,8 +913,8 @@ export default class AmmImpl implements AmmImplementation {
       pool,
       ammProgram,
       vaultProgram,
-      tokenAMint,
-      tokenBMint,
+      vaultA.tokenMint,
+      vaultB.tokenMint,
       poolState,
       poolInfo,
       vaultA,
