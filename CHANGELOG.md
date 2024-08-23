@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [1.0.5] - PR [#155](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/155)
+
+### Changed
+
+- update vault-sdk version
+
 ## @mercurial-finance/dynamic-amm-sdk [1.0.4] - PR [#154](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/154)
 
 ### Changed
