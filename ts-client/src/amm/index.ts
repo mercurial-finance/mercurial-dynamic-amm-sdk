@@ -782,26 +782,10 @@ export default class AmmImpl implements AmmImplementation {
 
     const poolsState: Array<PoolState & { lpSupply: BN }> = await getAllPoolState(poolList, ammProgram);
 
-    const PdaInfos = poolList.reduce<
-      Array<{ tokenAddress: PublicKey; vaultPda: PublicKey; tokenVaultPda: PublicKey; lpMintPda: PublicKey }>
-    >((accList, _, index) => {
+    const PdaInfos = poolList.reduce<Array<PublicKey>>((accList, _, index) => {
       const poolState = poolsState[index];
 
-      return [
-        ...accList,
-        {
-          tokenAddress: poolState.tokenAMint,
-          vaultPda: poolState.aVault,
-          tokenVaultPda: poolState.aVaultLp,
-          lpMintPda: poolState.lpMint,
-        },
-        {
-          tokenAddress: poolState.tokenBMint,
-          vaultPda: poolState.bVault,
-          tokenVaultPda: poolState.bVaultLp,
-          lpMintPda: poolState.lpMint,
-        },
-      ];
+      return [...accList, poolState.aVault, poolState.bVault];
     }, []);
     const vaultsImpl = await VaultImpl.createMultipleWithPda(connection, PdaInfos);
 
