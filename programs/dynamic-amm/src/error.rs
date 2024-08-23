@@ -177,7 +177,29 @@ pub enum PoolError {
     #[msg("Type cast error")]
     TypeCastFailed,
 
-    /// Amount is zero
+    /// AmountIsNotEnough
     #[msg("Amount is not enough")]
     AmountIsNotEnough,
+
+    /// InvalidActivationDuration
+    #[msg("Invalid activation duration")]
+    InvalidActivationDuration,
+
+    /// Pool is not launch pool
+    #[msg("Pool is not launch pool")]
+    PoolIsNotLaunchPool,
+
+    /// UnableToModifyActivationPoint
+    #[msg("Unable to modify activation point")]
+    UnableToModifyActivationPoint,
+
+    /// Invalid authority to create the pool
+    #[msg("Invalid authority to create the pool")]
+    InvalidAuthorityToCreateThePool,
+
+    #[msg("Invalid activation type")]
+    InvalidActivationType,
+
+    #[msg("Invalid activation point")]
+    InvalidActivationPoint,
 }

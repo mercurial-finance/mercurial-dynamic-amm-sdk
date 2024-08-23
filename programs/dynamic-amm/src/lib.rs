@@ -171,11 +171,29 @@ pub mod dynamic_amm {
         Ok(())
     }
 
+    /// Update activation point
+    pub fn update_activation_point(
+        ctx: Context<UpdateActivationPoint>,
+        new_activation_point: u64,
+    ) -> Result<()> {
+        Ok(())
+    }
+
     /// Initialize permissionless pool with config
     pub fn initialize_permissionless_constant_product_pool_with_config(
         ctx: Context<InitializePermissionlessConstantProductPoolWithConfig>,
         token_a_amount: u64,
         token_b_amount: u64,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Initialize permissionless pool with config 2
+    pub fn initialize_permissionless_constant_product_pool_with_config2(
+        ctx: Context<InitializePermissionlessConstantProductPoolWithConfig>,
+        token_a_amount: u64,
+        token_b_amount: u64,
+        activation_point: Option<u64>,
     ) -> Result<()> {
         Ok(())
     }
