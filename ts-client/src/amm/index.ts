@@ -445,6 +445,8 @@ export default class AmmImpl implements AmmImplementation {
       cluster?: Cluster;
       programId?: string;
       lockLiquidity?: boolean;
+      skipAAta?: boolean;
+      skipBAta?: boolean;
     },
   ) {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
@@ -492,8 +494,8 @@ export default class AmmImpl implements AmmImplementation {
       getOrCreateATAInstruction(tokenAMint, payer, connection),
       getOrCreateATAInstruction(tokenBMint, payer, connection),
     ]);
-    createPayerTokenAIx && preInstructions.push(createPayerTokenAIx);
-    createPayerTokenBIx && preInstructions.push(createPayerTokenBIx);
+    createPayerTokenAIx && !opt?.skipAAta && preInstructions.push(createPayerTokenAIx);
+    createPayerTokenBIx && !opt?.skipBAta && preInstructions.push(createPayerTokenBIx);
 
     const [[protocolTokenAFee], [protocolTokenBFee]] = [
       PublicKey.findProgramAddressSync(
