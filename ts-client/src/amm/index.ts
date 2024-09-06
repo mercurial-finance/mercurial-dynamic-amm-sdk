@@ -1895,6 +1895,10 @@ export default class AmmImpl implements AmmImplementation {
     const lockEscrowAccount = await this.program.account.lockEscrow.fetchNullable(lockEscrowPK);
     if (!lockEscrowAccount) return null;
 
+    const lockEscrowVault = await this.program.provider.connection.getTokenAccountBalance(
+      lockEscrowAccount.escrowVault,
+    );
+
     const [lockEscrow, _lockEscrowBump] = deriveLockEscrowPda(this.address, owner, this.program.programId);
     const unClaimedFee = calculateUnclaimedLockEscrowFee(
       lockEscrowAccount.totalLockedAmount,
@@ -1902,8 +1906,11 @@ export default class AmmImpl implements AmmImplementation {
       lockEscrowAccount.unclaimedFeePending,
       this.poolInfo.virtualPriceRaw,
     );
+    // Patch the bug from v1 impl
+    const escrowVaultAmount = new BN(lockEscrowVault.value.amount);
+    const unclaimedFeeCap = unClaimedFee.gt(escrowVaultAmount) ? escrowVaultAmount : unClaimedFee;
 
-    const { tokenAOutAmount, tokenBOutAmount } = this.getWithdrawQuote(unClaimedFee, 0);
+    const { tokenAOutAmount, tokenBOutAmount } = this.getWithdrawQuote(unclaimedFeeCap, 0);
     return {
       address: lockEscrow,
       amount: lockEscrowAccount.totalLockedAmount || new BN(0),
@@ -1913,7 +1920,7 @@ export default class AmmImpl implements AmmImplementation {
           tokenB: lockEscrowAccount.bFee || new BN(0),
         },
         unClaimed: {
-          lp: unClaimedFee,
+          lp: unclaimedFeeCap,
           tokenA: tokenAOutAmount || new BN(0),
           tokenB: tokenBOutAmount || new BN(0),
         },
