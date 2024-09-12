@@ -68,6 +68,7 @@ async function createPoolAndLockLiquidity(
 ) {
   const programID = new PublicKey(PROGRAM_ID);
   const poolPubkey = deriveConstantProductPoolAddressWithConfig(tokenAMint, tokenBMint, config, programID);
+  // Create the pool
   console.log('create pool %s', poolPubkey);
   let transactions = await AmmImpl.createPermissionlessConstantProductPoolWithConfig(
     provider.connection,
@@ -85,6 +86,7 @@ async function createPoolAndLockLiquidity(
     console.log('transaction %s', txHash);
   }
 
+  // Create escrow and lock liquidity
   const [lpMint] = PublicKey.findProgramAddressSync([Buffer.from(SEEDS.LP_MINT), poolPubkey.toBuffer()], programID);
   const payerPoolLp = await getAssociatedTokenAccount(lpMint, payerWallet.publicKey);
   const payerPoolLpBalance = (await provider.connection.getTokenAccountBalance(payerPoolLp)).value.amount;
@@ -102,11 +104,20 @@ async function createPoolAndLockLiquidity(
   }
 }
 
+/**
+ * Example script to create a new pool and lock liquidity to it
+ */
 async function main() {
+  // 1. Token A/B address of the pool.
   const tokenAMint = new PublicKey('BjhBG7jkHYMBMos2HtRdFrw8rvSguBe5c3a3EJYXhyUf');
   const tokenBMint = new PublicKey('9KMeJp868Pdk8PrJEkwoAHMA1ctdxfVhe2TjeS4BcWjs');
-  let config = new PublicKey('21PjsfQVgrn56jSypUT5qXwwSjwKWvuoBCKbVZrgTLz4');
 
+  // 2. Configuration address for the pool. It will decide the fees of the pool.
+  const config = new PublicKey('21PjsfQVgrn56jSypUT5qXwwSjwKWvuoBCKbVZrgTLz4');
+
+  // 3. Allocation of the locked LP to multiple address. In the below example
+  // 4sBMz7zmDWPzdEnECJW3NA9mEcNwkjYtVnL2KySaWYAf will get 80% of the fee of the locked liquidity
+  // CVV5MxfwA24PsM7iuS2ddssYgySf5SxVJ8PpAwGN2yVy will get 20% of the fee of the locked liquidity
   let allocations = [
     {
       address: new PublicKey('4sBMz7zmDWPzdEnECJW3NA9mEcNwkjYtVnL2KySaWYAf'),
@@ -117,6 +128,8 @@ async function main() {
       percentage: 20,
     },
   ];
+
+  // 4. Amount of token A and B to be deposited to the pool, and will be locked.
   let tokenAAmount = new BN(100_000);
   let tokenBAmount = new BN(500_000);
 
