@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [1.1.4] - PR[#162](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/162)
+
+### Changed
+
+- add 0.30% fee tier
+
 ## @mercurial-finance/dynamic-amm-sdk [1.1.3] - PR[#161](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/161)
 
 ### Changed
