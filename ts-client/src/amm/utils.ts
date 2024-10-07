@@ -603,6 +603,15 @@ export const deriveConfigPda = (index: BN, programId: PublicKey) => {
   return configPda;
 };
 
+export const deriveProtocolTokenFee = (poolAddress: PublicKey, tokenMint: PublicKey, programId: PublicKey) => {
+  const [protocolTokenFee] = PublicKey.findProgramAddressSync(
+    [Buffer.from('fee'), tokenMint.toBuffer(), poolAddress.toBuffer()],
+    programId,
+  );
+
+  return protocolTokenFee;
+};
+
 export function derivePoolAddress(
   connection: Connection,
   tokenInfoA: TokenInfo,
