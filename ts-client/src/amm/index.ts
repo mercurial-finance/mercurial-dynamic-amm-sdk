@@ -264,6 +264,7 @@ export default class AmmImpl implements AmmImplementation {
       programId?: string;
       lockLiquidity?: boolean;
       swapLiquidity?: {
+        // always swap B to A
         inAmount: BN;
         minAmountOut: BN;
       };
