@@ -24,6 +24,7 @@ import { Amm, IDL as AmmIdl } from './src/amm/idl';
 
 export default AmmImpl;
 export {
+  AmmImpl,
   // Classes
   ConstantProductSwap,
   StableSwap,

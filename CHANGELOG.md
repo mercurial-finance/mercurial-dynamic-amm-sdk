@@ -19,6 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [1.1.6] - PR[#161](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/163)
+
+### Added
+
+- Added `poolFees` in `getFeeConfigurations` function
+
+## @mercurial-finance/dynamic-amm-sdk [1.1.5] - PR[#161](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/163)
+
+### Added
+
+- Swap options on create pool config
+- Added `calculateSwapQuoteForGoingToCreateMemecoinPool` to allow swap quote on going to be created pool.
+
 ## @mercurial-finance/dynamic-amm-sdk [1.1.4] - PR[#161](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/164)
 
 ### Changed
