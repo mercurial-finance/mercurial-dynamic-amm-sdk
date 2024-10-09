@@ -1050,6 +1050,7 @@ export default class AmmImpl implements AmmImplementation {
 
       return {
         publicKey: configAccount.publicKey,
+        poolFees,
         tradeFeeBps: poolFees.tradeFeeNumerator.mul(new BN(10000)).div(poolFees.tradeFeeDenominator),
         protocolTradeFeeBps: poolFees.protocolTradeFeeNumerator
           .mul(new BN(10000))
