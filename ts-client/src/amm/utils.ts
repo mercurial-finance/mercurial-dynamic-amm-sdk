@@ -374,7 +374,12 @@ export const getDepegAccounts = async (
  * @param {BN} params.depegAccounts - A map of the depeg accounts. (get from `getDepegAccounts` util)
  * @returns The amount of tokens that will be received after the swap.
  */
-export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, params: SwapQuoteParam): SwapResult => {
+export const calculateSwapQuote = (
+  inTokenMint: PublicKey,
+  inAmountLamport: BN,
+  params: SwapQuoteParam,
+  swapInitiator?: PublicKey,
+): SwapResult => {
   const {
     vaultA,
     vaultB,
@@ -409,7 +414,10 @@ export const calculateSwapQuote = (inTokenMint: PublicKey, inAmountLamport: BN, 
     // Bootstrapping pool
     const activationType = poolState.bootstrapping.activationType;
     const currentPoint = activationType == ActivationType.Timestamp ? new BN(currentTime) : new BN(currentSlot);
-    invariant(currentPoint.gte(poolState.bootstrapping.activationPoint), 'Swap is disabled');
+    const canQuoteEarlier = swapInitiator ? swapInitiator.equals(poolState.bootstrapping.whitelistedVault) : false;
+    if (!canQuoteEarlier) {
+      invariant(currentPoint.gte(poolState.bootstrapping.activationPoint), 'Swap is disabled');
+    }
 
     swapCurve = new ConstantProductSwap();
   }
