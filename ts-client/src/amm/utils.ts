@@ -49,6 +49,7 @@ import {
   DepegNone,
   DepegSplStake,
   ParsedClockState,
+  PoolFees,
   PoolInformation,
   PoolState,
   StableSwapCurve,
@@ -353,6 +354,119 @@ export const getDepegAccounts = async (
   }
 
   return depegAccounts;
+};
+
+export interface VaultAssociatedAccountStates {
+  vault: VaultState;
+  reserve: BN;
+  lpSupply: BN;
+}
+
+export type SwapQuoteParams2 = {
+  vaultA?: VaultAssociatedAccountStates;
+  vaultB?: VaultAssociatedAccountStates;
+  currentTime: number;
+};
+
+export const calculateSwapQuoteForGoingToCreateMemecoinPool = (
+  inAmountLamport: BN,
+  tokenADepositAmount: BN,
+  tokenBDepositAmount: BN,
+  aToB: boolean,
+  fees: PoolFees,
+  params: SwapQuoteParams2,
+) => {
+  interface LocalStates {
+    vaultStates: VaultAssociatedAccountStates;
+    poolVaultLp: BN;
+  }
+
+  const { currentTime } = params;
+  const vaultA: LocalStates | undefined = params.vaultA
+    ? { vaultStates: params.vaultA, poolVaultLp: new BN(0) }
+    : undefined;
+  const vaultB: LocalStates | undefined = params.vaultB
+    ? { vaultStates: params.vaultB, poolVaultLp: new BN(0) }
+    : undefined;
+
+  invariant(vaultA || vaultB, 'Must one side have vault');
+  invariant(!vaultA || !vaultB, 'Must one side have vault');
+
+  const getTokenAmountAfterDepositVault = (amount: BN, states?: LocalStates) => {
+    // No vault
+    if (!states) {
+      return amount;
+    }
+
+    const vaultWithdrawableAmount = calculateWithdrawableAmount(currentTime, states.vaultStates.vault);
+    const lpMinted = getUnmintAmount(amount, vaultWithdrawableAmount, states.vaultStates.lpSupply);
+
+    states.vaultStates.lpSupply = states.vaultStates.lpSupply.add(lpMinted);
+    states.vaultStates.vault.totalAmount = states.vaultStates.vault.totalAmount.add(amount);
+    states.poolVaultLp = states.poolVaultLp.add(lpMinted);
+
+    return getAmountByShare(
+      states.poolVaultLp,
+      calculateWithdrawableAmount(currentTime, states.vaultStates.vault),
+      states.vaultStates.lpSupply,
+    );
+  };
+
+  const getTokenAmountAfterWithdrawVault = (amount: BN, states?: LocalStates) => {
+    // No vault
+    if (!states) {
+      return amount;
+    }
+
+    const vaultWithdrawableAmount = calculateWithdrawableAmount(currentTime, states.vaultStates.vault);
+    const lpBurned = getUnmintAmount(amount, vaultWithdrawableAmount, states.vaultStates.lpSupply);
+
+    states.vaultStates.lpSupply = states.vaultStates.lpSupply.sub(lpBurned);
+    states.vaultStates.vault.totalAmount = states.vaultStates.vault.totalAmount.sub(amount);
+    states.poolVaultLp = states.poolVaultLp.sub(lpBurned);
+
+    return getAmountByShare(
+      states.poolVaultLp,
+      calculateWithdrawableAmount(currentTime, states.vaultStates.vault),
+      states.vaultStates.lpSupply,
+    );
+  };
+
+  const tokenAAmount = getTokenAmountAfterDepositVault(tokenADepositAmount, vaultA);
+  const tokenBAmount = getTokenAmountAfterDepositVault(tokenBDepositAmount, vaultB);
+
+  const [sourceAmount, swapSourceAmount, swapDestinationAmount, sourceVault, destinationVault] = aToB
+    ? [inAmountLamport, tokenAAmount, tokenBAmount, vaultA, vaultB]
+    : [inAmountLamport, tokenBAmount, tokenAAmount, vaultB, vaultA];
+
+  const tradeFee = sourceAmount.mul(fees.tradeFeeNumerator).div(fees.tradeFeeDenominator);
+  const protocolFee = tradeFee.mul(fees.protocolTradeFeeNumerator).div(fees.protocolTradeFeeDenominator);
+  const sourceAmountLessProtocolFee = sourceAmount.sub(protocolFee);
+
+  const beforeSwapSourceAmount = swapSourceAmount;
+  const afterSwapSourceAmount = sourceVault
+    ? getTokenAmountAfterDepositVault(sourceAmountLessProtocolFee, sourceVault)
+    : sourceAmountLessProtocolFee;
+
+  const actualSourceAmount = afterSwapSourceAmount.sub(beforeSwapSourceAmount);
+  const sourceAmountLessFee = actualSourceAmount.sub(tradeFee.sub(protocolFee));
+
+  const curve = new ConstantProductSwap();
+  const { outAmount: destinationAmount } = curve.computeOutAmount(
+    sourceAmountLessFee,
+    swapSourceAmount,
+    swapDestinationAmount,
+    aToB ? TradeDirection.AToB : TradeDirection.BToA,
+  );
+
+  const afterDestinationAmount = destinationVault
+    ? getTokenAmountAfterWithdrawVault(destinationAmount, destinationVault)
+    : destinationAmount;
+
+  return {
+    amountOut: afterDestinationAmount,
+    fee: sourceAmountLessProtocolFee,
+  };
 };
 
 /**
