@@ -1325,21 +1325,26 @@ export default class AmmImpl implements AmmImplementation {
    * @param {number} [slippage] - The maximum amount of slippage you're willing to accept. (Max to 2 decimal place)
    * @returns The amount of the destination token that will be received after the swap.
    */
-  public getSwapQuote(inTokenMint: PublicKey, inAmountLamport: BN, slippage: number) {
-    const { amountOut, fee, priceImpact } = calculateSwapQuote(inTokenMint, inAmountLamport, {
-      currentTime: this.accountsInfo.currentTime.toNumber(),
-      currentSlot: this.accountsInfo.currentSlot.toNumber(),
-      poolState: this.poolState,
-      depegAccounts: this.depegAccounts,
-      poolVaultALp: this.accountsInfo.poolVaultALp,
-      poolVaultBLp: this.accountsInfo.poolVaultBLp,
-      vaultA: this.vaultA.vaultState,
-      vaultB: this.vaultB.vaultState,
-      vaultALpSupply: this.accountsInfo.vaultALpSupply,
-      vaultBLpSupply: this.accountsInfo.vaultBLpSupply,
-      vaultAReserve: this.accountsInfo.vaultAReserve,
-      vaultBReserve: this.accountsInfo.vaultBReserve,
-    });
+  public getSwapQuote(inTokenMint: PublicKey, inAmountLamport: BN, slippage: number, swapInitiator?: PublicKey) {
+    const { amountOut, fee, priceImpact } = calculateSwapQuote(
+      inTokenMint,
+      inAmountLamport,
+      {
+        currentTime: this.accountsInfo.currentTime.toNumber(),
+        currentSlot: this.accountsInfo.currentSlot.toNumber(),
+        poolState: this.poolState,
+        depegAccounts: this.depegAccounts,
+        poolVaultALp: this.accountsInfo.poolVaultALp,
+        poolVaultBLp: this.accountsInfo.poolVaultBLp,
+        vaultA: this.vaultA.vaultState,
+        vaultB: this.vaultB.vaultState,
+        vaultALpSupply: this.accountsInfo.vaultALpSupply,
+        vaultBLpSupply: this.accountsInfo.vaultBLpSupply,
+        vaultAReserve: this.accountsInfo.vaultAReserve,
+        vaultBReserve: this.accountsInfo.vaultBReserve,
+      },
+      swapInitiator,
+    );
 
     return {
       swapInAmount: inAmountLamport,
