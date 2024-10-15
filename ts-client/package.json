@@ -25,7 +25,8 @@
     "bn.js": "5.2.1",
     "decimal.js": "^10.4.1",
     "dotenv": "^16.0.1",
-    "invariant": "^2.2.4"
+    "invariant": "^2.2.4",
+    "@meteora-ag/stake-for-fee": "1.0.7"
   },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.1",
