@@ -498,7 +498,7 @@ export default class AmmImpl implements AmmImplementation {
       skipBAta?: boolean;
     },
   ) {
-    const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
+    const { vaultProgram, ammProgram, stakeForFeeProgram } = createProgram(connection, opt?.programId);
 
     const [
       { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aLpMintPda },
@@ -576,16 +576,14 @@ export default class AmmImpl implements AmmImplementation {
     const [mintMetadata, _mintMetadataBump] = deriveMintMetadata(lpMint);
     const lpAmount = sqrt(tokenAAmount.mul(tokenBAmount));
     const feeWrapperPercent = opt?.stakeLiquidity?.percent?.gt(new Decimal(0))
-      ? opt.stakeLiquidity.percent
+      ? Decimal.min(opt?.stakeLiquidity?.percent, new Decimal(1))
       : new Decimal(0);
 
     const feeWrapperLockAmount = new BN(
       new Decimal(lpAmount.toString()).mul(feeWrapperPercent).toFixed(0, Decimal.ROUND_DOWN),
     );
-    const userLockAmount = feeWrapperPercent.gt(new Decimal(0)) ? new BN(
-      new Decimal(lpAmount.toString()).mul(new Decimal(1).minus(feeWrapperPercent)).toFixed(0, Decimal.ROUND_DOWN),
-    ) : U64_MAX;
-
+    const userLockAmount = feeWrapperPercent.gt(new Decimal(0)) ? lpAmount.sub(feeWrapperLockAmount) : U64_MAX;
+    
     const createPoolPostInstructions: TransactionInstruction[] = [];
     if (opt?.lockLiquidity) {
       const [lockEscrowPK] = deriveLockEscrowPda(poolPubkey, payer, ammProgram.programId);
@@ -686,17 +684,23 @@ export default class AmmImpl implements AmmImplementation {
      if (feeWrapperLockAmount.gt(new BN(0))) {
        const feeVaultConfig = await StakeForFee.getConfigs(connection);
 
-       const createStakeForFeeTx = await StakeForFee.createFeeVault(
+       const latestBlockHashStakeProgram = await stakeForFeeProgram.provider.connection.getLatestBlockhash(
+        stakeForFeeProgram.provider.connection.commitment,
+      );
+
+       const createStakeForFeeTx = await StakeForFee.createFeeVault2(
          connection,
          poolPubkey,
          tokenAMint,
          payer,
          feeVaultConfig[0].publicKey,
+         tokenAMint,
+         tokenBMint,
        );
 
        const newCreateStakeForFeeTx = new Transaction({
          feePayer: payer,
-         ...latestBlockHash,
+         ...latestBlockHashStakeProgram,
        }).add(createStakeForFeeTx);
 
        resultTx.push(newCreateStakeForFeeTx);

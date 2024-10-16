@@ -7,6 +7,7 @@ import {
   VaultIdl,
   PROGRAM_ID as VAULT_PROGRAM_ID,
 } from '@mercurial-finance/vault-sdk';
+import { STAKE_FOR_FEE_PROGRAM_ID, IDL as StakeForFeeIDL,  StakeForFee as StakeForFeeIdl } from '@meteora-ag/stake-for-fee';
 import { AnchorProvider, BN, Program } from '@coral-xyz/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -65,8 +66,9 @@ export const createProgram = (connection: Connection, programId?: string) => {
   const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
   const ammProgram = new Program<AmmIdl>(AmmIDL, programId ?? PROGRAM_ID, provider);
   const vaultProgram = new Program<VaultIdl>(VaultIDL, VAULT_PROGRAM_ID, provider);
+  const stakeForFeeProgram = new Program<StakeForFeeIdl>(StakeForFeeIDL, STAKE_FOR_FEE_PROGRAM_ID, provider);
 
-  return { provider, ammProgram, vaultProgram };
+  return { provider, ammProgram, vaultProgram, stakeForFeeProgram };
 };
 
 /**
