@@ -583,7 +583,7 @@ export default class AmmImpl implements AmmImplementation {
       new Decimal(lpAmount.toString()).mul(feeWrapperPercent).toFixed(0, Decimal.ROUND_DOWN),
     );
     const userLockAmount = feeWrapperPercent.gt(new Decimal(0)) ? lpAmount.sub(feeWrapperLockAmount) : U64_MAX;
-    
+
     const createPoolPostInstructions: TransactionInstruction[] = [];
     if (opt?.lockLiquidity) {
       const [lockEscrowPK] = deriveLockEscrowPda(poolPubkey, payer, ammProgram.programId);
@@ -681,67 +681,65 @@ export default class AmmImpl implements AmmImplementation {
 
     resultTx.push(createPoolTx);
 
-     if (feeWrapperLockAmount.gt(new BN(0))) {
-       const feeVaultConfig = await StakeForFee.getConfigs(connection);
-
-       const latestBlockHashStakeProgram = await stakeForFeeProgram.provider.connection.getLatestBlockhash(
-        stakeForFeeProgram.provider.connection.commitment,
+    if (feeWrapperLockAmount.gt(new BN(0))) {
+      const feeVaultConfig = await StakeForFee.getConfigs(connection);
+      const createFeeVaultTx = await StakeForFee.createFeeVaultWithParams(
+        connection,
+        poolPubkey,
+        tokenAMint,
+        payer,
+        feeVaultConfig[0].publicKey,
+        tokenAMint,
+        tokenBMint,
       );
 
-       const createStakeForFeeTx = await StakeForFee.createFeeVault2(
-         connection,
-         poolPubkey,
-         tokenAMint,
-         payer,
-         feeVaultConfig[0].publicKey,
-         tokenAMint,
-         tokenBMint,
-       );
+      const newCreateFeeVaultTx = new Transaction({
+        feePayer: payer,
+        ...latestBlockHash,
+      }).add(createFeeVaultTx);
 
-       const newCreateStakeForFeeTx = new Transaction({
-         feePayer: payer,
-         ...latestBlockHashStakeProgram,
-       }).add(createStakeForFeeTx);
+      resultTx.push(newCreateFeeVaultTx);
 
-       resultTx.push(newCreateStakeForFeeTx);
+      const vaultKey = deriveFeeVault(poolPubkey, STAKE_FOR_FEE_PROGRAM_ID);
+      const [lockEscrowFeeVaultPK] = deriveLockEscrowPda(poolPubkey, vaultKey, ammProgram.programId);
 
-       const vaultKey = deriveFeeVault(poolPubkey, STAKE_FOR_FEE_PROGRAM_ID);
+      const preLockFeeVaultInstructions: Array<TransactionInstruction> = [];
+      
+      const [escrowFeeVaultAta, createEscrowFeeVaultAtaIx] = await getOrCreateATAInstruction(
+        lpMint,
+        lockEscrowFeeVaultPK,
+        connection,
+        payer,
+      );
 
-       const [lockEscrowFeeVaultPK] = deriveLockEscrowPda(poolPubkey, vaultKey, ammProgram.programId);
+      createEscrowFeeVaultAtaIx && preLockFeeVaultInstructions.push(createEscrowFeeVaultAtaIx);
 
-       const [escrowFeeVaultAta] = await getOrCreateATAInstruction(
-         lpMint,
-         lockEscrowFeeVaultPK,
-         connection,
-         payer,
-       );
+      const lockTx = await ammProgram.methods
+        .lock(feeWrapperLockAmount)
+        .accounts({
+          pool: poolPubkey,
+          lockEscrow: lockEscrowFeeVaultPK,
+          owner: payer,
+          lpMint,
+          sourceTokens: payerPoolLp,
+          escrowVault: escrowFeeVaultAta,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          aVault,
+          bVault,
+          aVaultLp,
+          bVaultLp,
+          aVaultLpMint,
+          bVaultLpMint,
+        })
+        .preInstructions(preLockFeeVaultInstructions)
+        .transaction();
 
-       const lockTx = await ammProgram.methods
-         .lock(feeWrapperLockAmount)
-         .accounts({
-           pool: poolPubkey,
-           lockEscrow: lockEscrowFeeVaultPK,
-           owner: payer,
-           lpMint,
-           sourceTokens: payerPoolLp,
-           escrowVault: escrowFeeVaultAta,
-           tokenProgram: TOKEN_PROGRAM_ID,
-           aVault,
-           bVault,
-           aVaultLp,
-           bVaultLp,
-           aVaultLpMint,
-           bVaultLpMint,
-         })
-         .transaction();
-
-       const feeWraperLockTx = new Transaction({
-         feePayer: payer,
-         ...latestBlockHash,
-       }).add(lockTx);
-
-       resultTx.push(feeWraperLockTx);
-     }
+      const feeWraperLockTx = new Transaction({
+        feePayer: payer,
+        ...latestBlockHash,
+      }).add(lockTx);
+      resultTx.push(feeWraperLockTx);
+    }
 
     if (opt?.swapLiquidity) {
       const protocolTokenFee = deriveProtocolTokenFee(poolPubkey, tokenBMint, ammProgram.programId);

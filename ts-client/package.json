@@ -26,7 +26,7 @@
     "decimal.js": "^10.4.1",
     "dotenv": "^16.0.1",
     "invariant": "^2.2.4",
-    "@meteora-ag/stake-for-fee": "1.0.8-rc.2"
+    "@meteora-ag/stake-for-fee": "1.0.8-rc.8"
   },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.1",
