@@ -1,6 +1,6 @@
 {
   "name": "@mercurial-finance/dynamic-amm-sdk",
-  "version": "1.1.6",
+  "version": "1.1.7-rc.2",
   "description": "Mercurial Vaults SDK is a typescript library that allows you to interact with Mercurial v2's AMM.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -26,7 +26,8 @@
     "decimal.js": "^10.4.1",
     "dotenv": "^16.0.1",
     "invariant": "^2.2.4",
-    "@meteora-ag/stake-for-fee": "1.0.8-rc.8"
+    "@meteora-ag/stake-for-fee": "1.0.8-rc.11",
+    "@metaplex-foundation/mpl-token-metadata": "~2.13.0"
   },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.1",

@@ -11,12 +11,14 @@ import {
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
   ComputeBudgetProgram,
+  Keypair,
 } from '@solana/web3.js';
 import { TokenInfo } from '@solana/spl-token-registry';
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  getMint,
+  createMintToInstruction,
+  createSetAuthorityInstruction,
   Mint,
   MintLayout,
   NATIVE_MINT,
@@ -40,7 +42,6 @@ import {
   PoolState,
   VaultProgram,
   WithdrawQuote,
-  tokenAddressAndDecimals,
 } from './types';
 import { ERROR, SEEDS, UNLOCK_AMOUNT_BUFFER, FEE_OWNER, METAPLEX_PROGRAM, U64_MAX } from './constants';
 import { StableSwap, SwapCurve, TradeDirection } from './curve';
@@ -69,10 +70,12 @@ import {
   derivePoolAddressWithConfig as deriveConstantProductPoolAddressWithConfig,
   deriveConfigPda,
   deriveProtocolTokenFee,
+  createMint,
 } from './utils';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import Decimal from 'decimal.js';
 import sqrt from 'bn-sqrt';
+import { DataV2 } from '@metaplex-foundation/mpl-token-metadata';
 
 type Opt = {
   cluster: Cluster;
@@ -491,14 +494,11 @@ export default class AmmImpl implements AmmImplementation {
         inAmount: BN;
         minAmountOut: BN;
       };
-      stakeLiquidity?: {
-        percent?: Decimal;
-      };
       skipAAta?: boolean;
       skipBAta?: boolean;
     },
   ) {
-    const { vaultProgram, ammProgram, stakeForFeeProgram } = createProgram(connection, opt?.programId);
+    const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
 
     const [
       { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aLpMintPda },
@@ -513,6 +513,280 @@ export default class AmmImpl implements AmmImplementation {
     let aVaultLpMint = aLpMintPda;
     let bVaultLpMint = bLpMintPda;
     let preInstructions: Array<TransactionInstruction> = [];
+
+    if (!aVaultAccount) {
+      const createVaultAIx = await VaultImpl.createPermissionlessVaultInstruction(connection, payer, tokenAMint);
+      createVaultAIx && preInstructions.push(createVaultAIx);
+    } else {
+      aVaultLpMint = aVaultAccount.lpMint; // Old vault doesn't have lp mint pda
+    }
+    if (!bVaultAccount) {
+      const createVaultBIx = await VaultImpl.createPermissionlessVaultInstruction(connection, payer, tokenBMint);
+      createVaultBIx && preInstructions.push(createVaultBIx);
+    } else {
+      bVaultLpMint = bVaultAccount.lpMint; // Old vault doesn't have lp mint pda
+    }
+
+    const poolPubkey = deriveConstantProductPoolAddressWithConfig(tokenAMint, tokenBMint, config, ammProgram.programId);
+
+    const [lpMint] = PublicKey.findProgramAddressSync(
+      [Buffer.from(SEEDS.LP_MINT), poolPubkey.toBuffer()],
+      ammProgram.programId,
+    );
+
+    const [[aVaultLp], [bVaultLp]] = [
+      PublicKey.findProgramAddressSync([aVault.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
+      PublicKey.findProgramAddressSync([bVault.toBuffer(), poolPubkey.toBuffer()], ammProgram.programId),
+    ];
+
+    const [[payerTokenA, createPayerTokenAIx], [payerTokenB, createPayerTokenBIx]] = await Promise.all([
+      getOrCreateATAInstruction(tokenAMint, payer, connection),
+      getOrCreateATAInstruction(tokenBMint, payer, connection),
+    ]);
+    createPayerTokenAIx && !opt?.skipAAta && preInstructions.push(createPayerTokenAIx);
+    createPayerTokenBIx && !opt?.skipBAta && preInstructions.push(createPayerTokenBIx);
+
+    const [[protocolTokenAFee], [protocolTokenBFee]] = [
+      PublicKey.findProgramAddressSync(
+        [Buffer.from(SEEDS.FEE), tokenAMint.toBuffer(), poolPubkey.toBuffer()],
+        ammProgram.programId,
+      ),
+      PublicKey.findProgramAddressSync(
+        [Buffer.from(SEEDS.FEE), tokenBMint.toBuffer(), poolPubkey.toBuffer()],
+        ammProgram.programId,
+      ),
+    ];
+
+    const payerPoolLp = getAssociatedTokenAccount(lpMint, payer);
+
+    if (tokenAMint.equals(NATIVE_MINT)) {
+      preInstructions = preInstructions.concat(wrapSOLInstruction(payer, payerTokenA, BigInt(tokenAAmount.toString())));
+    }
+
+    if (tokenBMint.equals(NATIVE_MINT)) {
+      preInstructions = preInstructions.concat(
+        wrapSOLInstruction(
+          payer,
+          payerTokenB,
+          BigInt(tokenBAmount.add(opt?.swapLiquidity?.inAmount ?? new BN(0)).toString()),
+        ),
+      );
+    }
+
+    const [mintMetadata, _mintMetadataBump] = deriveMintMetadata(lpMint);
+
+    const createPoolPostInstructions: TransactionInstruction[] = [];
+    if (opt?.lockLiquidity) {
+      const [lockEscrowPK] = deriveLockEscrowPda(poolPubkey, payer, ammProgram.programId);
+      const createLockEscrowIx = await ammProgram.methods
+        .createLockEscrow()
+        .accounts({
+          pool: poolPubkey,
+          lockEscrow: lockEscrowPK,
+          owner: payer,
+          lpMint,
+          payer,
+          systemProgram: SystemProgram.programId,
+        })
+        .instruction();
+      createPoolPostInstructions.push(createLockEscrowIx);
+      const [escrowAta, createEscrowAtaIx] = await getOrCreateATAInstruction(lpMint, lockEscrowPK, connection, payer);
+
+      createEscrowAtaIx && createPoolPostInstructions.push(createEscrowAtaIx);
+      const lockIx = await ammProgram.methods
+        .lock(U64_MAX)
+        .accounts({
+          pool: poolPubkey,
+          lockEscrow: lockEscrowPK,
+          owner: payer,
+          lpMint,
+          sourceTokens: payerPoolLp,
+          escrowVault: escrowAta,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          aVault,
+          bVault,
+          aVaultLp,
+          bVaultLp,
+          aVaultLpMint,
+          bVaultLpMint,
+        })
+        .instruction();
+      createPoolPostInstructions.push(lockIx);
+    }
+
+    const createPermissionlessPoolTx = await ammProgram.methods
+      .initializePermissionlessConstantProductPoolWithConfig(tokenAAmount, tokenBAmount)
+      .accounts({
+        pool: poolPubkey,
+        tokenAMint,
+        tokenBMint,
+        aVault,
+        bVault,
+        aVaultLpMint,
+        bVaultLpMint,
+        aVaultLp,
+        bVaultLp,
+        lpMint,
+        payerTokenA,
+        payerTokenB,
+        protocolTokenAFee,
+        protocolTokenBFee,
+        payerPoolLp,
+        aTokenVault,
+        bTokenVault,
+        mintMetadata,
+        metadataProgram: METAPLEX_PROGRAM,
+        payer,
+        config,
+        rent: SYSVAR_RENT_PUBKEY,
+        vaultProgram: vaultProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+      .postInstructions(createPoolPostInstructions)
+      .transaction();
+
+    const resultTx: Transaction[] = [];
+    const latestBlockHash = await ammProgram.provider.connection.getLatestBlockhash(
+      ammProgram.provider.connection.commitment,
+    );
+    if (preInstructions.length) {
+      const preInstructionTx = new Transaction({
+        feePayer: payer,
+        ...latestBlockHash,
+      }).add(...preInstructions);
+      resultTx.push(preInstructionTx);
+    }
+
+    const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_400_000,
+    });
+    const createPoolTx = new Transaction({
+      feePayer: payer,
+      ...latestBlockHash,
+    })
+      .add(setComputeUnitLimitIx)
+      .add(createPermissionlessPoolTx);
+
+    resultTx.push(createPoolTx);
+
+    if (opt?.swapLiquidity) {
+      const protocolTokenFee = deriveProtocolTokenFee(poolPubkey, tokenBMint, ammProgram.programId);
+      const swapTx = await ammProgram.methods
+        .swap(opt.swapLiquidity.inAmount, opt.swapLiquidity.minAmountOut)
+        .accounts({
+          aTokenVault,
+          bTokenVault,
+          aVault,
+          bVault,
+          aVaultLp,
+          bVaultLp,
+          aVaultLpMint,
+          bVaultLpMint,
+          userSourceToken: payerTokenB,
+          userDestinationToken: payerTokenA,
+          user: payer,
+          protocolTokenFee,
+          pool: poolPubkey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          vaultProgram: vaultProgram.programId,
+        })
+        .transaction();
+      const newSwapTx = new Transaction({
+        feePayer: payer,
+        ...latestBlockHash,
+      }).add(swapTx);
+      resultTx.push(newSwapTx);
+    }
+
+    return resultTx;
+  }
+
+  public static async createPermissionlessConstantProductMemecoinPoolWithConfig(
+    connection: Connection,
+    payer: PublicKey,
+    tokenAMint: PublicKey,
+    tokenBMint: PublicKey,
+    tokenAAmount: BN,
+    tokenBAmount: BN,
+    config: PublicKey,
+    memecoinInfo: {
+      keypair: Keypair;
+      payer: PublicKey;
+      assetData: DataV2;
+      mintAuthority: PublicKey;
+      freezeAuthority: PublicKey | null;
+      decimals: number;
+      mintAmount: BN;
+    },
+    opt?: {
+      cluster?: Cluster;
+      programId?: string;
+      lockLiquidity?: boolean;
+      swapLiquidity?: {
+        inAmount: BN;
+        minAmountOut: BN;
+      };
+      stakeLiquidity?: {
+        percent?: Decimal;
+      };
+      skipAAta?: boolean;
+      skipBAta?: boolean;
+    },
+  ) {
+    const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
+
+    const { tx: mintTx, mintAccount } = await createMint(
+      connection,
+      memecoinInfo.keypair,
+      memecoinInfo.payer,
+      memecoinInfo.assetData,
+      memecoinInfo.mintAuthority,
+      null,
+      memecoinInfo.decimals,
+      TOKEN_PROGRAM_ID,
+    );
+
+    const createTokenIxs: TransactionInstruction[] = [...mintTx.instructions];
+
+    const [ata, createAtaIx] = await getOrCreateATAInstruction(
+      mintAccount.publicKey,
+      memecoinInfo.mintAuthority,
+      connection,
+      memecoinInfo.payer,
+    );
+
+    createAtaIx && createTokenIxs.push(createAtaIx);
+
+    const mintToIx = createMintToInstruction(
+      mintAccount.publicKey,
+      ata,
+      memecoinInfo.mintAuthority,
+      BigInt(memecoinInfo.mintAmount.toString()),
+    );
+    createTokenIxs.push(mintToIx);
+    const revokeMintAuthorityIx = createSetAuthorityInstruction(
+      mintAccount.publicKey,
+      memecoinInfo.mintAuthority,
+      0,
+      null,
+    );
+    createTokenIxs.push(revokeMintAuthorityIx);
+    let preInstructions: Array<TransactionInstruction> = [...createTokenIxs];
+
+    const [
+      { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aLpMintPda },
+      { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bLpMintPda },
+    ] = [getVaultPdas(tokenAMint, vaultProgram.programId), getVaultPdas(tokenBMint, vaultProgram.programId)];
+
+    const [aVaultAccount, bVaultAccount] = await Promise.all([
+      vaultProgram.account.vault.fetchNullable(aVault),
+      vaultProgram.account.vault.fetchNullable(bVault),
+    ]);
+
+    let aVaultLpMint = aLpMintPda;
+    let bVaultLpMint = bLpMintPda;
 
     if (!aVaultAccount) {
       const createVaultAIx = await VaultImpl.createPermissionlessVaultInstruction(connection, payer, tokenAMint);
@@ -682,8 +956,9 @@ export default class AmmImpl implements AmmImplementation {
     resultTx.push(createPoolTx);
 
     if (feeWrapperLockAmount.gt(new BN(0))) {
+      const preInstructions: TransactionInstruction[] = [];
       const feeVaultConfig = await StakeForFee.getConfigs(connection);
-      const createFeeVaultTx = await StakeForFee.createFeeVaultWithParams(
+      const createFeeVaultIxs = await StakeForFee.createFeeVaultInstructions(
         connection,
         poolPubkey,
         tokenAMint,
@@ -692,19 +967,13 @@ export default class AmmImpl implements AmmImplementation {
         tokenAMint,
         tokenBMint,
       );
-
-      const newCreateFeeVaultTx = new Transaction({
-        feePayer: payer,
-        ...latestBlockHash,
-      }).add(createFeeVaultTx);
-
-      resultTx.push(newCreateFeeVaultTx);
+    
+      preInstructions.push(...createFeeVaultIxs);
 
       const vaultKey = deriveFeeVault(poolPubkey, STAKE_FOR_FEE_PROGRAM_ID);
+
       const [lockEscrowFeeVaultPK] = deriveLockEscrowPda(poolPubkey, vaultKey, ammProgram.programId);
 
-      const preLockFeeVaultInstructions: Array<TransactionInstruction> = [];
-      
       const [escrowFeeVaultAta, createEscrowFeeVaultAtaIx] = await getOrCreateATAInstruction(
         lpMint,
         lockEscrowFeeVaultPK,
@@ -712,7 +981,7 @@ export default class AmmImpl implements AmmImplementation {
         payer,
       );
 
-      createEscrowFeeVaultAtaIx && preLockFeeVaultInstructions.push(createEscrowFeeVaultAtaIx);
+      createEscrowFeeVaultAtaIx && preInstructions.push(createEscrowFeeVaultAtaIx);
 
       const lockTx = await ammProgram.methods
         .lock(feeWrapperLockAmount)
@@ -731,13 +1000,14 @@ export default class AmmImpl implements AmmImplementation {
           aVaultLpMint,
           bVaultLpMint,
         })
-        .preInstructions(preLockFeeVaultInstructions)
+        .preInstructions(preInstructions)
         .transaction();
 
       const feeWraperLockTx = new Transaction({
         feePayer: payer,
         ...latestBlockHash,
       }).add(lockTx);
+
       resultTx.push(feeWraperLockTx);
     }
 

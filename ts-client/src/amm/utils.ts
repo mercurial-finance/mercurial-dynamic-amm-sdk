@@ -18,14 +18,19 @@ import {
   getAssociatedTokenAddressSync,
   RawAccount,
   createCloseAccountInstruction,
+  getMinimumBalanceForRentExemptMint,
+  MintLayout,
+  createInitializeMintInstruction,
 } from '@solana/spl-token';
 import {
   AccountInfo,
   Connection,
+  Keypair,
   ParsedAccountData,
   PublicKey,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
+  Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import invariant from 'invariant';
@@ -61,6 +66,13 @@ import {
 import { Amm as AmmIdl, IDL as AmmIDL } from './idl';
 import { TokenInfo } from '@solana/spl-token-registry';
 import Decimal from 'decimal.js';
+import {
+  createCreateMetadataAccountV3Instruction,
+  CreateMetadataAccountV3InstructionAccounts,
+  CreateMetadataAccountV3InstructionArgs,
+  DataV2,
+  PROGRAM_ID as PROGRAM_ID_META,
+} from '@metaplex-foundation/mpl-token-metadata';
 
 export const createProgram = (connection: Connection, programId?: string) => {
   const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
@@ -922,4 +934,57 @@ export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, 
         },
       }
     : { constantProduct: {} };
+}
+
+export async function createMint(
+  connection: Connection,
+  mintAccount: Keypair,
+  payer: PublicKey,
+  assetData: DataV2,
+  mintAuthority: PublicKey,
+  freezeAuthority: PublicKey | null,
+  decimals: number,
+  programId: PublicKey,
+): Promise<{ tx: Transaction; mintAccount: Keypair }> {
+  // Allocate memory for the account
+  const balanceNeeded = await getMinimumBalanceForRentExemptMint(connection);
+
+  const transaction = new Transaction();
+  transaction.add(
+    SystemProgram.createAccount({
+      fromPubkey: payer,
+      newAccountPubkey: mintAccount.publicKey,
+      lamports: balanceNeeded,
+      space: MintLayout.span,
+      programId,
+    }),
+  );
+
+  transaction.add(
+    createInitializeMintInstruction(mintAccount.publicKey, decimals, mintAuthority, freezeAuthority, programId),
+  );
+
+  const [metadata] = PublicKey.findProgramAddressSync(
+    [Buffer.from('metadata'), PROGRAM_ID_META.toBuffer(), mintAccount.publicKey.toBuffer()],
+    PROGRAM_ID_META,
+  );
+
+  const accounts: CreateMetadataAccountV3InstructionAccounts = {
+    metadata,
+    mint: mintAccount.publicKey,
+    mintAuthority: payer,
+    payer,
+    updateAuthority: payer,
+  };
+
+  const args: CreateMetadataAccountV3InstructionArgs = {
+    createMetadataAccountArgsV3: {
+      data: assetData,
+      isMutable: false,
+      collectionDetails: null,
+    },
+  };
+  transaction.add(createCreateMetadataAccountV3Instruction(accounts, args));
+
+  return { tx: transaction, mintAccount };
 }
