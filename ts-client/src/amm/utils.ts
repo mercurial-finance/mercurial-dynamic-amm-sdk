@@ -7,7 +7,11 @@ import {
   VaultIdl,
   PROGRAM_ID as VAULT_PROGRAM_ID,
 } from '@mercurial-finance/vault-sdk';
-import { STAKE_FOR_FEE_PROGRAM_ID, IDL as StakeForFeeIDL,  StakeForFee as StakeForFeeIdl } from '@meteora-ag/stake-for-fee';
+import {
+  STAKE_FOR_FEE_PROGRAM_ID,
+  IDL as StakeForFeeIDL,
+  StakeForFee as StakeForFeeIdl,
+} from '@meteora-ag/stake-for-fee';
 import { AnchorProvider, BN, Program } from '@coral-xyz/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -44,6 +48,7 @@ import {
   CONSTANT_PRODUCT_DEFAULT_TRADE_FEE_BPS,
   METAPLEX_PROGRAM,
   SEEDS,
+  U64_MAX,
 } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
@@ -988,3 +993,19 @@ export async function createMint(
 
   return { tx: transaction, mintAccount };
 }
+
+export const calculateLockAmounts = (amount: BN, feeWrapperPercent?: Decimal) => {
+  const safeFeeWrapperPercent = feeWrapperPercent?.gt(new Decimal(0))
+    ? Decimal.min(feeWrapperPercent, new Decimal(1))
+    : new Decimal(0);
+
+  const feeWrapperLockAmount = new BN(
+    new Decimal(amount.toString()).mul(safeFeeWrapperPercent).toFixed(0, Decimal.ROUND_DOWN),
+  );
+  const userLockAmount = safeFeeWrapperPercent.gt(new Decimal(0)) ? amount.sub(feeWrapperLockAmount) : U64_MAX;
+
+  return {
+    feeWrapperLockAmount,
+    userLockAmount,
+  };
+};
