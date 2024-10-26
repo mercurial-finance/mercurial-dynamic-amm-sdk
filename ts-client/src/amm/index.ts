@@ -112,11 +112,10 @@ const getPoolState = async (poolMint: PublicKey, program: AmmProgram) => {
 };
 
 const getFeeVaultState = async (publicKey: PublicKey, program: StakeForFeeProgram) => {
-  const feeVaultState = (await program.account.feeVault.fetchNullable(publicKey));
+  const feeVaultState = await program.account.feeVault.fetchNullable(publicKey);
 
   return feeVaultState;
 };
-
 
 type DecoderType = { [x: string]: (accountData: Buffer) => BN };
 const decodeAccountTypeMapper = (type: AccountType): ((accountData: Buffer) => BN) => {
@@ -365,7 +364,7 @@ export default class AmmImpl implements AmmImplementation {
     const { userLockAmount, feeWrapperLockAmount } = calculateLockAmounts(lpAmount, opt?.stakeLiquidity?.percent);
 
     const createPoolPostInstructions: TransactionInstruction[] = [];
-    if (opt?.lockLiquidity) {
+    if (opt?.lockLiquidity && userLockAmount.gt(new BN(0))) {
       const [lockEscrowPK] = deriveLockEscrowPda(poolPubkey, payer, ammProgram.programId);
       const createLockEscrowIx = await ammProgram.methods
         .createLockEscrow()
@@ -922,7 +921,7 @@ export default class AmmImpl implements AmmImplementation {
     const { userLockAmount, feeWrapperLockAmount } = calculateLockAmounts(lpAmount, opt?.stakeLiquidity?.percent);
 
     const createPoolPostInstructions: TransactionInstruction[] = [];
-    if (opt?.lockLiquidity) {
+    if (opt?.lockLiquidity && userLockAmount.gt(new BN(0))) {
       const [lockEscrowPK] = deriveLockEscrowPda(poolPubkey, payer, ammProgram.programId);
       const createLockEscrowIx = await ammProgram.methods
         .createLockEscrow()
@@ -2473,7 +2472,7 @@ export default class AmmImpl implements AmmImplementation {
     createEscrowAtaIx && preInstructions.push(createEscrowAtaIx);
 
     const { userLockAmount, feeWrapperLockAmount } = calculateLockAmounts(amount, opt?.stakeLiquidity?.percent);
-    
+
     if (feeWrapperLockAmount.gt(new BN(0))) {
       const { stakeForFeeProgram } = createProgram(this.program.provider.connection);
 
