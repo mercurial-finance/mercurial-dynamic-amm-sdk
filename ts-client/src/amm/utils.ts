@@ -7,6 +7,11 @@ import {
   VaultIdl,
   PROGRAM_ID as VAULT_PROGRAM_ID,
 } from '@mercurial-finance/vault-sdk';
+import {
+  STAKE_FOR_FEE_PROGRAM_ID,
+  IDL as StakeForFeeIDL,
+  StakeForFee as StakeForFeeIdl,
+} from '@meteora-ag/stake-for-fee';
 import { AnchorProvider, BN, Program } from '@coral-xyz/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -17,14 +22,19 @@ import {
   getAssociatedTokenAddressSync,
   RawAccount,
   createCloseAccountInstruction,
+  getMinimumBalanceForRentExemptMint,
+  MintLayout,
+  createInitializeMintInstruction,
 } from '@solana/spl-token';
 import {
   AccountInfo,
   Connection,
+  Keypair,
   ParsedAccountData,
   PublicKey,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
+  Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import invariant from 'invariant';
@@ -38,6 +48,7 @@ import {
   CONSTANT_PRODUCT_DEFAULT_TRADE_FEE_BPS,
   METAPLEX_PROGRAM,
   SEEDS,
+  U64_MAX,
 } from './constants';
 import { ConstantProductSwap, StableSwap, SwapCurve, TradeDirection } from './curve';
 import {
@@ -60,13 +71,21 @@ import {
 import { Amm as AmmIdl, IDL as AmmIDL } from './idl';
 import { TokenInfo } from '@solana/spl-token-registry';
 import Decimal from 'decimal.js';
+import {
+  createCreateMetadataAccountV3Instruction,
+  CreateMetadataAccountV3InstructionAccounts,
+  CreateMetadataAccountV3InstructionArgs,
+  DataV2,
+  PROGRAM_ID as PROGRAM_ID_META,
+} from '@metaplex-foundation/mpl-token-metadata';
 
 export const createProgram = (connection: Connection, programId?: string) => {
   const provider = new AnchorProvider(connection, {} as any, AnchorProvider.defaultOptions());
   const ammProgram = new Program<AmmIdl>(AmmIDL, programId ?? PROGRAM_ID, provider);
   const vaultProgram = new Program<VaultIdl>(VaultIDL, VAULT_PROGRAM_ID, provider);
+  const stakeForFeeProgram = new Program<StakeForFeeIdl>(StakeForFeeIDL, STAKE_FOR_FEE_PROGRAM_ID, provider);
 
-  return { provider, ammProgram, vaultProgram };
+  return { provider, ammProgram, vaultProgram, stakeForFeeProgram };
 };
 
 /**
@@ -921,3 +940,72 @@ export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, 
       }
     : { constantProduct: {} };
 }
+
+export async function createMint(
+  connection: Connection,
+  mintAccount: Keypair,
+  payer: PublicKey,
+  assetData: DataV2,
+  mintAuthority: PublicKey,
+  freezeAuthority: PublicKey | null,
+  decimals: number,
+  programId: PublicKey,
+): Promise<{ tx: Transaction; mintAccount: Keypair }> {
+  // Allocate memory for the account
+  const balanceNeeded = await getMinimumBalanceForRentExemptMint(connection);
+
+  const transaction = new Transaction();
+  transaction.add(
+    SystemProgram.createAccount({
+      fromPubkey: payer,
+      newAccountPubkey: mintAccount.publicKey,
+      lamports: balanceNeeded,
+      space: MintLayout.span,
+      programId,
+    }),
+  );
+
+  transaction.add(
+    createInitializeMintInstruction(mintAccount.publicKey, decimals, mintAuthority, freezeAuthority, programId),
+  );
+
+  const [metadata] = PublicKey.findProgramAddressSync(
+    [Buffer.from('metadata'), PROGRAM_ID_META.toBuffer(), mintAccount.publicKey.toBuffer()],
+    PROGRAM_ID_META,
+  );
+
+  const accounts: CreateMetadataAccountV3InstructionAccounts = {
+    metadata,
+    mint: mintAccount.publicKey,
+    mintAuthority: payer,
+    payer,
+    updateAuthority: payer,
+  };
+
+  const args: CreateMetadataAccountV3InstructionArgs = {
+    createMetadataAccountArgsV3: {
+      data: assetData,
+      isMutable: false,
+      collectionDetails: null,
+    },
+  };
+  transaction.add(createCreateMetadataAccountV3Instruction(accounts, args));
+
+  return { tx: transaction, mintAccount };
+}
+
+export const calculateLockAmounts = (amount: BN, feeWrapperPercent?: Decimal) => {
+  const safeFeeWrapperPercent = feeWrapperPercent?.gt(new Decimal(0))
+    ? Decimal.min(feeWrapperPercent, new Decimal(1))
+    : new Decimal(0);
+
+  const feeWrapperLockAmount = new BN(
+    new Decimal(amount.toString()).mul(safeFeeWrapperPercent).toFixed(0, Decimal.ROUND_DOWN),
+  );
+  const userLockAmount = safeFeeWrapperPercent.gt(new Decimal(0)) ? amount.sub(feeWrapperLockAmount) : U64_MAX;
+
+  return {
+    feeWrapperLockAmount,
+    userLockAmount,
+  };
+};
