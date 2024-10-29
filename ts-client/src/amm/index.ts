@@ -2451,7 +2451,7 @@ export default class AmmImpl implements AmmImplementation {
     const [lockEscrowPK] = deriveLockEscrowPda(this.address, owner, this.program.programId);
 
     const preInstructions: TransactionInstruction[] = [];
-    const postInstructions: Array<TransactionInstruction> = [];
+    const stakeForFeeInstructions: Array<TransactionInstruction> = [];
 
     const lockEscrowAccount = await this.program.account.lockEscrow.fetchNullable(lockEscrowPK);
     if (!lockEscrowAccount) {
@@ -2494,7 +2494,7 @@ export default class AmmImpl implements AmmImplementation {
           this.poolState.tokenBMint,
         );
 
-        postInstructions.push(...createFeeVaultIxs);
+        stakeForFeeInstructions.push(...createFeeVaultIxs);
       }
 
       const [lockEscrowFeeVaultPK] = deriveLockEscrowPda(this.address, vaultKey, this.program.programId);
@@ -2506,7 +2506,7 @@ export default class AmmImpl implements AmmImplementation {
         payer,
       );
 
-      createEscrowFeeVaultAtaIx && postInstructions.push(createEscrowFeeVaultAtaIx);
+      createEscrowFeeVaultAtaIx && stakeForFeeInstructions.push(createEscrowFeeVaultAtaIx);
 
       const lockTx = await this.program.methods
         .lock(feeWrapperLockAmount)
@@ -2527,7 +2527,7 @@ export default class AmmImpl implements AmmImplementation {
         })
         .instruction();
 
-      postInstructions.push(lockTx);
+      stakeForFeeInstructions.push(lockTx);
     }
 
     const transaction = new Transaction({
@@ -2553,14 +2553,14 @@ export default class AmmImpl implements AmmImplementation {
           aVaultLpMint: this.vaultA.vaultState.lpMint,
           bVaultLpMint: this.vaultB.vaultState.lpMint,
         })
-        .postInstructions(postInstructions)
+        .postInstructions(stakeForFeeInstructions)
         .preInstructions(preInstructions)
         .transaction();
 
       return transaction.add(lockTx);
     }
 
-    return transaction.add(...postInstructions);
+    return transaction.add(...stakeForFeeInstructions);
   }
 
   public async claimLockFee(owner: PublicKey, maxAmount: BN): Promise<Transaction> {
