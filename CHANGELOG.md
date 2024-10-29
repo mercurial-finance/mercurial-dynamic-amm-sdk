@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## dynamic-amm-quote - PR[#171](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/171)
+
+### Fixed
+
+- Fix `compute_quote` result doesn't matches simulation result
+
 ## @mercurial-finance/dynamic-amm-sdk [1.1.7] - PR[#168](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/168)
 
 ### Added

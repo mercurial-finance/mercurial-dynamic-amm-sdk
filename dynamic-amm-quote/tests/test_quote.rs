@@ -10,6 +10,8 @@ use dynamic_amm_quote::QuoteData;
 use prog_dynamic_amm::state::Pool;
 use prog_dynamic_vault::state::Vault;
 use solana_program_test::*;
+use solana_sdk::account::AccountSharedData;
+use solana_sdk::clock::Clock;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::transaction::Transaction;
 use solana_sdk::{
@@ -43,11 +45,16 @@ pub async fn process_and_assert_ok(
     assert!(banks_client.process_transaction(tx.clone()).await.is_ok());
 }
 
-async fn setup_accounts(
+struct SetupContextResult {
+    mock_user_keypair: Keypair,
+    banks_client: BanksClient,
+}
+
+async fn setup_accounts_and_start(
     rpc_client: &RpcClient,
-    test: &mut ProgramTest,
+    mut test: ProgramTest,
     pool_key: Pubkey,
-) -> Keypair {
+) -> SetupContextResult {
     let mock_keypair = Keypair::new();
 
     let pool_account = rpc_client.get_account(&pool_key).await.unwrap();
@@ -79,6 +86,7 @@ async fn setup_accounts(
         vault_a_state.lp_mint,
         vault_b_state.token_vault,
         vault_b_state.lp_mint,
+        sysvar::clock::ID,
     ];
 
     let accounts = rpc_client
@@ -86,15 +94,17 @@ async fn setup_accounts(
         .await
         .unwrap();
 
-    let keyed_accounts = account_keys.iter().zip(accounts);
+    let keyed_accounts = account_keys.iter().zip(accounts).collect::<Vec<_>>();
+    let pool_related_accounts = &keyed_accounts[..account_keys.len() - 1];
+    let clock_account = keyed_accounts.iter().last();
 
-    for (key, account) in keyed_accounts {
+    for (key, account) in pool_related_accounts {
         if let Some(account) = account {
             if account.owner.eq(&anchor_spl::token::ID)
                 && account.data.len() == anchor_spl::token::spl_token::state::Mint::LEN
             {
                 let token_state = anchor_spl::token::spl_token::state::Account {
-                    mint: *key,
+                    mint: *key.to_owned(),
                     owner: mock_keypair.pubkey(),
                     amount: 100_000_000_000_000_000,
                     state: AccountState::Initialized,
@@ -124,7 +134,7 @@ async fn setup_accounts(
                 );
             }
 
-            test.add_account(*key, account.clone());
+            test.add_account(*key.to_owned(), account.clone());
         }
     }
 
@@ -138,7 +148,19 @@ async fn setup_accounts(
         },
     );
 
-    mock_keypair
+    let mut context = test.start_with_context().await;
+
+    if let Some(clock_account) = clock_account.and_then(|(_key, account)| account.as_ref()) {
+        let share_clock_account: AccountSharedData = clock_account.to_owned().into();
+        let clock = bincode::deserialize::<Clock>(clock_account.data.as_ref()).unwrap();
+        context.set_account(&sysvar::clock::ID, &share_clock_account);
+        context.warp_to_slot(clock.slot).unwrap();
+    }
+
+    SetupContextResult {
+        mock_user_keypair: mock_keypair,
+        banks_client: context.banks_client,
+    }
 }
 
 async fn get_quote_data(banks_client: &mut BanksClient, pool: Pubkey) -> QuoteData {
@@ -309,52 +331,61 @@ async fn swap(
 
 #[tokio::test]
 async fn test_quote() {
-    let USDC_USDT = solana_sdk::pubkey!("32D4zRxNc1EssbJieVHfPhZM3rH6CzfUPrWUuWxD9prG");
-    let mut program_test = ProgramTest::default();
+    let pools: [Pubkey; 3] = [
+        solana_sdk::pubkey!("32D4zRxNc1EssbJieVHfPhZM3rH6CzfUPrWUuWxD9prG"),
+        solana_sdk::pubkey!("12axRhGcPfHdg345DSdtzrj51vkf6uk2jAxDF5E1cQY"),
+        solana_sdk::pubkey!("HKyrNi2yfBQyFY7jH3c2h9YqVrmuLqe3tUZXFQhNY6PW"),
+    ];
 
-    program_test.prefer_bpf(true);
-    program_test.add_program("dynamic_amm", prog_dynamic_amm::ID, None);
-    program_test.add_program("dynamic_vault", prog_dynamic_vault::ID, None);
+    for pool in pools {
+        let mut program_test = ProgramTest::default();
 
-    let rpc_client = RpcClient::new(Cluster::Mainnet.url().to_owned());
+        program_test.prefer_bpf(true);
+        program_test.add_program("dynamic_amm", prog_dynamic_amm::ID, None);
+        program_test.add_program("dynamic_vault", prog_dynamic_vault::ID, None);
 
-    let mock_user_keypair = setup_accounts(&rpc_client, &mut program_test, USDC_USDT).await;
+        let rpc_client = RpcClient::new(Cluster::Mainnet.url().to_owned());
 
-    let (mut banks_client, _, _) = program_test.start().await;
+        let SetupContextResult {
+            mock_user_keypair,
+            mut banks_client,
+        } = setup_accounts_and_start(&rpc_client, program_test, pool).await;
 
-    let pool_state = banks_client
-        .get_account(USDC_USDT)
-        .await
-        .unwrap()
-        .map(|account| Pool::try_deserialize(&mut account.data.as_ref()).unwrap())
-        .unwrap();
+        let pool_state = banks_client
+            .get_account(pool)
+            .await
+            .unwrap()
+            .map(|account| Pool::try_deserialize(&mut account.data.as_ref()).unwrap())
+            .unwrap();
 
-    for (in_token_mint, out_token_mint) in [
-        (pool_state.token_a_mint, pool_state.token_b_mint),
-        (pool_state.token_b_mint, pool_state.token_a_mint),
-    ] {
-        let in_amount = 100_000_000;
-        let quote_data = get_quote_data(&mut banks_client, USDC_USDT).await;
-        let quote =
-            dynamic_amm_quote::compute_quote(in_token_mint, in_amount, quote_data.clone()).unwrap();
+        for (in_token_mint, out_token_mint) in [
+            (pool_state.token_a_mint, pool_state.token_b_mint),
+            (pool_state.token_b_mint, pool_state.token_a_mint),
+        ] {
+            let in_amount = 100_000_000;
+            let quote_data = get_quote_data(&mut banks_client, pool).await;
+            let quote =
+                dynamic_amm_quote::compute_quote(in_token_mint, in_amount, quote_data.clone())
+                    .unwrap();
 
-        println!("{:#?}", quote);
+            println!("{:#?}", quote);
 
-        let token_received = swap(
-            &mut banks_client,
-            USDC_USDT,
-            in_amount,
-            quote.out_amount,
-            in_token_mint,
-            out_token_mint,
-            quote_data,
-            &mock_user_keypair,
-        )
-        .await;
+            let token_received = swap(
+                &mut banks_client,
+                pool,
+                in_amount,
+                quote.out_amount,
+                in_token_mint,
+                out_token_mint,
+                quote_data,
+                &mock_user_keypair,
+            )
+            .await;
 
-        assert_eq!(
-            quote.out_amount, token_received,
-            "Swap quote amount doesn't matches actual swap out amount"
-        );
+            assert_eq!(
+                quote.out_amount, token_received,
+                "Swap quote amount doesn't matches actual swap out amount"
+            );
+        }
     }
 }
