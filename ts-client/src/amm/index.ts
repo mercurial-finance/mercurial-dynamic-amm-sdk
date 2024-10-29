@@ -2530,31 +2530,37 @@ export default class AmmImpl implements AmmImplementation {
       postInstructions.push(lockTx);
     }
 
-    const lockTx = await this.program.methods
-      .lock(userLockAmount)
-      .accounts({
-        pool: this.address,
-        lockEscrow: lockEscrowPK,
-        owner: payer,
-        lpMint: this.poolState.lpMint,
-        sourceTokens: userAta,
-        escrowVault: escrowAta,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        aVault: this.poolState.aVault,
-        bVault: this.poolState.bVault,
-        aVaultLp: this.poolState.aVaultLp,
-        bVaultLp: this.poolState.bVaultLp,
-        aVaultLpMint: this.vaultA.vaultState.lpMint,
-        bVaultLpMint: this.vaultB.vaultState.lpMint,
-      })
-      .postInstructions(postInstructions)
-      .preInstructions(preInstructions)
-      .transaction();
-
-    return new Transaction({
+    const transaction = new Transaction({
       feePayer: payer,
       ...(await this.program.provider.connection.getLatestBlockhash(this.program.provider.connection.commitment)),
-    }).add(lockTx);
+    });
+
+    if (userLockAmount.gt(new BN(0))) {
+      const lockTx = await this.program.methods
+        .lock(userLockAmount)
+        .accounts({
+          pool: this.address,
+          lockEscrow: lockEscrowPK,
+          owner: payer,
+          lpMint: this.poolState.lpMint,
+          sourceTokens: userAta,
+          escrowVault: escrowAta,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          aVault: this.poolState.aVault,
+          bVault: this.poolState.bVault,
+          aVaultLp: this.poolState.aVaultLp,
+          bVaultLp: this.poolState.bVaultLp,
+          aVaultLpMint: this.vaultA.vaultState.lpMint,
+          bVaultLpMint: this.vaultB.vaultState.lpMint,
+        })
+        .postInstructions(postInstructions)
+        .preInstructions(preInstructions)
+        .transaction();
+
+      return transaction.add(lockTx);
+    }
+
+    return transaction.add(...postInstructions);
   }
 
   public async claimLockFee(owner: PublicKey, maxAmount: BN): Promise<Transaction> {
