@@ -161,6 +161,11 @@ pub fn compute_quote(
         .protocol_trading_fee(trade_fee)
         .context("Fail to calculate protocol trading fee")?;
 
+    // Protocol fee is a cut from trade fee
+    let trade_fee = trade_fee
+        .checked_sub(protocol_fee)
+        .context("Fail to calculate trade fee")?;
+
     let in_amount_after_protocol_fee = in_amount
         .checked_sub(protocol_fee.try_into()?)
         .context("Fail to calculate in_amount_after_protocol_fee")?;
