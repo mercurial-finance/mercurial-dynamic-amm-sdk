@@ -461,13 +461,11 @@ export default class AmmImpl implements AmmImplementation {
 
     if (feeWrapperLockAmount.gt(new BN(0))) {
       const preInstructions: TransactionInstruction[] = [];
-      const feeVaultConfig = await StakeForFee.getConfigs(connection);
       const createFeeVaultIxs = await StakeForFee.createFeeVaultInstructions(
         connection,
         poolPubkey,
         tokenAMint,
         payer,
-        feeVaultConfig[0].publicKey,
         tokenAMint,
         tokenBMint,
       );
@@ -802,6 +800,12 @@ export default class AmmImpl implements AmmImplementation {
       };
       skipAAta?: boolean;
       skipBAta?: boolean;
+      feeVault?: {
+        secondsToFullUnlock: BN;
+        topListLength: number;
+        startClaimFeeTimestamp: BN;
+        unstakeLockDuration: BN
+      };
     },
   ) {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
@@ -1019,15 +1023,17 @@ export default class AmmImpl implements AmmImplementation {
 
     if (feeWrapperLockAmount.gt(new BN(0))) {
       const preInstructions: TransactionInstruction[] = [];
-      const feeVaultConfig = await StakeForFee.getConfigs(connection);
+
+      const initFeeVaultParams = opt?.feeVault ? { ...opt.feeVault, padding: new Array(64).fill(0) } : undefined;
+      
       const createFeeVaultIxs = await StakeForFee.createFeeVaultInstructions(
         connection,
         poolPubkey,
         tokenAMint,
         payer,
-        feeVaultConfig[0].publicKey,
         tokenAMint,
         tokenBMint,
+        initFeeVaultParams,
       );
       preInstructions.push(...createFeeVaultIxs);
 
@@ -2479,13 +2485,11 @@ export default class AmmImpl implements AmmImplementation {
       const vaultKey = deriveFeeVault(this.address, STAKE_FOR_FEE_PROGRAM_ID);
       const vaultState = await getFeeVaultState(vaultKey, stakeForFeeProgram);
       if (!vaultState) {
-        const feeVaultConfig = await StakeForFee.getConfigs(this.program.provider.connection);
         const createFeeVaultIxs = await StakeForFee.createFeeVaultInstructions(
           this.program.provider.connection,
           this.address,
           this.poolState.tokenAMint,
           payer,
-          feeVaultConfig[0].publicKey,
           this.poolState.tokenAMint,
           this.poolState.tokenBMint,
         );
