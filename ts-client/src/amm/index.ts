@@ -803,8 +803,8 @@ export default class AmmImpl implements AmmImplementation {
       feeVault?: {
         secondsToFullUnlock: BN;
         topListLength: number;
-        startClaimFeeTimestamp: BN;
-        unstakeLockDuration: BN
+        startClaimFeeTimestamp: BN | null;
+        unstakeLockDuration: BN;
       };
     },
   ) {
