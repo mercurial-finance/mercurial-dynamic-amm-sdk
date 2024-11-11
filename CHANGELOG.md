@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [1.1.11] - PR[#170](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/170)
+
+### Fixed
+
+- Fix user lock amount was 0
+
 ## @mercurial-finance/dynamic-amm-sdk [1.1.10] - PR[#174](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/174)
 
 ### Changed

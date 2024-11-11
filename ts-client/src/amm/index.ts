@@ -2478,23 +2478,15 @@ export default class AmmImpl implements AmmImplementation {
     createEscrowAtaIx && preInstructions.push(createEscrowAtaIx);
 
     const { userLockAmount, feeWrapperLockAmount } = calculateLockAmounts(amount, opt?.stakeLiquidity?.percent);
-
+  
     if (feeWrapperLockAmount.gt(new BN(0))) {
       const { stakeForFeeProgram } = createProgram(this.program.provider.connection);
 
       const vaultKey = deriveFeeVault(this.address, STAKE_FOR_FEE_PROGRAM_ID);
       const vaultState = await getFeeVaultState(vaultKey, stakeForFeeProgram);
-      if (!vaultState) {
-        const createFeeVaultIxs = await StakeForFee.createFeeVaultInstructions(
-          this.program.provider.connection,
-          this.address,
-          this.poolState.tokenAMint,
-          payer,
-          this.poolState.tokenAMint,
-          this.poolState.tokenBMint,
-        );
 
-        stakeForFeeInstructions.push(...createFeeVaultIxs);
+      if (!vaultState) {
+         throw new Error(`Fee vault not found for pool ${this.address.toBase58()}`);
       }
 
       const [lockEscrowFeeVaultPK] = deriveLockEscrowPda(this.address, vaultKey, this.program.programId);
@@ -2507,7 +2499,7 @@ export default class AmmImpl implements AmmImplementation {
       );
 
       createEscrowFeeVaultAtaIx && stakeForFeeInstructions.push(createEscrowFeeVaultAtaIx);
-
+      
       const lockTx = await this.program.methods
         .lock(feeWrapperLockAmount)
         .accounts({
