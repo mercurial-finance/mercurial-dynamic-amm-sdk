@@ -2451,7 +2451,7 @@ export default class AmmImpl implements AmmImplementation {
     const [lockEscrowPK] = deriveLockEscrowPda(this.address, owner, this.program.programId);
 
     const preInstructions: TransactionInstruction[] = [];
-    const postInstructions: Array<TransactionInstruction> = [];
+    const stakeForFeeInstructions: Array<TransactionInstruction> = [];
 
     const lockEscrowAccount = await this.program.account.lockEscrow.fetchNullable(lockEscrowPK);
     if (!lockEscrowAccount) {
@@ -2478,23 +2478,15 @@ export default class AmmImpl implements AmmImplementation {
     createEscrowAtaIx && preInstructions.push(createEscrowAtaIx);
 
     const { userLockAmount, feeWrapperLockAmount } = calculateLockAmounts(amount, opt?.stakeLiquidity?.percent);
-
+  
     if (feeWrapperLockAmount.gt(new BN(0))) {
       const { stakeForFeeProgram } = createProgram(this.program.provider.connection);
 
       const vaultKey = deriveFeeVault(this.address, STAKE_FOR_FEE_PROGRAM_ID);
       const vaultState = await getFeeVaultState(vaultKey, stakeForFeeProgram);
-      if (!vaultState) {
-        const createFeeVaultIxs = await StakeForFee.createFeeVaultInstructions(
-          this.program.provider.connection,
-          this.address,
-          this.poolState.tokenAMint,
-          payer,
-          this.poolState.tokenAMint,
-          this.poolState.tokenBMint,
-        );
 
-        postInstructions.push(...createFeeVaultIxs);
+      if (!vaultState) {
+         throw new Error(`Fee vault not found for pool ${this.address.toBase58()}`);
       }
 
       const [lockEscrowFeeVaultPK] = deriveLockEscrowPda(this.address, vaultKey, this.program.programId);
@@ -2506,8 +2498,8 @@ export default class AmmImpl implements AmmImplementation {
         payer,
       );
 
-      createEscrowFeeVaultAtaIx && postInstructions.push(createEscrowFeeVaultAtaIx);
-
+      createEscrowFeeVaultAtaIx && stakeForFeeInstructions.push(createEscrowFeeVaultAtaIx);
+      
       const lockTx = await this.program.methods
         .lock(feeWrapperLockAmount)
         .accounts({
@@ -2527,34 +2519,40 @@ export default class AmmImpl implements AmmImplementation {
         })
         .instruction();
 
-      postInstructions.push(lockTx);
+      stakeForFeeInstructions.push(lockTx);
     }
 
-    const lockTx = await this.program.methods
-      .lock(userLockAmount)
-      .accounts({
-        pool: this.address,
-        lockEscrow: lockEscrowPK,
-        owner: payer,
-        lpMint: this.poolState.lpMint,
-        sourceTokens: userAta,
-        escrowVault: escrowAta,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        aVault: this.poolState.aVault,
-        bVault: this.poolState.bVault,
-        aVaultLp: this.poolState.aVaultLp,
-        bVaultLp: this.poolState.bVaultLp,
-        aVaultLpMint: this.vaultA.vaultState.lpMint,
-        bVaultLpMint: this.vaultB.vaultState.lpMint,
-      })
-      .postInstructions(postInstructions)
-      .preInstructions(preInstructions)
-      .transaction();
-
-    return new Transaction({
+    const transaction = new Transaction({
       feePayer: payer,
       ...(await this.program.provider.connection.getLatestBlockhash(this.program.provider.connection.commitment)),
-    }).add(lockTx);
+    });
+
+    if (userLockAmount.gt(new BN(0))) {
+      const lockTx = await this.program.methods
+        .lock(userLockAmount)
+        .accounts({
+          pool: this.address,
+          lockEscrow: lockEscrowPK,
+          owner: payer,
+          lpMint: this.poolState.lpMint,
+          sourceTokens: userAta,
+          escrowVault: escrowAta,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          aVault: this.poolState.aVault,
+          bVault: this.poolState.bVault,
+          aVaultLp: this.poolState.aVaultLp,
+          bVaultLp: this.poolState.bVaultLp,
+          aVaultLpMint: this.vaultA.vaultState.lpMint,
+          bVaultLpMint: this.vaultB.vaultState.lpMint,
+        })
+        .postInstructions(stakeForFeeInstructions)
+        .preInstructions(preInstructions)
+        .transaction();
+
+      return transaction.add(lockTx);
+    }
+
+    return transaction.add(...stakeForFeeInstructions);
   }
 
   public async claimLockFee(owner: PublicKey, maxAmount: BN): Promise<Transaction> {
