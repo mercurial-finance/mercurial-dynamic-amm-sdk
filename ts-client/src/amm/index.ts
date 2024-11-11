@@ -1025,7 +1025,7 @@ export default class AmmImpl implements AmmImplementation {
       const preInstructions: TransactionInstruction[] = [];
 
       const initFeeVaultParams = opt?.feeVault ? { ...opt.feeVault, padding: new Array(64).fill(0) } : undefined;
-      
+
       const createFeeVaultIxs = await StakeForFee.createFeeVaultInstructions(
         connection,
         poolPubkey,
@@ -1985,6 +1985,97 @@ export default class AmmImpl implements AmmImplementation {
       feePayer: owner,
       ...(await this.program.provider.connection.getLatestBlockhash(this.program.provider.connection.commitment)),
     }).add(swapTx);
+  }
+
+  /**
+   * `swap` is a function that takes in a `PublicKey` of the owner, a `PublicKey` of the input token
+   * mint, an `BN` of the input amount of lamports, and an `BN` of the output amount of lamports. It
+   * returns a `Promise<Transaction>` of the swap transaction
+   * @param {PublicKey} owner - The public key of the user who is swapping
+   * @param {PublicKey} inTokenMint - The mint of the token you're swapping from.
+   * @param {BN} inAmountLamport - The amount of the input token you want to swap.
+   * @param {BN} outAmountLamport - The minimum amount of the output token you want to receive.
+   * @param {PublicKey} [referralOwner] - The referrer wallet will receive the host fee, fee will be transferred to ATA of referrer wallet.
+   * @returns A transaction object
+   */
+  public async swapAndStakeForFee(
+    owner: PublicKey,
+    inTokenMint: PublicKey,
+    inAmountLamport: BN,
+    outAmountLamport: BN,
+    stakeForFee: StakeForFee,
+  ): Promise<Transaction[]> {
+    const resultTxs: Transaction[] = [];
+    const [sourceToken, destinationToken] = this.tokenAMint.address.equals(inTokenMint)
+      ? [this.poolState.tokenAMint, this.poolState.tokenBMint]
+      : [this.poolState.tokenBMint, this.poolState.tokenAMint];
+
+    const protocolTokenFee = this.tokenAMint.address.equals(inTokenMint)
+      ? this.poolState.protocolTokenAFee
+      : this.poolState.protocolTokenBFee;
+
+    let preInstructions: Array<TransactionInstruction> = [];
+    const [[userSourceToken, createUserSourceIx], [userDestinationToken, createUserDestinationIx]] =
+      await this.createATAPreInstructions(owner, [sourceToken, destinationToken]);
+
+    createUserSourceIx && preInstructions.push(createUserSourceIx);
+    createUserDestinationIx && preInstructions.push(createUserDestinationIx);
+
+    if (sourceToken.equals(NATIVE_MINT)) {
+      preInstructions = preInstructions.concat(
+        wrapSOLInstruction(owner, userSourceToken, BigInt(inAmountLamport.toString())),
+      );
+    }
+
+    const postInstructions: Array<TransactionInstruction> = [];
+    if (NATIVE_MINT.equals(destinationToken)) {
+      const unwrapSOLIx = await unwrapSOLInstruction(owner);
+      unwrapSOLIx && postInstructions.push(unwrapSOLIx);
+    }
+
+    const remainingAccounts = this.swapCurve.getRemainingAccounts();
+
+    const swapTx = await this.program.methods
+      .swap(inAmountLamport, outAmountLamport)
+      .accounts({
+        aTokenVault: this.vaultA.vaultState.tokenVault,
+        bTokenVault: this.vaultB.vaultState.tokenVault,
+        aVault: this.poolState.aVault,
+        bVault: this.poolState.bVault,
+        aVaultLp: this.poolState.aVaultLp,
+        bVaultLp: this.poolState.bVaultLp,
+        aVaultLpMint: this.vaultA.vaultState.lpMint,
+        bVaultLpMint: this.vaultB.vaultState.lpMint,
+        userSourceToken,
+        userDestinationToken,
+        user: owner,
+        protocolTokenFee,
+        pool: this.address,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        vaultProgram: this.vaultProgram.programId,
+      })
+      .remainingAccounts(remainingAccounts)
+      .preInstructions(preInstructions)
+      .postInstructions(postInstructions)
+      .transaction();
+
+    resultTxs.push(
+      new Transaction({
+        feePayer: owner,
+        ...(await this.program.provider.connection.getLatestBlockhash(this.program.provider.connection.commitment)),
+      }).add(swapTx),
+    );
+
+    const stakeTx = await stakeForFee.stake(outAmountLamport, owner);
+
+    resultTxs.push(
+      new Transaction({
+        feePayer: owner,
+        ...(await this.program.provider.connection.getLatestBlockhash(this.program.provider.connection.commitment)),
+      }).add(stakeTx),
+    );
+
+    return resultTxs;
   }
 
   /**
