@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [1.1.13] - PR[#176](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/176)
+
+### Added
+
+- Fix function `swapAndStakeForFee`
+
 ## @mercurial-finance/dynamic-amm-sdk [1.1.12] - PR[#173](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/173)
 
 ### Added
