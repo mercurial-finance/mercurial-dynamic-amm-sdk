@@ -464,7 +464,6 @@ export default class AmmImpl implements AmmImplementation {
       const createFeeVaultIxs = await StakeForFee.createFeeVaultInstructions(
         connection,
         poolPubkey,
-        tokenAMint,
         payer,
         tokenAMint,
         tokenBMint,
@@ -803,7 +802,7 @@ export default class AmmImpl implements AmmImplementation {
       feeVault?: {
         secondsToFullUnlock: BN;
         topListLength: number;
-        startClaimFeeTimestamp: BN | null;
+        startFeeDistributeTimestamp: BN | null;
         unstakeLockDuration: BN;
       };
     },
@@ -1029,7 +1028,6 @@ export default class AmmImpl implements AmmImplementation {
       const createFeeVaultIxs = await StakeForFee.createFeeVaultInstructions(
         connection,
         poolPubkey,
-        tokenAMint,
         payer,
         tokenAMint,
         tokenBMint,

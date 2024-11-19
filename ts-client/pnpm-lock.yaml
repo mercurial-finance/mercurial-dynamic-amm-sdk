@@ -27,8 +27,8 @@ importers:
         specifier: ~2.13.0
         version: 2.13.0(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(utf-8-validate@5.0.10)
       '@meteora-ag/stake-for-fee':
-        specifier: 1.0.22
-        version: 1.0.22(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
+        specifier: 1.0.26
+        version: 1.0.26(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
       '@project-serum/anchor':
         specifier: ^0.24.2
         version: 0.24.2(bufferutil@4.0.7)(utf-8-validate@5.0.10)
@@ -398,8 +398,8 @@ packages:
   '@metaplex-foundation/mpl-token-metadata@2.13.0':
     resolution: {integrity: sha512-Fl/8I0L9rv4bKTV/RAl5YIbJe9SnQPInKvLz+xR1fEc4/VQkuCn3RPgypfUMEKWmCznzaw4sApDxy6CFS4qmJw==}
 
-  '@meteora-ag/stake-for-fee@1.0.22':
-    resolution: {integrity: sha512-PqFKj+c/wzPM1uHAQQSP1tRhEvoKkjGweHHMiDy8S9qGM8WC24Y8ZNCAPikUitP01HqAZ6JVWYzBHO4UlIUzSA==}
+  '@meteora-ag/stake-for-fee@1.0.26':
+    resolution: {integrity: sha512-yRjjl+/xWNNNth7aI6jlLYHmkod2xKZ2Z2di6qUusLUb1806k06zMusFel8pkqlTjLU5ZGiIJakdttgdMvQWhw==}
 
   '@noble/curves@1.4.2':
     resolution: {integrity: sha512-TavHr8qycMChk8UwMld0ZDRvatedkzWfH8IiaeGCfymOP5i0hSCozz9vHOL0nkwk7HRMlFnAiKpS2jrUmSybcw==}
@@ -2551,7 +2551,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@meteora-ag/stake-for-fee@1.0.22(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)':
+  '@meteora-ag/stake-for-fee@1.0.26(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.28.0(bufferutil@4.0.7)(utf-8-validate@5.0.10)
       '@coral-xyz/borsh': 0.30.1(@solana/web3.js@1.95.4(bufferutil@4.0.7)(utf-8-validate@5.0.10))
