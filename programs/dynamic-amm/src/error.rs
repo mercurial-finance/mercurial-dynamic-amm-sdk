@@ -202,4 +202,14 @@ pub enum PoolError {
 
     #[msg("Invalid activation point")]
     InvalidActivationPoint,
+
+    #[msg("Pre activation swap window started")]
+    PreActivationSwapStarted,
+
+    /// Invalid pool type
+    #[msg("Invalid pool type")]
+    InvalidPoolType,
+
+    #[msg("Quote token must be SOL,USDC")]
+    InvalidQuoteMint,
 }

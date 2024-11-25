@@ -36,6 +36,16 @@ pub mod dynamic_amm {
         Ok(())
     }
 
+    /// Initialize permissionless pool with customizable params
+    pub fn initialize_customizable_permissionless_constant_product_pool(
+        ctx: Context<InitializeCustomizablePermissionlessConstantProductPool>,
+        token_a_amount: u64,
+        token_b_amount: u64,
+        params: CustomizableParams,
+    ) -> Result<()> {
+        Ok(())
+    }
+
     /// Initialize a new permissionless pool with customized fee tier
     pub fn initialize_permissionless_pool_with_fee_tier(
         ctx: Context<InitializePermissionlessPoolWithFeeTier>,
@@ -43,6 +53,15 @@ pub mod dynamic_amm {
         trade_fee_bps: u64,
         token_a_amount: u64,
         token_b_amount: u64,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Partner claim fee
+    pub fn partner_claim_fee(
+        ctx: Context<PartnerClaimFees>,
+        max_amount_a: u64,
+        max_amount_b: u64,
     ) -> Result<()> {
         Ok(())
     }
@@ -140,7 +159,11 @@ pub mod dynamic_amm {
     }
 
     /// Update trading fee charged for liquidity provider, and admin.
-    pub fn set_pool_fees(ctx: Context<SetPoolFees>, fees: PoolFees) -> Result<()> {
+    pub fn set_pool_fees(
+        ctx: Context<SetPoolFees>,
+        fees: PoolFees,
+        new_partner_fee_numerator: u64,
+    ) -> Result<()> {
         Ok(())
     }
 

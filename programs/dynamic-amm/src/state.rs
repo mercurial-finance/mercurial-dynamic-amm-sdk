@@ -26,9 +26,11 @@ use std::fmt::Debug;
 /// Padding for future pool fields
 pub struct Padding {
     /// Padding 0
-    pub padding_0: [u8; 14], // 14
+    pub padding_0: [u8; 6], // 6
     /// Padding 1
-    pub padding: [u128; 24], // 384
+    pub padding_1: [u64; 21], // 168
+    /// Padding 2
+    pub padding_2: [u64; 21], // 168
 }
 
 /// Host fee
@@ -93,11 +95,20 @@ pub struct Pool {
     pub total_locked_lp: u64,
     /// Bootstrapping config
     pub bootstrapping: Bootstrapping,
+    pub partner_info: PartnerInfo,
     /// Padding for future pool field
     pub padding: Padding,
     /// The type of the swap curve supported by the pool.
     // Leaving curve_type as last field give us the flexibility to add specific curve information / new curve type
     pub curve_type: CurveType, //9
+}
+
+#[derive(Copy, Clone, Debug, AnchorSerialize, AnchorDeserialize, InitSpace, Default)]
+pub struct PartnerInfo {
+    pub fee_numerator: u64,
+    pub partner_authority: Pubkey,
+    pub pending_fee_a: u64,
+    pub pending_fee_b: u64,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -312,11 +323,12 @@ pub struct Config {
     pub pool_creator_authority: Pubkey,
     // Activation type
     pub activation_type: u8,
-    pub _padding: [u8; 227],
+    pub partner_fee_numerator: u64,
+    pub _padding: [u8; 219],
 }
 
 pub struct BootstrappingConfig {
-    pub activation_duration: u64,
+    pub activation_point: u64,
     pub vault_config_key: Pubkey,
     pub activation_type: u8,
 }

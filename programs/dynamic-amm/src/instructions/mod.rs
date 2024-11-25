@@ -35,3 +35,7 @@ pub mod close_config;
 pub use close_config::*;
 pub mod update_activation_point;
 pub use update_activation_point::*;
+pub mod initialize_customizable_permissionless_constant_product_pool;
+pub use initialize_customizable_permissionless_constant_product_pool::*;
+pub mod partner_claim_fees;
+pub use partner_claim_fees::*;
