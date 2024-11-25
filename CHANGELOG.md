@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [1.1.16] - PR[#179](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/179)
+
+### Added
+
+- Update `getReverseSwapQuote` to calculate swap quote based on exact out
+
 ## @mercurial-finance/dynamic-amm-sdk [1.1.15] - PR[#178](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/178)
 
 ### Added

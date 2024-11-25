@@ -216,8 +216,9 @@ describe('Constant product pool', () => {
 
     test('Swap A → B', async () => {
       await cpPoolFeeTiered.updateState();
-      const inAmountLamport = new BN(0.1 * 10 ** cpPoolFeeTiered.tokenAMint.decimals);
+      const inAmountLamport = new BN(0.01 * 10 ** cpPoolFeeTiered.tokenAMint.decimals);
       const inTokenMint = new PublicKey(cpPoolFeeTiered.tokenAMint.address);
+      const outTokenMint = new PublicKey(cpPoolFeeTiered.tokenBMint.address);
 
       const { swapOutAmount, minSwapOutAmount } = cpPoolFeeTiered.getSwapQuote(
         inTokenMint,
@@ -225,6 +226,9 @@ describe('Constant product pool', () => {
         DEFAULT_SLIPPAGE,
       );
       expect(swapOutAmount.toNumber()).toBeGreaterThan(0);
+
+      const { swapInAmont } = cpPoolFeeTiered.getReverseSwapQuote(outTokenMint, swapOutAmount, DEFAULT_SLIPPAGE);
+      expect(inAmountLamport.sub(swapInAmont).div(inAmountLamport).mul(new BN(100)).lt(new BN(1))).toBe(true);
 
       const swapTx = await cpPoolFeeTiered.swap(mockWallet.publicKey, inTokenMint, inAmountLamport, minSwapOutAmount);
 
@@ -252,6 +256,7 @@ describe('Constant product pool', () => {
       await cpPoolFeeTiered.updateState();
       const inAmountLamport = new BN(0.1 * 10 ** cpPoolFeeTiered.tokenBMint.decimals);
       const inTokenMint = new PublicKey(cpPoolFeeTiered.tokenBMint.address);
+      const outTokenMint = new PublicKey(cpPoolFeeTiered.tokenAMint.address);
 
       const { swapOutAmount, minSwapOutAmount } = cpPoolFeeTiered.getSwapQuote(
         inTokenMint,
@@ -259,6 +264,9 @@ describe('Constant product pool', () => {
         DEFAULT_SLIPPAGE,
       );
       expect(swapOutAmount.toNumber()).toBeGreaterThan(0);
+
+      const { swapInAmont } = cpPoolFeeTiered.getReverseSwapQuote(outTokenMint, swapOutAmount, DEFAULT_SLIPPAGE);
+      expect(inAmountLamport.sub(swapInAmont).div(inAmountLamport).mul(new BN(100)).lt(new BN(1))).toBe(true);
 
       const swapTx = await cpPoolFeeTiered.swap(mockWallet.publicKey, inTokenMint, inAmountLamport, minSwapOutAmount);
 
@@ -440,6 +448,7 @@ describe('Constant product pool', () => {
       await cpPoolConfig.updateState();
       const inAmountLamport = new BN(0.1 * 10 ** cpPoolConfig.tokenAMint.decimals);
       const inTokenMint = new PublicKey(cpPoolConfig.tokenAMint.address);
+      const outTokenMint = new PublicKey(cpPoolConfig.tokenBMint.address);
 
       const { swapOutAmount, minSwapOutAmount } = cpPoolConfig.getSwapQuote(
         inTokenMint,
@@ -447,6 +456,9 @@ describe('Constant product pool', () => {
         DEFAULT_SLIPPAGE,
       );
       expect(swapOutAmount.toNumber()).toBeGreaterThan(0);
+
+      const { swapInAmont } = cpPoolFeeTiered.getReverseSwapQuote(outTokenMint, swapOutAmount, DEFAULT_SLIPPAGE);
+      expect(inAmountLamport.sub(swapInAmont).div(inAmountLamport).mul(new BN(100)).lt(new BN(1))).toBe(true);
 
       const swapTx = await cpPoolConfig.swap(mockWallet.publicKey, inTokenMint, inAmountLamport, minSwapOutAmount);
 
@@ -474,6 +486,7 @@ describe('Constant product pool', () => {
       await cpPoolConfig.updateState();
       const inAmountLamport = new BN(0.1 * 10 ** cpPoolConfig.tokenBMint.decimals);
       const inTokenMint = new PublicKey(cpPoolConfig.tokenBMint.address);
+      const outTokenMint = new PublicKey(cpPoolConfig.tokenAMint.address);
 
       const { swapOutAmount, minSwapOutAmount } = cpPoolConfig.getSwapQuote(
         inTokenMint,
@@ -481,6 +494,9 @@ describe('Constant product pool', () => {
         DEFAULT_SLIPPAGE,
       );
       expect(swapOutAmount.toNumber()).toBeGreaterThan(0);
+
+      const { swapInAmont } = cpPoolFeeTiered.getReverseSwapQuote(outTokenMint, swapOutAmount, DEFAULT_SLIPPAGE);
+      expect(inAmountLamport.sub(swapInAmont).div(inAmountLamport).mul(new BN(100)).lt(new BN(1))).toBe(true);
 
       const swapTx = await cpPoolConfig.swap(mockWallet.publicKey, inTokenMint, inAmountLamport, minSwapOutAmount);
 

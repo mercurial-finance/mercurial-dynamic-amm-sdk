@@ -1849,15 +1849,15 @@ export default class AmmImpl implements AmmImplementation {
   }
 
   public getReverseSwapQuote(outTokenMint: PublicKey, outAmountLamport: BN, slippage: number) {
-    const [swapSourceAmount, swapDestAmount, tradeDirection] = outTokenMint.equals(this.poolState.tokenAMint)
-    ? [this.poolInfo.tokenBAmount, this.poolInfo.tokenAAmount, TradeDirection.BToA]
-      : [this.poolInfo.tokenAAmount, this.poolInfo.tokenBAmount, TradeDirection.AToB]
-    let maxInAmount = this.swapCurve!.computeInAmount(outAmountLamport, this.poolInfo.tokenBAmount, this.poolInfo.tokenAAmount, TradeDirection.BToA);
+    const [inTokenMint, swapSourceAmount, swapDestAmount, tradeDirection] = outTokenMint.equals(this.poolState.tokenAMint)
+    ? [this.poolState.tokenBMint, this.poolInfo.tokenBAmount, this.poolInfo.tokenAAmount, TradeDirection.BToA]
+      : [this.poolState.tokenAMint, this.poolInfo.tokenAAmount, this.poolInfo.tokenBAmount, TradeDirection.AToB]
+    let maxInAmount = this.swapCurve!.computeInAmount(outAmountLamport, swapSourceAmount, swapDestAmount, tradeDirection);
     const adminFee = this.calculateProtocolTradingFee(maxInAmount);
     const tradeFee = this.calculateTradingFee(maxInAmount);
     maxInAmount = maxInAmount.sub(adminFee);
     maxInAmount = maxInAmount.sub(tradeFee);
-    const { priceImpact } = this.getSwapQuote(this.poolState.tokenBMint, maxInAmount, slippage);
+    const { priceImpact } = this.getSwapQuote(inTokenMint, maxInAmount, slippage);
 
     return {
       swapInAmont: maxInAmount,
