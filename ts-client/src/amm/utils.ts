@@ -716,6 +716,19 @@ export function deriveMintMetadata(lpMint: PublicKey) {
   );
 }
 
+export function deriveCustomizablePermissionlessConstantProductPoolAddress(
+  tokenA: PublicKey,
+  tokenB: PublicKey,
+  programId: PublicKey,
+) {
+  const [poolPubkey] = PublicKey.findProgramAddressSync(
+    [Buffer.from('pool'), getFirstKey(tokenA, tokenB), getSecondKey(tokenA, tokenB)],
+    programId,
+  );
+
+  return poolPubkey;
+}
+
 export function derivePoolAddressWithConfig(
   tokenA: PublicKey,
   tokenB: PublicKey,

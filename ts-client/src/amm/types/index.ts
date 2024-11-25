@@ -168,6 +168,7 @@ export type Depeg = Omit<IdlTypes<AmmIdl>['Depeg'], 'depegType'> & { depegType: 
 export type PoolFees = IdlTypes<AmmIdl>['PoolFees'];
 export type Bootstrapping = IdlTypes<AmmIdl>['Bootstrapping'];
 export type LockEscrowAccount = IdlAccounts<AmmIdl>['lockEscrow'];
+export type CustomizableParams = IdlTypes<AmmIdl>['CustomizableParams'];
 
 export type PoolInformation = {
   tokenAAmount: BN;

@@ -287,6 +287,7 @@ describe('Constant product pool', () => {
     beforeAll(async () => {
       const tradeFeeBps = 1500;
       const protocolFeeBps = 5000;
+      const partnerFeeNumerator = new BN(0);
       const transaction = await AmmImpl.createConfig(
         connection,
         mockWallet.publicKey,
@@ -296,6 +297,7 @@ describe('Constant product pool', () => {
         new BN(0),
         PublicKey.default,
         ActivationType.Slot,
+        partnerFeeNumerator,
       );
       transaction.sign(mockWallet.payer);
       const txHash = await connection.sendRawTransaction(transaction.serialize());
