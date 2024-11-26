@@ -12,7 +12,7 @@ const provider = new AnchorProvider(connection, mockWallet, {
   commitment: connection.commitment,
 });
 
-describe.only('Initialize customizable permissionless constant product pool', () => {
+describe('Initialize customizable permissionless constant product pool', () => {
   let MEME: PublicKey;
 
   let memeDecimal = 9;
@@ -46,7 +46,7 @@ describe.only('Initialize customizable permissionless constant product pool', ()
     await wrapSol(connection, new BN(1_000_000), mockWallet.payer);
   });
 
-  it('Initialize customizable CP pool', async () => {
+  test('Initialize customizable CP pool', async () => {
     const tokenAAmount = new BN(1_000_000);
     const tokenBAmount = new BN(1_000_000);
 
