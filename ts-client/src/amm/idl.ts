@@ -3437,7 +3437,7 @@ export type Amm = {
             "type": {
               "array": [
                 "u8",
-                64
+                90
               ]
             }
           }
@@ -7902,7 +7902,7 @@ export const IDL: Amm = {
             "type": {
               "array": [
                 "u8",
-                64
+                90
               ]
             }
           }

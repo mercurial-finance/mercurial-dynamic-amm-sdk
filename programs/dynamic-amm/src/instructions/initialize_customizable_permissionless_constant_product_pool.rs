@@ -177,5 +177,5 @@ pub struct CustomizableParams {
     /// Activation type
     pub activation_type: u8,
     /// Padding
-    pub padding: [u8; 64],
+    pub padding: [u8; 90],
 }
