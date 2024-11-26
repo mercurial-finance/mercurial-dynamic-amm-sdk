@@ -442,7 +442,7 @@ export default class AmmImpl implements AmmImplementation {
     if (preInstructions.length) {
       const preInstructionTx = new Transaction({
         feePayer: payer,
-        ...latestBlockHash,
+        ...(await ammProgram.provider.connection.getLatestBlockhash(ammProgram.provider.connection.commitment)),
       }).add(...preInstructions);
       resultTx.push(preInstructionTx);
     }
@@ -1104,7 +1104,7 @@ export default class AmmImpl implements AmmImplementation {
         resultTx.push(tx);
       }
     }
-    
+
     return resultTx;
   }
 
