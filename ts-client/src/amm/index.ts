@@ -72,6 +72,7 @@ import {
   deriveProtocolTokenFee,
   createMint,
   calculateLockAmounts,
+  createTransactions,
 } from './utils';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import Decimal from 'decimal.js';
@@ -435,30 +436,17 @@ export default class AmmImpl implements AmmImplementation {
       .postInstructions(createPoolPostInstructions)
       .transaction();
 
-    const latestBlockHash = await ammProgram.provider.connection.getLatestBlockhash(
-      ammProgram.provider.connection.commitment,
-    );
-    const resultTx: Transaction[] = [];
+    const ixs: Array<Transaction | TransactionInstruction | (Transaction | TransactionInstruction)[]> = [];
+
     if (preInstructions.length) {
-      const preInstructionTx = new Transaction({
-        feePayer: payer,
-        ...latestBlockHash,
-      }).add(...preInstructions);
-      resultTx.push(preInstructionTx);
+      ixs.push(preInstructions);
     }
 
     const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
       units: 1_400_000,
     });
-    const mainTx = new Transaction({
-      feePayer: payer,
-      ...(await ammProgram.provider.connection.getLatestBlockhash(ammProgram.provider.connection.commitment)),
-    })
-      .add(setComputeUnitLimitIx)
-      .add(createPermissionlessPoolTx);
-
-    resultTx.push(mainTx);
-
+    ixs.push([setComputeUnitLimitIx, createPermissionlessPoolTx]);
+      
     if (feeWrapperLockAmount.gt(new BN(0))) {
       const preInstructions: TransactionInstruction[] = [];
       const createFeeVaultIxs = await StakeForFee.createFeeVaultInstructions(
@@ -504,12 +492,7 @@ export default class AmmImpl implements AmmImplementation {
         .preInstructions(preInstructions)
         .transaction();
 
-      const feeWraperLockTx = new Transaction({
-        feePayer: payer,
-        ...latestBlockHash,
-      }).add(lockTx);
-
-      resultTx.push(feeWraperLockTx);
+      ixs.push(lockTx);
     }
 
     if (opt?.swapLiquidity) {
@@ -534,13 +517,11 @@ export default class AmmImpl implements AmmImplementation {
           vaultProgram: vaultProgram.programId,
         })
         .transaction();
-      const newSwapTx = new Transaction({
-        feePayer: payer,
-        ...latestBlockHash,
-      }).add(swapTx);
-      resultTx.push(newSwapTx);
+
+      ixs.push(swapTx);
     }
 
+    const resultTx: Transaction[] = await createTransactions(connection, ixs, payer);
     return resultTx;
   }
 
@@ -713,29 +694,17 @@ export default class AmmImpl implements AmmImplementation {
       .postInstructions(createPoolPostInstructions)
       .transaction();
 
-    const resultTx: Transaction[] = [];
-    const latestBlockHash = await ammProgram.provider.connection.getLatestBlockhash(
-      ammProgram.provider.connection.commitment,
-    );
+    const ixs: Array<Transaction | TransactionInstruction | (Transaction | TransactionInstruction)[]> = [];
+
     if (preInstructions.length) {
-      const preInstructionTx = new Transaction({
-        feePayer: payer,
-        ...latestBlockHash,
-      }).add(...preInstructions);
-      resultTx.push(preInstructionTx);
+      ixs.push(preInstructions);
     }
 
     const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
       units: 1_400_000,
     });
-    const createPoolTx = new Transaction({
-      feePayer: payer,
-      ...latestBlockHash,
-    })
-      .add(setComputeUnitLimitIx)
-      .add(createPermissionlessPoolTx);
 
-    resultTx.push(createPoolTx);
+    ixs.push([setComputeUnitLimitIx, createPermissionlessPoolTx]);
 
     if (opt?.swapLiquidity) {
       const protocolTokenFee = deriveProtocolTokenFee(poolPubkey, tokenBMint, ammProgram.programId);
@@ -759,13 +728,11 @@ export default class AmmImpl implements AmmImplementation {
           vaultProgram: vaultProgram.programId,
         })
         .transaction();
-      const newSwapTx = new Transaction({
-        feePayer: payer,
-        ...latestBlockHash,
-      }).add(swapTx);
-      resultTx.push(newSwapTx);
+
+      ixs.push(swapTx);
     }
 
+    const resultTx: Transaction[] = await createTransactions(connection, ixs, payer);
     return resultTx;
   }
 
@@ -1084,26 +1051,7 @@ export default class AmmImpl implements AmmImplementation {
 
       ixs.push(swapTx);
     }
-
-    const latestBlockHash = await connection.getLatestBlockhash();
-    const resultTx: Transaction[] = [];
-
-    for (const instruction of ixs) {
-      if (Array.isArray(instruction)) {
-        const tx = new Transaction({
-          feePayer: payer,
-          ...latestBlockHash,
-        }).add(...instruction);
-
-        resultTx.push(tx);
-      } else {
-        const tx = new Transaction({
-          feePayer: payer,
-          ...latestBlockHash,
-        }).add(instruction);
-        resultTx.push(tx);
-      }
-    }
+    const resultTx: Transaction[] =  await createTransactions(connection, ixs, payer);
 
     return resultTx;
   }
