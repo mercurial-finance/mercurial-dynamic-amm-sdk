@@ -17,6 +17,9 @@ importers:
       '@coral-xyz/borsh':
         specifier: ^0.28.0
         version: 0.28.0(@solana/web3.js@1.95.4(bufferutil@4.0.7)(utf-8-validate@5.0.10))
+      '@mercurial-finance/dynamic-amm-sdk':
+        specifier: 1.1.16-sam.5
+        version: 1.1.16-sam.5(@solana/buffer-layout@4.0.1)(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
       '@mercurial-finance/token-math':
         specifier: 6.0.0
         version: 6.0.0
@@ -27,8 +30,8 @@ importers:
         specifier: ~2.13.0
         version: 2.13.0(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(utf-8-validate@5.0.10)
       '@meteora-ag/stake-for-fee':
-        specifier: 1.0.26
-        version: 1.0.26(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
+        specifier: 1.0.28
+        version: 1.0.28(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
       '@project-serum/anchor':
         specifier: ^0.24.2
         version: 0.24.2(bufferutil@4.0.7)(utf-8-validate@5.0.10)
@@ -379,6 +382,11 @@ packages:
   '@jridgewell/trace-mapping@0.3.18':
     resolution: {integrity: sha512-w+niJYzMHdd7USdiH2U6869nqhD2nbfZXND5Yp93qIbEmnDNk7PD48o+YchRVpzMU7M6jVCbenTR7PA1FLQ9pA==}
 
+  '@mercurial-finance/dynamic-amm-sdk@1.1.16-sam.5':
+    resolution: {integrity: sha512-bKZh1Liu1olNBvypwFhfXxfZGPk5os+8oNqDqYNtVKJnQJWei1k1TsVSAaW/Yuh5xK2EfIu8spiFLgvk6NM/ww==}
+    peerDependencies:
+      '@solana/buffer-layout': ^4
+
   '@mercurial-finance/token-math@6.0.0':
     resolution: {integrity: sha512-/o2Kr+gXXE4UvkBJ4QLcbiBmKUyBvU1C0tty6y4smJxEItJYiH6yQzRSWpkBhP5Q387n/j05nqoizX4uZkBlwg==}
     engines: {node: '>=10'}
@@ -398,8 +406,11 @@ packages:
   '@metaplex-foundation/mpl-token-metadata@2.13.0':
     resolution: {integrity: sha512-Fl/8I0L9rv4bKTV/RAl5YIbJe9SnQPInKvLz+xR1fEc4/VQkuCn3RPgypfUMEKWmCznzaw4sApDxy6CFS4qmJw==}
 
-  '@meteora-ag/stake-for-fee@1.0.26':
-    resolution: {integrity: sha512-yRjjl+/xWNNNth7aI6jlLYHmkod2xKZ2Z2di6qUusLUb1806k06zMusFel8pkqlTjLU5ZGiIJakdttgdMvQWhw==}
+  '@meteora-ag/stake-for-fee@1.0.27-sam.3':
+    resolution: {integrity: sha512-Ix26UvOvC7hrbbC+pJKTmrDOZh5G75d6BfAypAxCMEFV8Sv12IcIavPlXo2xz48QbhQZWfGclPB2irVSi7nn2Q==}
+
+  '@meteora-ag/stake-for-fee@1.0.28':
+    resolution: {integrity: sha512-FevXshZyeFD+CpYoYBrg95lRx8CyrhV5R31IteNzGlSRcQ6NWFRhTmgxtt+yMHFGj8+24qwfBUrBCNx2vT/G4A==}
 
   '@noble/curves@1.4.2':
     resolution: {integrity: sha512-TavHr8qycMChk8UwMld0ZDRvatedkzWfH8IiaeGCfymOP5i0hSCozz9vHOL0nkwk7HRMlFnAiKpS2jrUmSybcw==}
@@ -2487,6 +2498,32 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.0
       '@jridgewell/sourcemap-codec': 1.4.14
 
+  '@mercurial-finance/dynamic-amm-sdk@1.1.16-sam.5(@solana/buffer-layout@4.0.1)(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@coral-xyz/anchor': 0.28.0(bufferutil@4.0.7)(utf-8-validate@5.0.10)
+      '@coral-xyz/borsh': 0.28.0(@solana/web3.js@1.95.4(bufferutil@4.0.7)(utf-8-validate@5.0.10))
+      '@mercurial-finance/token-math': 6.0.0
+      '@mercurial-finance/vault-sdk': 2.2.0(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
+      '@metaplex-foundation/mpl-token-metadata': 2.13.0(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(utf-8-validate@5.0.10)
+      '@meteora-ag/stake-for-fee': 1.0.27-sam.3(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
+      '@project-serum/anchor': 0.24.2(bufferutil@4.0.7)(utf-8-validate@5.0.10)
+      '@solana/buffer-layout': 4.0.1
+      '@solana/spl-token': 0.4.8(@solana/web3.js@1.95.4(bufferutil@4.0.7)(utf-8-validate@5.0.10))(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
+      '@solana/spl-token-registry': 0.2.4574
+      '@solana/web3.js': 1.95.4(bufferutil@4.0.7)(utf-8-validate@5.0.10)
+      bn-sqrt: 1.0.0
+      bn.js: 5.2.1
+      decimal.js: 10.4.3
+      dotenv: 16.0.3
+      invariant: 2.2.4
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - fastestsmallesttextencoderdecoder
+      - supports-color
+      - typescript
+      - utf-8-validate
+
   '@mercurial-finance/token-math@6.0.0':
     dependencies:
       '@types/big.js': 6.2.2
@@ -2551,7 +2588,22 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@meteora-ag/stake-for-fee@1.0.26(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)':
+  '@meteora-ag/stake-for-fee@1.0.27-sam.3(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@coral-xyz/anchor': 0.28.0(bufferutil@4.0.7)(utf-8-validate@5.0.10)
+      '@coral-xyz/borsh': 0.30.1(@solana/web3.js@1.95.4(bufferutil@4.0.7)(utf-8-validate@5.0.10))
+      '@solana/spl-token': 0.4.8(@solana/web3.js@1.95.4(bufferutil@4.0.7)(utf-8-validate@5.0.10))(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
+      '@solana/web3.js': 1.95.4(bufferutil@4.0.7)(utf-8-validate@5.0.10)
+      bn.js: 5.2.1
+      decimal.js: 10.4.3
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - fastestsmallesttextencoderdecoder
+      - typescript
+      - utf-8-validate
+
+  '@meteora-ag/stake-for-fee@1.0.28(bufferutil@4.0.7)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.28.0(bufferutil@4.0.7)(utf-8-validate@5.0.10)
       '@coral-xyz/borsh': 0.30.1(@solana/web3.js@1.95.4(bufferutil@4.0.7)(utf-8-validate@5.0.10))
