@@ -1009,3 +1009,29 @@ export const calculateLockAmounts = (amount: BN, feeWrapperPercent?: Decimal) =>
     userLockAmount,
   };
 };
+
+export async function createTransactions(
+  connection: Connection,
+  ixs: Array<Transaction | TransactionInstruction | (Transaction | TransactionInstruction)[]>,
+  payer: PublicKey,
+): Promise<Transaction[]> {
+  const latestBlockHash = await connection.getLatestBlockhash();
+  const resultTx: Transaction[] = [];
+
+  for (const instruction of ixs) {
+    const tx = new Transaction({
+      feePayer: payer,
+      ...latestBlockHash,
+    });
+
+    if (Array.isArray(instruction)) {
+      tx.add(...instruction);
+    } else {
+      tx.add(instruction);
+    }
+
+    resultTx.push(tx);
+  }
+
+  return resultTx;
+}
