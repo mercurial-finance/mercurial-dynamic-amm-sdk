@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+
+
+## @mercurial-finance/dynamic-amm-sdk [1.1.16] - PR[#182](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/182)
+
+### Added
+
+- Update ` @meteora-ag/stake-for-fee@1.0.28`
+
 ## @mercurial-finance/dynamic-amm-sdk [1.1.15] - PR[#178](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/178)
 
 ### Added
