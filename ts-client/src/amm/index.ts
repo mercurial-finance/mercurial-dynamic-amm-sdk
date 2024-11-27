@@ -603,11 +603,19 @@ export default class AmmImpl implements AmmImplementation {
     const ixs: Array<Transaction | TransactionInstruction | (Transaction | TransactionInstruction)[]> = [];
 
     if (preInstructions.length) {
-      ixs.push(preInstructions);
+      // https://explorer.solana.com/tx/3G95TWMmTLbZ7aAgyGmZd8JFk19ye8whVB5cXhYCCsUWSUsnuVMqPMXbPiY5WaF4zE2Sz7CG5e4jTj8NQbCnUG14?cluster=devnet
+      // Create 2 dynamic vault consume around 190k CU. Each create ATA + Wrap SOL around 23k
+      const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+        units: 300_000,
+      });
+      ixs.push([setComputeUnitLimitIx, ...preInstructions]);
     }
 
+    // https://explorer.solana.com/tx/4X37hBoUNwpmHKNGpQB3M72xDA7yhFKhbYrkBQUK4skBGD7P9LdWgb2WpvFGHcxYi13e9bdwhetsqmULeW7nUDbW?cluster=devnet
+    // https://explorer.solana.com/tx/3xMGCQ9GAqSMZH1uhXXc1quZit61DXr1KsbVxdBN1zCkQy1GTXBGuWgxzWfMEdecdRi859m3mYQKuLyemvR18VHS?cluster=devnet
+    // Create dynamic pool consume around 287k, create lock escrow + lock liquidity around 84k
     const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
-      units: 1_400_000,
+      units: 450_000,
     });
     ixs.push([setComputeUnitLimitIx, createPermissionlessPoolTx]);
 
@@ -861,11 +869,16 @@ export default class AmmImpl implements AmmImplementation {
     const ixs: Array<Transaction | TransactionInstruction | (Transaction | TransactionInstruction)[]> = [];
 
     if (preInstructions.length) {
-      ixs.push(preInstructions);
+      // Create 2 dynamic vault consume around 190k CU. Each create ATA + Wrap SOL around 23k
+      const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+        units: 300_000,
+      });
+      ixs.push([setComputeUnitLimitIx, ...preInstructions]);
     }
 
+    // Create dynamic pool consume around 287k, create lock escrow + lock liquidity around 84k
     const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
-      units: 1_400_000,
+      units: 450_000,
     });
 
     ixs.push([setComputeUnitLimitIx, createPermissionlessPoolTx]);
@@ -1130,11 +1143,16 @@ export default class AmmImpl implements AmmImplementation {
     const ixs: Array<Transaction | TransactionInstruction | (Transaction | TransactionInstruction)[]> = [];
 
     if (preInstructions.length) {
-      ixs.push(preInstructions);
+      // Create 2 dynamic vault consume around 190k CU. Each create ATA + Wrap SOL around 23k
+      const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+        units: 300_000,
+      });
+      ixs.push([setComputeUnitLimitIx, ...preInstructions]);
     }
 
+    // Create dynamic pool consume around 287k, create lock escrow + lock liquidity around 84k
     const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
-      units: 1_400_000,
+      units: 450_000,
     });
 
     ixs.push([setComputeUnitLimitIx, createPermissionlessPoolTx]);
