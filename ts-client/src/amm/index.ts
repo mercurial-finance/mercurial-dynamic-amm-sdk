@@ -439,14 +439,22 @@ export default class AmmImpl implements AmmImplementation {
     const ixs: Array<Transaction | TransactionInstruction | (Transaction | TransactionInstruction)[]> = [];
 
     if (preInstructions.length) {
-      ixs.push(preInstructions);
+      // https://explorer.solana.com/tx/3G95TWMmTLbZ7aAgyGmZd8JFk19ye8whVB5cXhYCCsUWSUsnuVMqPMXbPiY5WaF4zE2Sz7CG5e4jTj8NQbCnUG14?cluster=devnet
+      // Create 2 dynamic vault consume around 190k CU. Each create ATA + Wrap SOL around 23k
+      const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+        units: 300_000,
+      });
+      ixs.push([setComputeUnitLimitIx, ...preInstructions]);
     }
 
+    // https://explorer.solana.com/tx/4X37hBoUNwpmHKNGpQB3M72xDA7yhFKhbYrkBQUK4skBGD7P9LdWgb2WpvFGHcxYi13e9bdwhetsqmULeW7nUDbW?cluster=devnet
+    // https://explorer.solana.com/tx/3xMGCQ9GAqSMZH1uhXXc1quZit61DXr1KsbVxdBN1zCkQy1GTXBGuWgxzWfMEdecdRi859m3mYQKuLyemvR18VHS?cluster=devnet
+    // Create dynamic pool consume around 287k, create lock escrow + lock liquidity around 84k
     const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
-      units: 1_400_000,
+      units: 450_000,
     });
     ixs.push([setComputeUnitLimitIx, createPermissionlessPoolTx]);
-      
+
     if (feeWrapperLockAmount.gt(new BN(0))) {
       const preInstructions: TransactionInstruction[] = [];
       const createFeeVaultIxs = await StakeForFee.createFeeVaultInstructions(
@@ -697,11 +705,16 @@ export default class AmmImpl implements AmmImplementation {
     const ixs: Array<Transaction | TransactionInstruction | (Transaction | TransactionInstruction)[]> = [];
 
     if (preInstructions.length) {
-      ixs.push(preInstructions);
+      // Create 2 dynamic vault consume around 190k CU. Each create ATA + Wrap SOL around 23k
+      const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+        units: 300_000,
+      });
+      ixs.push([setComputeUnitLimitIx, ...preInstructions]);
     }
 
+    // Create dynamic pool consume around 287k, create lock escrow + lock liquidity around 84k
     const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
-      units: 1_400_000,
+      units: 450_000,
     });
 
     ixs.push([setComputeUnitLimitIx, createPermissionlessPoolTx]);
@@ -966,11 +979,16 @@ export default class AmmImpl implements AmmImplementation {
     const ixs: Array<Transaction | TransactionInstruction | (Transaction | TransactionInstruction)[]> = [];
 
     if (preInstructions.length) {
-      ixs.push(preInstructions);
+      // Create 2 dynamic vault consume around 190k CU. Each create ATA + Wrap SOL around 23k
+      const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+        units: 300_000,
+      });
+      ixs.push([setComputeUnitLimitIx, ...preInstructions]);
     }
 
+    // Create dynamic pool consume around 287k, create lock escrow + lock liquidity around 84k
     const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
-      units: 1_400_000,
+      units: 450_000,
     });
 
     ixs.push([setComputeUnitLimitIx, createPermissionlessPoolTx]);
@@ -1051,7 +1069,7 @@ export default class AmmImpl implements AmmImplementation {
 
       ixs.push(swapTx);
     }
-    const resultTx: Transaction[] =  await createTransactions(connection, ixs, payer);
+    const resultTx: Transaction[] = await createTransactions(connection, ixs, payer);
 
     return resultTx;
   }
@@ -2454,7 +2472,7 @@ export default class AmmImpl implements AmmImplementation {
     createEscrowAtaIx && preInstructions.push(createEscrowAtaIx);
 
     const { userLockAmount, feeWrapperLockAmount } = calculateLockAmounts(amount, opt?.stakeLiquidity?.percent);
-  
+
     if (feeWrapperLockAmount.gt(new BN(0))) {
       const { stakeForFeeProgram } = createProgram(this.program.provider.connection);
 
@@ -2462,7 +2480,7 @@ export default class AmmImpl implements AmmImplementation {
       const vaultState = await getFeeVaultState(vaultKey, stakeForFeeProgram);
 
       if (!vaultState) {
-         throw new Error(`Fee vault not found for pool ${this.address.toBase58()}`);
+        throw new Error(`Fee vault not found for pool ${this.address.toBase58()}`);
       }
 
       const [lockEscrowFeeVaultPK] = deriveLockEscrowPda(this.address, vaultKey, this.program.programId);
@@ -2475,7 +2493,7 @@ export default class AmmImpl implements AmmImplementation {
       );
 
       createEscrowFeeVaultAtaIx && stakeForFeeInstructions.push(createEscrowFeeVaultAtaIx);
-      
+
       const lockTx = await this.program.methods
         .lock(feeWrapperLockAmount)
         .accounts({
