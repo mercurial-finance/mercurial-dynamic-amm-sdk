@@ -995,7 +995,7 @@ export async function createMint(
 }
 
 export const calculateLockAmounts = (amount: BN, feeWrapperRatio = new Decimal(0)) => {
-  if (feeWrapperRatio?.lt(0) || feeWrapperRatio?.gt(1)) {
+  if (feeWrapperRatio.lt(0) || feeWrapperRatio.gt(1)) {
     throw new Error('Fee wrapper ratio should be between 0 and 1');
   }
 
