@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [1.1.18] - PR[#185](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/185)
+
+### Fixed
+
+- Fix `calculateLockAmounts` util not calculating `userLockAmount` correctly if `feeWrapperRatio` is `null` or zero
+
 ## @mercurial-finance/dynamic-amm-sdk [1.1.17] - PR[#183](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/183)
 
 ### Changed

@@ -994,15 +994,15 @@ export async function createMint(
   return { tx: transaction, mintAccount };
 }
 
-export const calculateLockAmounts = (amount: BN, feeWrapperPercent?: Decimal) => {
-  const safeFeeWrapperPercent = feeWrapperPercent?.gt(new Decimal(0))
-    ? Decimal.min(feeWrapperPercent, new Decimal(1))
-    : new Decimal(0);
+export const calculateLockAmounts = (amount: BN, feeWrapperRatio = new Decimal(0)) => {
+  if (feeWrapperRatio?.lt(0) || feeWrapperRatio?.gt(1)) {
+    throw new Error('Fee wrapper percent should be between 0 and 100');
+  }
 
   const feeWrapperLockAmount = new BN(
-    new Decimal(amount.toString()).mul(safeFeeWrapperPercent).toFixed(0, Decimal.ROUND_DOWN),
+    new Decimal(amount.toString()).mul(feeWrapperRatio).toFixed(0, Decimal.ROUND_DOWN),
   );
-  const userLockAmount = safeFeeWrapperPercent.gt(new Decimal(0)) ? amount.sub(feeWrapperLockAmount) : U64_MAX;
+  const userLockAmount = amount.sub(feeWrapperLockAmount);
 
   return {
     feeWrapperLockAmount,

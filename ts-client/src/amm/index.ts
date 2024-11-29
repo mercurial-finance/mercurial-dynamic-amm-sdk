@@ -283,7 +283,7 @@ export default class AmmImpl implements AmmImplementation {
         minAmountOut: BN;
       };
       stakeLiquidity?: {
-        percent?: Decimal;
+        ratio?: Decimal;
       };
       activationPoint?: BN;
     },
@@ -362,7 +362,7 @@ export default class AmmImpl implements AmmImplementation {
     const activationPoint = opt?.activationPoint || null;
 
     const lpAmount = sqrt(tokenAAmount.mul(tokenBAmount));
-    const { userLockAmount, feeWrapperLockAmount } = calculateLockAmounts(lpAmount, opt?.stakeLiquidity?.percent);
+    const { userLockAmount, feeWrapperLockAmount } = calculateLockAmounts(lpAmount, opt?.stakeLiquidity?.ratio);
 
     const createPoolPostInstructions: TransactionInstruction[] = [];
     if (opt?.lockLiquidity && userLockAmount.gt(new BN(0))) {
@@ -446,7 +446,7 @@ export default class AmmImpl implements AmmImplementation {
       units: 1_400_000,
     });
     ixs.push([setComputeUnitLimitIx, createPermissionlessPoolTx]);
-      
+
     if (feeWrapperLockAmount.gt(new BN(0))) {
       const preInstructions: TransactionInstruction[] = [];
       const createFeeVaultIxs = await StakeForFee.createFeeVaultInstructions(
@@ -762,7 +762,7 @@ export default class AmmImpl implements AmmImplementation {
         minAmountOut: BN;
       };
       stakeLiquidity?: {
-        percent?: Decimal;
+        ratio?: Decimal;
       };
       skipAAta?: boolean;
       skipBAta?: boolean;
@@ -888,7 +888,7 @@ export default class AmmImpl implements AmmImplementation {
 
     const [mintMetadata, _mintMetadataBump] = deriveMintMetadata(lpMint);
     const lpAmount = sqrt(tokenAAmount.mul(tokenBAmount));
-    const { userLockAmount, feeWrapperLockAmount } = calculateLockAmounts(lpAmount, opt?.stakeLiquidity?.percent);
+    const { userLockAmount, feeWrapperLockAmount } = calculateLockAmounts(lpAmount, opt?.stakeLiquidity?.ratio);
 
     const createPoolPostInstructions: TransactionInstruction[] = [];
     if (opt?.lockLiquidity && userLockAmount.gt(new BN(0))) {
@@ -1051,7 +1051,7 @@ export default class AmmImpl implements AmmImplementation {
 
       ixs.push(swapTx);
     }
-    const resultTx: Transaction[] =  await createTransactions(connection, ixs, payer);
+    const resultTx: Transaction[] = await createTransactions(connection, ixs, payer);
 
     return resultTx;
   }
@@ -2419,7 +2419,7 @@ export default class AmmImpl implements AmmImplementation {
     feePayer?: PublicKey,
     opt?: {
       stakeLiquidity?: {
-        percent?: Decimal;
+        ratio?: Decimal;
       };
     },
   ): Promise<Transaction> {
@@ -2453,8 +2453,8 @@ export default class AmmImpl implements AmmImplementation {
     createUserAtaIx && preInstructions.push(createUserAtaIx);
     createEscrowAtaIx && preInstructions.push(createEscrowAtaIx);
 
-    const { userLockAmount, feeWrapperLockAmount } = calculateLockAmounts(amount, opt?.stakeLiquidity?.percent);
-  
+    const { userLockAmount, feeWrapperLockAmount } = calculateLockAmounts(amount, opt?.stakeLiquidity?.ratio);
+
     if (feeWrapperLockAmount.gt(new BN(0))) {
       const { stakeForFeeProgram } = createProgram(this.program.provider.connection);
 
@@ -2462,7 +2462,7 @@ export default class AmmImpl implements AmmImplementation {
       const vaultState = await getFeeVaultState(vaultKey, stakeForFeeProgram);
 
       if (!vaultState) {
-         throw new Error(`Fee vault not found for pool ${this.address.toBase58()}`);
+        throw new Error(`Fee vault not found for pool ${this.address.toBase58()}`);
       }
 
       const [lockEscrowFeeVaultPK] = deriveLockEscrowPda(this.address, vaultKey, this.program.programId);
@@ -2475,7 +2475,7 @@ export default class AmmImpl implements AmmImplementation {
       );
 
       createEscrowFeeVaultAtaIx && stakeForFeeInstructions.push(createEscrowFeeVaultAtaIx);
-      
+
       const lockTx = await this.program.methods
         .lock(feeWrapperLockAmount)
         .accounts({
