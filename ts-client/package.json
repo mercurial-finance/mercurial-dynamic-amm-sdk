@@ -13,22 +13,20 @@
     "dist"
   ],
   "dependencies": {
+    "@meteora-ag/config": "workspace:*",
+    "@meteora-ag/vault-sdk": "workspace:*",
     "@coral-xyz/borsh": "^0.28.0",
     "@mercurial-finance/token-math": "6.0.0",
     "@metaplex-foundation/mpl-token-metadata": "~2.13.0",
-    "@meteora-ag/config": "workspace:*",
     "@meteora-ag/stake-for-fee": "1.0.28",
-    "@meteora-ag/vault-sdk": "workspace:*",
     "@solana/buffer-layout": "^4.0.1",
     "bn-sqrt": "^1.0.0",
-    "bn.js": "5.2.1",
-    "decimal.js": "^10.4.1",
     "dotenv": "^16.0.1",
     "invariant": "^2.2.4"
   },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.1",
-    "@types/bn.js": "^5.1.0",
+    "@types/bn.js": "^5.1.6",
     "@types/chai": "^4.3.1",
     "@types/invariant": "^2.2.35",
     "@types/jest": "^27.5.1",
@@ -46,7 +44,8 @@
     "@solana/buffer-layout": "^4.0.1",
     "@solana/spl-token": "^0.4.9",
     "@solana/web3.js": "^1.95.5",
-    "bn.js": "^5.2.1"
+    "bn.js": "^5.2.1",
+    "decimal.js": "^10.4.1"
   },
   "directories": {
     "test": "tests"

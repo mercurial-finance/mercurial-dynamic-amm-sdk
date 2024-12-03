@@ -31,6 +31,7 @@ describe('Constant product pool', () => {
   beforeAll(async () => {
     await airDropSol(connection, mockWallet.publicKey, 10);
     BTC = await createMint(provider.connection, mockWallet.payer, mockWallet.publicKey, null, btcDecimal);
+    USDC = await createMint(provider.connection, mockWallet.payer, mockWallet.publicKey, null, usdcDecimal);
 
     mockWalletBtcATA = await getOrCreateATA(connection, BTC, mockWallet.publicKey, mockWallet.payer);
     mockWalletUsdcATA = await getOrCreateATA(connection, USDC, mockWallet.publicKey, mockWallet.payer);
