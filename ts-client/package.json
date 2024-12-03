@@ -1,10 +1,11 @@
 {
-  "name": "@mercurial-finance/dynamic-amm-sdk",
-  "version": "1.1.19",
+  "name": "@meteora-ag/dynamic-amm-sdk",
+  "version": "1.1.18",
   "description": "Mercurial Vaults SDK is a typescript library that allows you to interact with Mercurial v2's AMM.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "scripts": {
+    "postclone": "pnpm rm @meteora-ag/vault-sdk && pnpm install @meteora-ag/vault-sdk",
     "build": "rm -rf dist && tsc -p tsconfig.build.json && tsc -p tsconfig.esm.json",
     "test": "jest ./src/amm/tests/*.test.ts --runInBand"
   },
@@ -12,17 +13,13 @@
     "dist"
   ],
   "dependencies": {
-    "@coral-xyz/anchor": "^0.28.0",
     "@coral-xyz/borsh": "^0.28.0",
     "@mercurial-finance/token-math": "6.0.0",
-    "@mercurial-finance/vault-sdk": "2.2.0",
     "@metaplex-foundation/mpl-token-metadata": "~2.13.0",
+    "@meteora-ag/config": "workspace:*",
+    "@meteora-ag/vault-sdk": "workspace:*",
     "@meteora-ag/stake-for-fee": "1.0.28",
-    "@project-serum/anchor": "^0.24.2",
-    "@solana/buffer-layout": "^3 || ^4",
-    "@solana/spl-token": "^0.4.6",
-    "@solana/spl-token-registry": "^0.2.4574",
-    "@solana/web3.js": "^1.95.4",
+    "@solana/buffer-layout": "^4.0.1",
     "bn-sqrt": "^1.0.0",
     "bn.js": "5.2.1",
     "decimal.js": "^10.4.1",
@@ -44,10 +41,11 @@
     "typescript": "^5.5.4"
   },
   "peerDependencies": {
-    "@solana/buffer-layout": "^3 || ^4"
-  },
-  "resolutions": {
-    "@solana/buffer-layout": "^4"
+    "@solana/buffer-layout": "^4.0.1",
+    "@coral-xyz/anchor": "^0.28.0",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.95.5",
+    "bn.js": "^5.2.1"
   },
   "directories": {
     "test": "tests"

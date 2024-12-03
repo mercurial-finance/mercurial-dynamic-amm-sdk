@@ -13,18 +13,18 @@ import {
   ComputeBudgetProgram,
   Keypair,
 } from '@solana/web3.js';
-import { TokenInfo } from '@solana/spl-token-registry';
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   createMintToInstruction,
   createSetAuthorityInstruction,
+  getMint,
   Mint,
   MintLayout,
   NATIVE_MINT,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
-import VaultImpl, { calculateWithdrawableAmount, getVaultPdas } from '@mercurial-finance/vault-sdk';
+import VaultImpl, { calculateWithdrawableAmount, getVaultPdas } from '@meteora-ag/vault-sdk';
 import StakeForFee, { deriveFeeVault, STAKE_FOR_FEE_PROGRAM_ID, StakeForFeeProgram } from '@meteora-ag/stake-for-fee';
 import invariant from 'invariant';
 import {
@@ -1223,8 +1223,8 @@ export default class AmmImpl implements AmmImplementation {
   public static async createPermissionlessPool(
     connection: Connection,
     payer: PublicKey,
-    tokenInfoA: TokenInfo,
-    tokenInfoB: TokenInfo,
+    tokenAMint: PublicKey,
+    tokenBMint: PublicKey,
     tokenAAmount: BN,
     tokenBAmount: BN,
     isStable: boolean,
@@ -1236,14 +1236,12 @@ export default class AmmImpl implements AmmImplementation {
   ): Promise<Transaction> {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
 
-    const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
-
-    const tokenAMint = new PublicKey(tokenInfoA.address);
-    const tokenBMint = new PublicKey(tokenInfoB.address);
     const [
       { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aLpMintPda },
       { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bLpMintPda },
     ] = [getVaultPdas(tokenAMint, vaultProgram.programId), getVaultPdas(tokenBMint, vaultProgram.programId)];
+    const [mintA, mintB] = await Promise.all([getMint(connection, tokenAMint), getMint(connection, tokenBMint)]);
+    const curveType = generateCurveType(mintA, mintB, isStable);
     const [aVaultAccount, bVaultAccount] = await Promise.all([
       vaultProgram.account.vault.fetchNullable(aVault),
       vaultProgram.account.vault.fetchNullable(bVault),
@@ -1258,27 +1256,19 @@ export default class AmmImpl implements AmmImplementation {
     preInstructions.push(setComputeUnitLimitIx);
 
     if (!aVaultAccount) {
-      const createVaultAIx = await VaultImpl.createPermissionlessVaultInstruction(
-        connection,
-        payer,
-        new PublicKey(tokenInfoA.address),
-      );
+      const createVaultAIx = await VaultImpl.createPermissionlessVaultInstruction(connection, payer, mintA.address);
       createVaultAIx && preInstructions.push(createVaultAIx);
     } else {
       aVaultLpMint = aVaultAccount.lpMint; // Old vault doesn't have lp mint pda
     }
     if (!bVaultAccount) {
-      const createVaultBIx = await VaultImpl.createPermissionlessVaultInstruction(
-        connection,
-        payer,
-        new PublicKey(tokenInfoB.address),
-      );
+      const createVaultBIx = await VaultImpl.createPermissionlessVaultInstruction(connection, payer, mintB.address);
       createVaultBIx && preInstructions.push(createVaultBIx);
     } else {
       bVaultLpMint = bVaultAccount.lpMint; // Old vault doesn't have lp mint pda
     }
 
-    const poolPubkey = derivePoolAddress(connection, tokenInfoA, tokenInfoB, isStable, tradeFeeBps, {
+    const poolPubkey = derivePoolAddress(connection, mintA, mintB, isStable, tradeFeeBps, {
       programId: opt?.programId,
     });
 

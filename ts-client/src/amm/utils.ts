@@ -6,7 +6,7 @@ import {
   IDL as VaultIDL,
   VaultIdl,
   PROGRAM_ID as VAULT_PROGRAM_ID,
-} from '@mercurial-finance/vault-sdk';
+} from '@meteora-ag/vault-sdk';
 import {
   STAKE_FOR_FEE_PROGRAM_ID,
   IDL as StakeForFeeIDL,
@@ -25,6 +25,7 @@ import {
   getMinimumBalanceForRentExemptMint,
   MintLayout,
   createInitializeMintInstruction,
+  Mint,
 } from '@solana/spl-token';
 import {
   AccountInfo,
@@ -69,7 +70,6 @@ import {
   TokenMultiplier,
 } from './types';
 import { Amm as AmmIdl, IDL as AmmIDL } from './idl';
-import { TokenInfo } from '@solana/spl-token-registry';
 import Decimal from 'decimal.js';
 import {
   createCreateMetadataAccountV3Instruction,
@@ -760,8 +760,8 @@ export const deriveProtocolTokenFee = (poolAddress: PublicKey, tokenMint: Public
 
 export function derivePoolAddress(
   connection: Connection,
-  tokenInfoA: TokenInfo,
-  tokenInfoB: TokenInfo,
+  tokenAMint: Mint,
+  tokenBMint: Mint,
   isStable: boolean,
   tradeFeeBps: BN,
   opt?: {
@@ -769,15 +769,13 @@ export function derivePoolAddress(
   },
 ) {
   const { ammProgram } = createProgram(connection, opt?.programId);
-  const curveType = generateCurveType(tokenInfoA, tokenInfoB, isStable);
-  const tokenAMint = new PublicKey(tokenInfoA.address);
-  const tokenBMint = new PublicKey(tokenInfoB.address);
+  const curveType = generateCurveType(tokenAMint, tokenBMint, isStable);
 
   const [poolPubkey] = PublicKey.findProgramAddressSync(
     [
       Buffer.from([encodeCurveType(curveType)]),
-      getFirstKey(tokenAMint, tokenBMint),
-      getSecondKey(tokenAMint, tokenBMint),
+      getFirstKey(tokenAMint.address, tokenBMint.address),
+      getSecondKey(tokenAMint.address, tokenBMint.address),
       getTradeFeeBpsBuffer(curveType, tradeFeeBps),
     ],
     ammProgram.programId,
@@ -796,8 +794,8 @@ export function derivePoolAddress(
  */
 export async function checkPoolExists(
   connection: Connection,
-  tokenInfoA: TokenInfo,
-  tokenInfoB: TokenInfo,
+  tokenAMint: Mint,
+  tokenBMint: Mint,
   isStable: boolean,
   tradeFeeBps: BN,
   opt?: {
@@ -806,7 +804,7 @@ export async function checkPoolExists(
 ): Promise<PublicKey | undefined> {
   const { ammProgram } = createProgram(connection, opt?.programId);
 
-  const poolPubkey = derivePoolAddress(connection, tokenInfoA, tokenInfoB, isStable, tradeFeeBps, {
+  const poolPubkey = derivePoolAddress(connection, tokenAMint, tokenBMint, isStable, tradeFeeBps, {
     programId: opt?.programId,
   });
 
@@ -941,7 +939,7 @@ export const DepegType = {
   },
 };
 
-export function generateCurveType(tokenInfoA: TokenInfo, tokenInfoB: TokenInfo, isStable: boolean) {
+export function generateCurveType(tokenInfoA: Mint, tokenInfoB: Mint, isStable: boolean) {
   return isStable
     ? {
         stable: {
