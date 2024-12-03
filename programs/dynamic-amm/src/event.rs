@@ -127,6 +127,21 @@ pub struct PoolEnabled {
     pub enabled: bool,
 }
 
+/// Migrate fee account event
+#[event]
+pub struct MigrateFeeAccount {
+    /// Pool address
+    pub pool: Pubkey,
+    /// New admin token a fee
+    pub new_admin_token_a_fee: Pubkey,
+    /// New admin token b fee
+    pub new_admin_token_b_fee: Pubkey,
+    /// Transfer token a fee amount
+    pub token_a_amount: u64,
+    /// Transfer token b fee amount
+    pub token_b_amount: u64,
+}
+
 /// Create lock escrow
 #[event]
 pub struct CreateLockEscrow {
@@ -178,4 +193,32 @@ pub struct CreateConfig {
 pub struct CloseConfig {
     /// Config pubkey
     pub config: Pubkey,
+}
+
+/// Withdraw protocol fees
+#[event]
+pub struct WithdrawProtocolFees {
+    /// Pool address
+    pub pool: Pubkey,
+    /// Protocol A fee
+    pub protocol_a_fee: u64,
+    /// Protocol B fee
+    pub protocol_b_fee: u64,
+    /// Protocol A fee owner
+    pub protocol_a_fee_owner: Pubkey,
+    /// Protocol B fee owner
+    pub protocol_b_fee_owner: Pubkey,
+}
+
+/// Partner claim fees
+#[event]
+pub struct PartnerClaimFees {
+    /// Pool address
+    pub pool: Pubkey,
+    /// Fee B
+    pub fee_a: u64,
+    /// Fee B
+    pub fee_b: u64,
+    /// Partner
+    pub partner: Pubkey,
 }

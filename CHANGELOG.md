@@ -19,6 +19,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## dynamic-amm [0.6.1] - PR [180](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/180)
+
+### Added
+
+- Add a new endpoint `initialize_customizable_permissionless_constant_product_pool`, that allows pool creator to be able to set trading fee, activation_point and alpha-vault
+- Add a new endpoint `partner_claim_fees`, that allows pool creator (a.k.a partner) to claim profit shared from the protocol fees.
+
+### Changed
+
+- Endpoint `create_config` require `partner_fee_numerator`. It's used to share portion of protocol fee to the partner (pool_authority)
+- New field `PartnerInfo` in `Pool` account. It stores the information of the partner for profit sharing.
+
+## @mercurial-finance/dynamic-amm-sdk [1.1.19] - PR[#180](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/180)
+
+### Added
+
+- `partnerClaimFees` function to allow partner to claim partner profit shared from the protocol fees
+- `createCustomizablePermissionlessConstantProductPool` function to allow user to create constant product pool with customizable trading fee, activation point, activation type, and alpha vault.
+
+### Changed
+
+- `createConfig` function require new parameter `partnerFeeNumerator`. It's used to share portion of protocol fee to the partner (pool_authority)
+
 ## @mercurial-finance/dynamic-amm-sdk [1.1.18] - PR[#185](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/185)
 
 ### Fixed

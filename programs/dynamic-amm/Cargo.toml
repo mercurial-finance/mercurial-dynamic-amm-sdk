@@ -1,6 +1,6 @@
 [package]
 name = "dynamic-amm"
-version = "0.6.0"
+version = "0.6.1"
 description = "Created with Anchor"
 edition = "2021"
 
@@ -18,3 +18,4 @@ name = "dynamic_amm"
 [dependencies]
 anchor-lang = { version = "0.28.0", features = ["event-cpi"] }
 anchor-spl = "0.28.0"
+solana-program = "1.16.0"

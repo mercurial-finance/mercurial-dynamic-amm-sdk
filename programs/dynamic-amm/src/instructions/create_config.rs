@@ -10,6 +10,7 @@ pub struct ConfigParameters {
     pub pool_creator_authority: Pubkey,
     pub activation_type: u8,
     pub index: u64,
+    pub partner_fee_numerator: u64,
 }
 
 #[derive(Accounts)]

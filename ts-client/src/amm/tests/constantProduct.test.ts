@@ -287,6 +287,7 @@ describe('Constant product pool', () => {
     beforeAll(async () => {
       const tradeFeeBps = 1500;
       const protocolFeeBps = 5000;
+      const partnerFeeNumerator = new BN(50_000);
       const transaction = await AmmImpl.createConfig(
         connection,
         mockWallet.publicKey,
@@ -294,8 +295,9 @@ describe('Constant product pool', () => {
         new BN(protocolFeeBps),
         PublicKey.default,
         new BN(0),
-        PublicKey.default,
+        mockWallet.publicKey,
         ActivationType.Slot,
+        partnerFeeNumerator,
       );
       transaction.sign(mockWallet.payer);
       const txHash = await connection.sendRawTransaction(transaction.serialize());
@@ -545,6 +547,31 @@ describe('Constant product pool', () => {
         console.trace(error);
         throw new Error(error.message);
       }
+    });
+
+    test('Partner claim fee', async () => {
+      const [beforeTokenABalance, beforeTokenBBalance] = await Promise.all([
+        provider.connection.getTokenAccountBalance(mockWalletBtcATA).then((v) => new BN(v.value.amount)),
+        provider.connection.getTokenAccountBalance(mockWalletUsdcATA).then((v) => new BN(v.value.amount)),
+      ]);
+
+      const tx = await cpPoolConfig.partnerClaimFees(
+        mockWallet.publicKey,
+        new BN(Number.MAX_SAFE_INTEGER),
+        new BN(Number.MAX_SAFE_INTEGER),
+      );
+
+      tx.sign(mockWallet.payer);
+      const txSig = await connection.sendRawTransaction(tx.serialize());
+      await connection.confirmTransaction(txSig, 'finalized');
+
+      const [afterTokenABalance, afterTokenBBalance] = await Promise.all([
+        provider.connection.getTokenAccountBalance(mockWalletBtcATA).then((v) => new BN(v.value.amount)),
+        provider.connection.getTokenAccountBalance(mockWalletUsdcATA).then((v) => new BN(v.value.amount)),
+      ]);
+
+      expect(afterTokenABalance.gt(beforeTokenABalance)).toBe(true);
+      expect(afterTokenBBalance.gt(beforeTokenBBalance)).toBe(true);
     });
   });
 });
