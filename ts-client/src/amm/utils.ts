@@ -122,7 +122,7 @@ export const getOrCreateATAInstruction = async (
   owner: PublicKey,
   connection: Connection,
   payer?: PublicKey,
-): Promise<[PublicKey, TransactionInstruction?]> => {
+): Promise<[PublicKey, TransactionInstruction | undefined]> => {
   let toAccount;
   try {
     toAccount = await getAssociatedTokenAccount(tokenMint, owner);

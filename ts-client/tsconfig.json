@@ -1,16 +1,13 @@
 {
-  "extends": "@tsconfig/recommended/tsconfig.json",
+  "extends": "@meteora-ag/config/typescript/react-library",
   "compilerOptions": {
     "outDir": "dist",
     "types": ["jest", "mocha", "chai"],
     "typeRoots": ["./node_modules/@types"],
     "module": "commonjs",
-    // "target": "es6",
-    "target": "ES2022",
+    "target": "es6",
     "moduleResolution": "node",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
     "noImplicitAny": false,
-    "skipLibCheck": true
+    "preserveSymlinks": true
   }
 }

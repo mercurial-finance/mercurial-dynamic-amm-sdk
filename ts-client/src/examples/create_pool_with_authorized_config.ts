@@ -61,7 +61,7 @@ async function main() {
     tokenBMint,
     tokenADepositAmount,
     tokenBDepositAmount,
-    config.publicKey,
+    config!.publicKey,
     payerWallet.payer,
   );
 }

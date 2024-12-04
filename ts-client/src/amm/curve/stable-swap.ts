@@ -424,6 +424,7 @@ function calculateEstimatedMintAmount(
   const newBalances = [reserveA + depositAmountA, reserveB + depositAmountB] as const;
   const adjustedBalances = newBalances.map((newBalance, i) => {
     const oldBalance = oldBalances[i];
+    if (!oldBalance) throw new Error('Old balance not found');
     const idealBalance = new Fraction(d1, d0).multiply(oldBalance);
     const difference = idealBalance.subtract(newBalance);
     const diffAbs = difference.greaterThan(0) ? difference : difference.multiply(-1);

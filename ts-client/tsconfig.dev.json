@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compileOnSave": true,
+  "compilerOptions": {
+    "outDir": "./dist/cjs/",
+    "moduleResolution": "node",
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": false,
+    "skipLibCheck": true
+  },
+  "exclude": ["./src/vault/tests/**/*", "./dist/**/*"]
+}

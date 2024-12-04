@@ -120,8 +120,8 @@ const getFeeVaultState = async (publicKey: PublicKey, program: StakeForFeeProgra
   return feeVaultState;
 };
 
-type DecoderType = { [x: string]: (accountData: Buffer) => BN };
-const decodeAccountTypeMapper = (type: AccountType): ((accountData: Buffer) => BN) => {
+type DecoderType = { [x: string]: ((accountData: Buffer) => BN) | undefined };
+const decodeAccountTypeMapper = (type: AccountType): ((accountData: Buffer) => BN) | undefined => {
   const decoder: DecoderType = {
     [AccountType.VAULT_A_RESERVE]: (accountData) => new BN(AccountLayout.decode(accountData).amount.toString()),
     [AccountType.VAULT_B_RESERVE]: (accountData) => new BN(AccountLayout.decode(accountData).amount.toString()),
@@ -162,7 +162,7 @@ const deserializeAccountsBuffer = (accountInfoMap: Map<string, AccountTypeInfo>)
   return Array.from(accountInfoMap).reduce((accValue, [publicKey, { type, account }]) => {
     const decodedAccountInfo = decodeAccountTypeMapper(type);
 
-    accValue.set(publicKey, decodedAccountInfo(account!.data));
+    accValue.set(publicKey, decodedAccountInfo?.(account!.data));
 
     return accValue;
   }, new Map());
@@ -271,6 +271,7 @@ export default class AmmImpl implements AmmImplementation {
 
   public async partnerClaimFees(partnerAddress: PublicKey, maxAmountA: BN, maxAmountB: BN) {
     let preInstructions: Array<TransactionInstruction> = [];
+    // @ts-ignore
     const [[partnerTokenA, createPartnerTokenAIx], [partnerTokenB, createPartnerTokenBIx]] =
       await this.createATAPreInstructions(partnerAddress, [this.poolState.tokenAMint, this.poolState.tokenBMint]);
 
@@ -1381,6 +1382,8 @@ export default class AmmImpl implements AmmImplementation {
     const PdaInfos = poolList.reduce<Array<PublicKey>>((accList, _, index) => {
       const poolState = poolsState[index];
 
+      if (!poolState) throw new Error('Pool not found');
+
       return [...accList, poolState.aVault, poolState.bVault];
     }, []);
     const vaultsImpl = await VaultImpl.createMultipleWithPda(connection, PdaInfos);
@@ -1388,6 +1391,8 @@ export default class AmmImpl implements AmmImplementation {
     const accountsToFetch = await Promise.all(
       poolsState.map(async (poolState, index) => {
         const pool = poolList[index];
+
+        if (!pool) throw new Error('Pool not found');
 
         const vaultA = vaultsImpl.find(({ vaultPda }) => vaultPda.equals(poolState.aVault));
         const vaultB = vaultsImpl.find(({ vaultPda }) => vaultPda.equals(poolState.bVault));
@@ -1431,6 +1436,11 @@ export default class AmmImpl implements AmmImplementation {
     const ammImpls: AmmImpl[] = await Promise.all(
       accountsToFetch.map(async (accounts) => {
         const [tokenAVault, tokenBVault, vaultALp, vaultBLp, poolVaultA, poolVaultB, poolLpMint] = accounts; // must follow order
+        invariant(
+          !!poolVaultA && !!poolVaultB && !!vaultALp && !!vaultBLp && !!tokenAVault && !!tokenBVault && !!poolLpMint,
+          'Account not found',
+        );
+
         const poolVaultALp = accountsInfoMap.get(poolVaultA.pubkey.toBase58()) as BN;
         const poolVaultBLp = accountsInfoMap.get(poolVaultB.pubkey.toBase58()) as BN;
         const vaultALpSupply = accountsInfoMap.get(vaultALp.pubkey.toBase58()) as BN;
@@ -1635,6 +1645,8 @@ export default class AmmImpl implements AmmImplementation {
     const [vaultA, vaultB] = await VaultImpl.createMultipleWithPda(connection, pdaInfos, {
       seedBaseKey: opt?.vaultSeedBaseKey,
     });
+
+    if (!vaultA || !vaultB) throw new Error('Vaults not found');
 
     const accountsBufferMap = await getAccountsBuffer(connection, [
       { pubkey: vaultA.vaultState.tokenVault, type: AccountType.VAULT_A_RESERVE },

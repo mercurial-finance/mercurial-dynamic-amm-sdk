@@ -295,7 +295,7 @@ describe('Constant product pool', () => {
         USDC,
         btcDepositAmount,
         usdcDepositAmount,
-        configs[0].publicKey,
+        configs[0]!.publicKey,
       );
 
       for (const transaction of transactions) {
@@ -304,7 +304,7 @@ describe('Constant product pool', () => {
         await connection.confirmTransaction(txHash, 'finalized');
       }
 
-      const poolKey = derivePoolAddressWithConfig(BTC, USDC, configs[0].publicKey, new PublicKey(PROGRAM_ID));
+      const poolKey = derivePoolAddressWithConfig(BTC, USDC, configs[0]!.publicKey, new PublicKey(PROGRAM_ID));
       cpPoolConfig = await AmmImpl.create(connection, poolKey);
 
       expect(poolKey.toBase58()).toBe(cpPoolConfig.address.toBase58());

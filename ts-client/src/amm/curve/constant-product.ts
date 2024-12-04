@@ -27,7 +27,7 @@ function ceilDiv(lhs: BN, rhs: BN) {
 }
 
 export class ConstantProductSwap implements SwapCurve {
-  constructor() { }
+  constructor() {}
 
   private computeOutAmountWithoutSlippage(sourceAmount: BN, swapSourceAmount: BN, swapDestinationAmount: BN): BN {
     return sourceAmount.mul(swapDestinationAmount).div(swapSourceAmount);
@@ -42,6 +42,7 @@ export class ConstantProductSwap implements SwapCurve {
   ): OutResult {
     let invariant = swapSourceAmount.mul(swapDestinationAmount);
     let [newSwapDestinationAmount, _newSwapSourceAmount] = ceilDiv(invariant, swapSourceAmount.add(sourceAmount));
+    if (!newSwapDestinationAmount) throw new Error('Invalid newSwapDestinationAmount');
     let destinationAmountSwapped = swapDestinationAmount.sub(newSwapDestinationAmount);
     if (destinationAmountSwapped.eq(new BN(0))) {
       throw new Error('Swap result in zero');
@@ -68,7 +69,7 @@ export class ConstantProductSwap implements SwapCurve {
   ): BN {
     let invariant = swapSourceAmount.mul(swapDestinationAmount);
     let [newSwapSourceAmount, _newSwapDestinationAmount] = ceilDiv(invariant, swapDestinationAmount.sub(destAmount));
-    let sourceAmount = newSwapSourceAmount.sub(swapSourceAmount);
+    let sourceAmount = newSwapSourceAmount?.sub(swapSourceAmount) ?? new BN(0);
 
     if (sourceAmount.eq(new BN(0))) {
       throw new Error('Swap result in zero');
