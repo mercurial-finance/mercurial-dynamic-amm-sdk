@@ -12,5 +12,6 @@ ts-client/dist/
 ts-client/package-lock.json
 
 ts-client/.env
+ts-client/.turbo/
 
 commands

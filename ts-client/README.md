@@ -1,13 +1,13 @@
 # Mercurial Amm Dynamic SDK
 
 <p align="center">
-<img align="center" src="https://vaults.mercurial.finance/icons/logo.svg" width="180" height="180" />
+<img align="center" src="https://app.meteora.ag/icons/logo.svg" width="180" height="180" />
 </p>
 <br>
 
 ## Getting started
 
-NPM: https://www.npmjs.com/package/@mercurial-finance/dynamic-amm-sdk
+NPM: https://www.npmjs.com/package/@meteora-ag/dynamic-amm-sdk
 
 SDK: https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk
 
@@ -22,13 +22,13 @@ Discord: https://discord.com/channels/841152225564950528/864859354335412224
 1. Install deps
 
 ```
-npm i @mercurial-finance/dynamic-amm-sdk @project-serum/anchor @solana/web3.js @solana/spl-token @solana/spl-token-registry
+npm i @meteora-ag/dynamic-amm-sdk @project-serum/anchor @solana/web3.js @solana/spl-token
 ```
 
 2. Initialize AmmImpl instance
 
 ```ts
-import AmmImpl, { MAINNET_POOL } from '@mercurial-finance/dynamic-amm-sdk';
+import AmmImpl, { MAINNET_POOL } from '@meteora-ag/dynamic-amm-sdk';
 import { PublicKey } from '@solana/web3.js';
 import { Wallet, AnchorProvider } from '@project-serum/anchor';
 

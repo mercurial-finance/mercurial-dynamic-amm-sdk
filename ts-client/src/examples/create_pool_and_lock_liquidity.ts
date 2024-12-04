@@ -43,16 +43,16 @@ function fromAllocationsToAmount(lpAmount: BN, allocations: AllocationByPercenta
   let amounts: AllocationByAmount[] = [];
   let sum = new BN(0);
   for (let i = 0; i < allocations.length - 1; i++) {
-    const amount = lpAmount.mul(new BN(allocations[i].percentage)).div(new BN(sumPercentage));
+    const amount = lpAmount.mul(new BN(allocations[i]?.percentage ?? 0)).div(new BN(sumPercentage));
     sum = sum.add(amount);
     amounts.push({
-      address: allocations[i].address,
+      address: allocations[i]?.address ?? PublicKey.default,
       amount,
     });
   }
   // the last wallet get remaining amount
   amounts.push({
-    address: allocations[allocations.length - 1].address,
+    address: allocations[allocations.length - 1]?.address ?? PublicKey.default,
     amount: lpAmount.sub(sum),
   });
   return amounts;
