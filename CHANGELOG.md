@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [1.1.20] - PR[#183](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/183)
+
+### Changed
+
+- Use optimal CU when creating pool instead of requesting max CU
+
 ## dynamic-amm [0.6.1] - PR [180](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/180)
 
 ### Added
