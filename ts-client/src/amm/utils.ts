@@ -11,7 +11,7 @@ import {
   STAKE_FOR_FEE_PROGRAM_ID,
   IDL as StakeForFeeIDL,
   StakeForFee as StakeForFeeIdl,
-} from '@meteora-ag/stake-for-fee';
+} from '@meteora-ag/m3m3';
 import { AnchorProvider, BN, Program } from '@coral-xyz/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
