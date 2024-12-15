@@ -19,17 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-## @mercurial-finance/dynamic-amm-sdk [1.1.21] - PR[#190](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/190)
-
-### Changed
-
-- Use optimal CU when creating pool instead of requesting max CU
-
-## @mercurial-finance/dynamic-amm-sdk [1.1.20] - PR[#183](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/183)
+## @mercurial-finance/dynamic-amm-sdk [1.1.2] - PR[#190](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/190)
 
 ### Added
 
 - Update `@meteora-ag/m3m3@1.0.4`
+
+## @mercurial-finance/dynamic-amm-sdk [1.1.20] - PR[#183](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/183)
+
+### Changed
+
+- Use optimal CU when creating pool instead of requesting max CU
 
 ## dynamic-amm [0.6.1] - PR [180](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/180)
 
