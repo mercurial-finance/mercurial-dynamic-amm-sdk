@@ -922,13 +922,14 @@ export default class AmmImpl implements AmmImplementation {
     tokenBAmount: BN,
     config: PublicKey,
     memecoinInfo: {
-      keypair: Keypair;
-      payer: PublicKey;
-      assetData: DataV2;
-      mintAuthority: PublicKey;
-      freezeAuthority: PublicKey | null;
-      decimals: number;
-      mintAmount: BN;
+      isMinted?: boolean;
+      keypair?: Keypair;
+      payer?: PublicKey;
+      assetData?: DataV2;
+      mintAuthority?: PublicKey;
+      freezeAuthority?: PublicKey | null;
+      decimals?: number;
+      mintAmount?: BN;
     },
     opt?: {
       cluster?: Cluster;
@@ -952,45 +953,63 @@ export default class AmmImpl implements AmmImplementation {
     },
   ) {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
+    
+    const createTokenIxs: TransactionInstruction[] = [];
+    
+    if (!memecoinInfo.isMinted) {
+      if (
+        !memecoinInfo.keypair ||
+        !memecoinInfo.payer ||
+        !memecoinInfo.mintAuthority ||
+        !memecoinInfo.mintAmount ||
+        !memecoinInfo.assetData
+      ) {
+        throw new Error('Missing required fields for minting Memecoin.');
+      }
 
-    const { tx: mintTx, mintAccount } = await createMint(
-      connection,
-      memecoinInfo.keypair,
-      memecoinInfo.payer,
-      memecoinInfo.assetData,
-      memecoinInfo.mintAuthority,
-      null,
-      memecoinInfo.decimals,
-      TOKEN_PROGRAM_ID,
-    );
+      const { tx: mintTx, mintAccount } = await createMint(
+        connection,
+        memecoinInfo.keypair,
+        memecoinInfo.payer,
+        memecoinInfo.assetData,
+        memecoinInfo.mintAuthority,
+        null,
+        memecoinInfo.decimals || 0,
+        TOKEN_PROGRAM_ID,
+      );
 
-    const createTokenIxs: TransactionInstruction[] = [...mintTx.instructions];
+      createTokenIxs.push(...mintTx.instructions);
 
-    const [ata, createAtaIx] = await getOrCreateATAInstruction(
-      mintAccount.publicKey,
-      memecoinInfo.mintAuthority,
-      connection,
-      memecoinInfo.payer,
-    );
+      const [ata, createAtaIx] = await getOrCreateATAInstruction(
+        mintAccount.publicKey,
+        memecoinInfo.mintAuthority,
+        connection,
+        memecoinInfo.payer,
+      );
 
-    createAtaIx && createTokenIxs.push(createAtaIx);
+      createAtaIx && createTokenIxs.push(createAtaIx);
 
-    const mintToIx = createMintToInstruction(
-      mintAccount.publicKey,
-      ata,
-      memecoinInfo.mintAuthority,
-      BigInt(memecoinInfo.mintAmount.toString()),
-    );
-    createTokenIxs.push(mintToIx);
-    const revokeMintAuthorityIx = createSetAuthorityInstruction(
-      mintAccount.publicKey,
-      memecoinInfo.mintAuthority,
-      0,
-      null,
-    );
-    createTokenIxs.push(revokeMintAuthorityIx);
+      const mintToIx = createMintToInstruction(
+        mintAccount.publicKey,
+        ata,
+        memecoinInfo.mintAuthority,
+        BigInt(memecoinInfo.mintAmount.toString()),
+      );
+
+      createTokenIxs.push(mintToIx);
+
+      const revokeMintAuthorityIx = createSetAuthorityInstruction(
+        mintAccount.publicKey,
+        memecoinInfo.mintAuthority,
+        0,
+        null,
+      );
+
+      createTokenIxs.push(revokeMintAuthorityIx);
+    }
+
     let preInstructions: Array<TransactionInstruction> = [...createTokenIxs];
-
+    
     const [
       { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aLpMintPda },
       { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bLpMintPda },
@@ -1069,6 +1088,7 @@ export default class AmmImpl implements AmmImplementation {
 
     const createPoolPostInstructions: TransactionInstruction[] = [];
     if (opt?.lockLiquidity && userLockAmount.gt(new BN(0))) {
+      console.log("userLockAmount", userLockAmount.toString())
       const [lockEscrowPK] = deriveLockEscrowPda(poolPubkey, payer, ammProgram.programId);
       const createLockEscrowIx = await ammProgram.methods
         .createLockEscrow()
@@ -1157,7 +1177,11 @@ export default class AmmImpl implements AmmImplementation {
 
     ixs.push([setComputeUnitLimitIx, createPermissionlessPoolTx]);
 
+    console.log("feeWrapperLockAmount2", feeWrapperLockAmount.toString())
+
     if (feeWrapperLockAmount.gt(new BN(0))) {
+      console.log("feeWrapperLockAmount inside", feeWrapperLockAmount.toString())
+
       const preInstructions: TransactionInstruction[] = [];
 
       const initFeeVaultParams = opt?.feeVault ? { ...opt.feeVault, padding: new Array(64).fill(0) } : undefined;
