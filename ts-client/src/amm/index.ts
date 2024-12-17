@@ -955,7 +955,7 @@ export default class AmmImpl implements AmmImplementation {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
     
     const createTokenIxs: TransactionInstruction[] = [];
-    
+
     if (!memecoinInfo.isMinted) {
       if (
         !memecoinInfo.keypair ||
@@ -1088,7 +1088,6 @@ export default class AmmImpl implements AmmImplementation {
 
     const createPoolPostInstructions: TransactionInstruction[] = [];
     if (opt?.lockLiquidity && userLockAmount.gt(new BN(0))) {
-      console.log("userLockAmount", userLockAmount.toString())
       const [lockEscrowPK] = deriveLockEscrowPda(poolPubkey, payer, ammProgram.programId);
       const createLockEscrowIx = await ammProgram.methods
         .createLockEscrow()
@@ -1177,11 +1176,7 @@ export default class AmmImpl implements AmmImplementation {
 
     ixs.push([setComputeUnitLimitIx, createPermissionlessPoolTx]);
 
-    console.log("feeWrapperLockAmount2", feeWrapperLockAmount.toString())
-
     if (feeWrapperLockAmount.gt(new BN(0))) {
-      console.log("feeWrapperLockAmount inside", feeWrapperLockAmount.toString())
-
       const preInstructions: TransactionInstruction[] = [];
 
       const initFeeVaultParams = opt?.feeVault ? { ...opt.feeVault, padding: new Array(64).fill(0) } : undefined;
