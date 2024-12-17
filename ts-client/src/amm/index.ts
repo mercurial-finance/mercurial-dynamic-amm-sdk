@@ -922,13 +922,14 @@ export default class AmmImpl implements AmmImplementation {
     tokenBAmount: BN,
     config: PublicKey,
     memecoinInfo: {
-      keypair: Keypair;
-      payer: PublicKey;
-      assetData: DataV2;
-      mintAuthority: PublicKey;
-      freezeAuthority: PublicKey | null;
-      decimals: number;
-      mintAmount: BN;
+      isMinted?: boolean;
+      keypair?: Keypair;
+      payer?: PublicKey;
+      assetData?: DataV2;
+      mintAuthority?: PublicKey;
+      freezeAuthority?: PublicKey | null;
+      decimals?: number;
+      mintAmount?: BN;
     },
     opt?: {
       cluster?: Cluster;
@@ -953,42 +954,61 @@ export default class AmmImpl implements AmmImplementation {
   ) {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
 
-    const { tx: mintTx, mintAccount } = await createMint(
-      connection,
-      memecoinInfo.keypair,
-      memecoinInfo.payer,
-      memecoinInfo.assetData,
-      memecoinInfo.mintAuthority,
-      null,
-      memecoinInfo.decimals,
-      TOKEN_PROGRAM_ID,
-    );
+    const createTokenIxs: TransactionInstruction[] = [];
 
-    const createTokenIxs: TransactionInstruction[] = [...mintTx.instructions];
+    if (!memecoinInfo.isMinted) {
+      if (
+        !memecoinInfo.keypair ||
+        !memecoinInfo.payer ||
+        !memecoinInfo.mintAuthority ||
+        !memecoinInfo.mintAmount ||
+        !memecoinInfo.assetData ||
+        memecoinInfo.freezeAuthority === undefined
+      ) {
+        throw new Error('Missing required fields for minting Memecoin.');
+      }
 
-    const [ata, createAtaIx] = await getOrCreateATAInstruction(
-      mintAccount.publicKey,
-      memecoinInfo.mintAuthority,
-      connection,
-      memecoinInfo.payer,
-    );
+      const { tx: mintTx, mintAccount } = await createMint(
+        connection,
+        memecoinInfo.keypair,
+        memecoinInfo.payer,
+        memecoinInfo.assetData,
+        memecoinInfo.mintAuthority,
+        memecoinInfo.freezeAuthority,
+        memecoinInfo.decimals || 0,
+        TOKEN_PROGRAM_ID,
+      );
 
-    createAtaIx && createTokenIxs.push(createAtaIx);
+      createTokenIxs.push(...mintTx.instructions);
 
-    const mintToIx = createMintToInstruction(
-      mintAccount.publicKey,
-      ata,
-      memecoinInfo.mintAuthority,
-      BigInt(memecoinInfo.mintAmount.toString()),
-    );
-    createTokenIxs.push(mintToIx);
-    const revokeMintAuthorityIx = createSetAuthorityInstruction(
-      mintAccount.publicKey,
-      memecoinInfo.mintAuthority,
-      0,
-      null,
-    );
-    createTokenIxs.push(revokeMintAuthorityIx);
+      const [ata, createAtaIx] = await getOrCreateATAInstruction(
+        mintAccount.publicKey,
+        memecoinInfo.mintAuthority,
+        connection,
+        memecoinInfo.payer,
+      );
+
+      createAtaIx && createTokenIxs.push(createAtaIx);
+
+      const mintToIx = createMintToInstruction(
+        mintAccount.publicKey,
+        ata,
+        memecoinInfo.mintAuthority,
+        BigInt(memecoinInfo.mintAmount.toString()),
+      );
+
+      createTokenIxs.push(mintToIx);
+
+      const revokeMintAuthorityIx = createSetAuthorityInstruction(
+        mintAccount.publicKey,
+        memecoinInfo.mintAuthority,
+        0,
+        null,
+      );
+
+      createTokenIxs.push(revokeMintAuthorityIx);
+    }
+
     let preInstructions: Array<TransactionInstruction> = [...createTokenIxs];
 
     const [
