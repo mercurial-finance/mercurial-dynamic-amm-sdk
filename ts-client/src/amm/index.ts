@@ -953,7 +953,7 @@ export default class AmmImpl implements AmmImplementation {
     },
   ) {
     const { vaultProgram, ammProgram } = createProgram(connection, opt?.programId);
-    
+
     const createTokenIxs: TransactionInstruction[] = [];
 
     if (!memecoinInfo.isMinted) {
@@ -962,7 +962,8 @@ export default class AmmImpl implements AmmImplementation {
         !memecoinInfo.payer ||
         !memecoinInfo.mintAuthority ||
         !memecoinInfo.mintAmount ||
-        !memecoinInfo.assetData
+        !memecoinInfo.assetData ||
+        memecoinInfo.freezeAuthority === undefined
       ) {
         throw new Error('Missing required fields for minting Memecoin.');
       }
@@ -973,7 +974,7 @@ export default class AmmImpl implements AmmImplementation {
         memecoinInfo.payer,
         memecoinInfo.assetData,
         memecoinInfo.mintAuthority,
-        null,
+        memecoinInfo.freezeAuthority,
         memecoinInfo.decimals || 0,
         TOKEN_PROGRAM_ID,
       );
@@ -1009,7 +1010,7 @@ export default class AmmImpl implements AmmImplementation {
     }
 
     let preInstructions: Array<TransactionInstruction> = [...createTokenIxs];
-    
+
     const [
       { vaultPda: aVault, tokenVaultPda: aTokenVault, lpMintPda: aLpMintPda },
       { vaultPda: bVault, tokenVaultPda: bTokenVault, lpMintPda: bLpMintPda },
