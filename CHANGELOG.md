@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @mercurial-finance/dynamic-amm-sdk [1.1.23] - PR[#192](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/192)
+
+### Changed
+
+- Added new parameter `memecoinInfo.isMinted` to `createPermissionlessConstantProductMemecoinPoolWithConfig` to allow creating a fee vault with minted token
+
 ## @mercurial-finance/dynamic-amm-sdk [1.1.22] - PR[#191](https://github.com/mercurial-finance/mercurial-dynamic-amm-sdk/pull/191)
 
 ### Added
